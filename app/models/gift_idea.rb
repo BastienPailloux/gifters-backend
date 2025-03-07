@@ -30,6 +30,7 @@ class GiftIdea < ApplicationRecord
   end
 
   def visible_to?(user)
+    return false if status == 'bought'
     return false if for_user_id == user.id
     return true if created_by_id == user.id
     for_user.has_common_group_with?(user)

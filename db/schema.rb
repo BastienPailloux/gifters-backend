@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_07_163620) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_07_184723) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -34,6 +34,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_07_163620) do
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "invite_code"
+    t.index ["invite_code"], name: "index_groups_on_invite_code", unique: true
   end
 
   create_table "memberships", force: :cascade do |t|

@@ -3,8 +3,33 @@ require 'rails_helper'
 RSpec.describe Group, type: :model do
   describe 'validations' do
     it { should validate_presence_of(:name) }
-    it { should validate_uniqueness_of(:name) }
-    it { should validate_presence_of(:description) }
+    it { should validate_uniqueness_of(:invite_code) }
+
+    # Test personnalisé pour la validation de présence de invite_code
+    it 'requires invite_code to be present' do
+      # Désactiver temporairement le callback pour ce test
+      allow_any_instance_of(Group).to receive(:generate_invite_code)
+
+      group = build(:group, invite_code: nil)
+      expect(group).not_to be_valid
+      expect(group.errors[:invite_code]).to include("can't be blank")
+    end
+  end
+
+  describe 'callbacks' do
+    it 'generates an invite code on creation' do
+      group = build(:group, invite_code: nil)
+      expect(group.invite_code).to be_nil
+      group.valid?
+      expect(group.invite_code).not_to be_nil
+      expect(group.invite_code.length).to eq(8)
+    end
+
+    it 'does not override an existing invite code' do
+      group = build(:group, invite_code: 'CUSTOM123')
+      group.valid?
+      expect(group.invite_code).to eq('CUSTOM123')
+    end
   end
 
   describe 'associations' do

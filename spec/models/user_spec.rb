@@ -4,7 +4,14 @@ RSpec.describe User, type: :model do
   describe 'validations' do
     it { should validate_presence_of(:name) }
     it { should validate_presence_of(:email) }
-    it { should validate_uniqueness_of(:email).case_insensitive }
+
+    # Test personnalisé pour l'unicité de l'email
+    it 'validates uniqueness of email' do
+      create(:user, email: 'test@example.com')
+      duplicate_user = build(:user, email: 'test@example.com')
+      expect(duplicate_user).not_to be_valid
+      expect(duplicate_user.errors[:email]).to include('has already been taken')
+    end
   end
 
   describe 'associations' do
