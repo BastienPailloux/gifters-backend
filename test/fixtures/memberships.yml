@@ -1,11 +1,36 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  user: one
-  group: one
-  role: MyString
+alice_family:
+  user: alice
+  group: family
+  role: admin
 
-two:
-  user: two
-  group: two
-  role: MyString
+bob_family:
+  user: bob
+  group: family
+  role: member
+
+alice_friends:
+  user: alice
+  group: friends
+  role: member
+
+bob_friends:
+  user: bob
+  group: friends
+  role: admin
+
+charlie_friends:
+  user: charlie
+  group: friends
+  role: member
+
+charlie_colleagues:
+  user: charlie
+  group: colleagues
+  role: admin
+
+david_colleagues:
+  user: david
+  group: colleagues
+  role: member

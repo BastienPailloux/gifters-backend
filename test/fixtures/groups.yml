@@ -1,9 +1,13 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  name: MyString
-  description: MyText
+family:
+  name: Famille
+  description: Groupe familial pour les cadeaux
 
-two:
-  name: MyString
-  description: MyText
+friends:
+  name: Amis
+  description: Groupe d'amis pour les cadeaux
+
+colleagues:
+  name: Collègues
+  description: Groupe de collègues pour les cadeaux
