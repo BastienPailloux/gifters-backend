@@ -10,9 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_07_155906) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_07_163620) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "gift_ideas", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.decimal "price"
+    t.string "link"
+    t.string "image_url"
+    t.bigint "for_user_id", null: false
+    t.bigint "created_by_id", null: false
+    t.string "status"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_gift_ideas_on_created_by_id"
+    t.index ["for_user_id"], name: "index_gift_ideas_on_for_user_id"
+  end
 
   create_table "groups", force: :cascade do |t|
     t.string "name"
@@ -52,6 +67,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_07_155906) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "gift_ideas", "users", column: "created_by_id"
+  add_foreign_key "gift_ideas", "users", column: "for_user_id"
   add_foreign_key "memberships", "groups"
   add_foreign_key "memberships", "users"
 end
