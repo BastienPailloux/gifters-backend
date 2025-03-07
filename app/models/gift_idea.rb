@@ -1,4 +1,48 @@
 class GiftIdea < ApplicationRecord
   belongs_to :for_user, class_name: 'User'
   belongs_to :created_by, class_name: 'User'
+
+  # Constants
+  STATUSES = %w[proposed buying bought].freeze
+
+  # Validations
+  validates :title, presence: true
+  validates :link, presence: true, format: { with: URI::regexp, message: "n'est pas une URL valide" }
+  validates :price, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :status, presence: true, inclusion: { in: STATUSES }
+  validate :creator_and_receiver_have_common_group
+
+  # Callbacks
+  before_validation :set_default_status
+
+  # Scopes
+  scope :proposed, -> { where(status: 'proposed') }
+  scope :buying, -> { where(status: 'buying') }
+  scope :bought, -> { where(status: 'bought') }
+
+  # Methods
+  def mark_as_buying
+    update(status: 'buying')
+  end
+
+  def mark_as_bought
+    update(status: 'bought')
+  end
+
+  def visible_to?(user)
+    return false if for_user_id == user.id
+    return true if created_by_id == user.id
+    for_user.has_common_group_with?(user)
+  end
+
+  private
+
+  def creator_and_receiver_have_common_group
+    return if created_by.has_common_group_with?(for_user) || created_by_id == for_user_id
+    errors.add(:for_user, "doit partager au moins un groupe avec vous")
+  end
+
+  def set_default_status
+    self.status ||= 'proposed'
+  end
 end
