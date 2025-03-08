@@ -2,7 +2,8 @@ class User < ApplicationRecord
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable
+         :recoverable, :rememberable, :validatable,
+         :jwt_authenticatable, jwt_revocation_strategy: JwtDenylist
 
   has_many :memberships, dependent: :destroy
   has_many :groups, through: :memberships
@@ -20,5 +21,14 @@ class User < ApplicationRecord
 
   def has_common_group_with?(user)
     common_groups_with(user).any?
+  end
+
+  # Méthode pour personnaliser les claims JWT
+  def jwt_payload
+    {
+      user_id: id,
+      name: name,
+      email: email
+    }
   end
 end

@@ -1,0 +1,50 @@
+module Api
+  module V1
+    class UsersController < BaseController
+      before_action :set_user, only: [:show, :update, :destroy]
+      before_action :authorize_user, only: [:update, :destroy]
+
+      # GET /api/v1/users
+      def index
+        @users = User.all
+        render json: @users, only: [:id, :name, :email]
+      end
+
+      # GET /api/v1/users/:id
+      def show
+        render json: @user, only: [:id, :name, :email]
+      end
+
+      # PUT /api/v1/users/:id
+      def update
+        if @user.update(user_params)
+          render json: @user, only: [:id, :name, :email]
+        else
+          render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
+      # DELETE /api/v1/users/:id
+      def destroy
+        @user.destroy
+        head :no_content
+      end
+
+      private
+
+      def set_user
+        @user = User.find(params[:id])
+      end
+
+      def authorize_user
+        unless @user == current_user
+          render json: { error: 'Forbidden' }, status: :forbidden
+        end
+      end
+
+      def user_params
+        params.require(:user).permit(:name, :email)
+      end
+    end
+  end
+end
