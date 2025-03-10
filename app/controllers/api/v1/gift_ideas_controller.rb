@@ -45,6 +45,15 @@ module Api
         end
       end
 
+      # PUT /api/v1/gift_ideas/:id
+      def update
+        if @gift_idea.update(gift_idea_params)
+          render json: @gift_idea
+        else
+          render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       private
 
       def set_gift_idea
