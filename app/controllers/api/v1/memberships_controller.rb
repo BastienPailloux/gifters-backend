@@ -3,8 +3,8 @@ module Api
     class MembershipsController < BaseController
       before_action :set_group
       before_action :ensure_user_in_group, except: [:create]
-      before_action :set_membership, only: [:show]
-      before_action :ensure_admin, only: [:create]
+      before_action :set_membership, only: [:show, :update]
+      before_action :ensure_admin, only: [:create, :update], unless: :updating_own_membership?
 
       # GET /api/v1/groups/:group_id/memberships
       def index
@@ -33,6 +33,22 @@ module Api
           render json: @membership.as_json(include: { user: { only: [:id, :name, :email] } },
                                           methods: [:user_name, :user_email]),
                  status: :created
+        else
+          render json: { errors: @membership.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
+      # PUT /api/v1/groups/:group_id/memberships/:id
+      def update
+        # Vérifier si c'est le dernier admin
+        if @membership.role == 'admin' && membership_params[:role] == 'member' && @group.admin_count == 1
+          render json: { errors: ['Cannot change role: group must have at least one admin'] }, status: :unprocessable_entity
+          return
+        end
+
+        if @membership.update(membership_params)
+          render json: @membership.as_json(include: { user: { only: [:id, :name, :email] } },
+                                          methods: [:user_name, :user_email])
         else
           render json: { errors: @membership.errors.full_messages }, status: :unprocessable_entity
         end
@@ -74,6 +90,10 @@ module Api
 
       def current_user_membership
         @current_user_membership ||= @group.memberships.find_by(user: current_user)
+      end
+
+      def updating_own_membership?
+        @membership&.user_id == current_user.id
       end
 
       def membership_params
