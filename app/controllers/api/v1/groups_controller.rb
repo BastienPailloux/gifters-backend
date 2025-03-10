@@ -32,6 +32,20 @@ module Api
         }
       end
 
+      # POST /api/v1/groups
+      def create
+        @group = Group.new(group_params)
+
+        if @group.save
+          # Ajouter l'utilisateur actuel comme administrateur du groupe
+          @group.add_user(current_user, 'admin')
+
+          render json: @group, status: :created, only: [:id, :name, :description, :invite_code]
+        else
+          render json: { errors: @group.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       private
 
       def set_group
