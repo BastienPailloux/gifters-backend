@@ -41,8 +41,12 @@ Rails.application.configure do
 
   config.action_mailer.perform_caching = false
 
-  # Configuration de l'hôte par défaut pour les URLs en développement
+  # Configuration des URL pour les emails
   config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+
+  # Configuration pour l'envoi d'emails en développement
+  config.action_mailer.delivery_method = :letter_opener
+  config.action_mailer.perform_deliveries = true
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

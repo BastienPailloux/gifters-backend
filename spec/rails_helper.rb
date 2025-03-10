@@ -68,6 +68,13 @@ RSpec.configure do |config|
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
+
+  # Configuration pour les tests d'emails
+  config.before(:each) do
+    ActionMailer::Base.delivery_method = :test
+    ActionMailer::Base.perform_deliveries = true
+    ActionMailer::Base.deliveries.clear
+  end
 end
 
 # The settings below are suggested to provide a good initial experience

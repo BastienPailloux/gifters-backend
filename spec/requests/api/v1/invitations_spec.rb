@@ -147,54 +147,62 @@ RSpec.describe "Api::V1::Invitations", type: :request do
     let(:valid_attributes) { { invitation: { role: 'member' } } }
     let(:invalid_attributes) { { invitation: { role: 'invalid_role' } } }
 
-    context "when authenticated" do
-      context "when the user is an admin of the group" do
-        context "when the request is valid" do
-          before { post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes, headers: headers }
+    context "when user is admin of the group" do
+      it "creates a new invitation" do
+        expect {
+          post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes, headers: headers
+        }.to change(Invitation, :count).by(1)
 
-          it "returns status code 201" do
-            expect(response).to have_http_status(201)
-          end
-
-          it "creates a new invitation" do
-            expect(JSON.parse(response.body)['invitation']['role']).to eq('member')
-          end
-
-          it "returns the invitation URL and token" do
-            response_body = JSON.parse(response.body)
-            expect(response_body).to include('invitation_url', 'token')
-          end
-        end
-
-        context "when the request is invalid" do
-          before { post "/api/v1/groups/#{group.id}/invitations", params: invalid_attributes, headers: headers }
-
-          it "returns status code 422" do
-            expect(response).to have_http_status(422)
-          end
-
-          it "returns a validation failure message" do
-            expect(JSON.parse(response.body)).to include('errors')
-          end
-        end
+        expect(response).to have_http_status(201)
+        expect(JSON.parse(response.body)['invitation']['role']).to eq('member')
       end
 
-      context "when the user is not an admin of the group" do
-        before do
-          # Changer le rôle de l'utilisateur à membre
-          membership = group.memberships.find_by(user: user)
-          membership.update(role: 'member')
+      it "sends an email when an email address is provided" do
+        recipient_email = "test@example.com"
 
-          post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes, headers: headers
-        end
+        expect {
+          post "/api/v1/groups/#{group.id}/invitations",
+               params: { invitation: { role: 'member' }, email: recipient_email },
+               headers: headers
+        }.to change { ActionMailer::Base.deliveries.count }.by(1)
 
-        it "returns status code 403" do
-          expect(response).to have_http_status(403)
-        end
+        expect(response).to have_http_status(201)
 
-        it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You must be an admin to manage invitations')
-        end
+        # Vérifier que l'email a été envoyé au bon destinataire
+        email = ActionMailer::Base.deliveries.last
+        expect(email.to).to include(recipient_email)
+        expect(email.subject).to eq("Vous avez été invité à rejoindre un groupe sur Gifters")
+      end
+
+      it "returns a 422 status with errors for invalid attributes" do
+        post "/api/v1/groups/#{group.id}/invitations", params: invalid_attributes, headers: headers
+
+        expect(response).to have_http_status(422)
+        expect(JSON.parse(response.body)).to have_key('errors')
+      end
+
+      it "includes the invitation URL and token in the response" do
+        post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes, headers: headers
+
+        expect(JSON.parse(response.body)).to include('invitation_url', 'token')
+      end
+    end
+
+    context "when user is not admin of the group" do
+      before do
+        # Changer le rôle de l'utilisateur à membre
+        membership = group.memberships.find_by(user: user)
+        membership.update(role: 'member')
+
+        post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes, headers: headers
+      end
+
+      it "returns status code 403" do
+        expect(response).to have_http_status(403)
+      end
+
+      it "returns a forbidden message" do
+        expect(JSON.parse(response.body)).to include('error' => 'You must be an admin to manage invitations')
       end
     end
 
@@ -278,6 +286,17 @@ RSpec.describe "Api::V1::Invitations", type: :request do
     let(:invitation) { create(:invitation, group: group, created_by: user) }
     let(:new_user) { create(:user) }
     let(:new_user_headers) { { 'Authorization' => "Bearer #{generate_jwt_token(new_user)}" } }
+
+    it "sends an email to the admin when a user accepts an invitation" do
+      expect {
+        post "/api/v1/invitations/accept", params: { token: invitation.token }, headers: new_user_headers
+      }.to change { ActionMailer::Base.deliveries.count }.by(1)
+
+      # Vérifier que l'email a été envoyé au bon destinataire
+      email = ActionMailer::Base.deliveries.last
+      expect(email.to).to include(user.email)
+      expect(email.subject).to eq("Un utilisateur a rejoint votre groupe sur Gifters")
+    end
 
     context "when authenticated" do
       context "when the invitation is valid and unused" do
