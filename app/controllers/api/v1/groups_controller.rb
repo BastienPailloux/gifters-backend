@@ -61,6 +61,23 @@ module Api
         head :no_content
       end
 
+      # POST /api/v1/groups/:id/join
+      def join
+        # Vérifier si l'utilisateur est déjà membre du groupe
+        if @group.users.include?(current_user)
+          render json: { error: 'You are already a member of this group' }, status: :unprocessable_entity
+          return
+        end
+
+        # Vérifier si le code d'invitation est valide
+        if @group.invite_code == params[:invite_code]
+          @group.add_user(current_user)
+          render json: { message: 'Successfully joined the group' }, status: :ok
+        else
+          render json: { error: 'Invalid invite code' }, status: :unprocessable_entity
+        end
+      end
+
       private
 
       def set_group
