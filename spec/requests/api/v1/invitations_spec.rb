@@ -273,4 +273,85 @@ RSpec.describe "Api::V1::Invitations", type: :request do
       end
     end
   end
+
+  describe "POST /api/v1/invitations/accept" do
+    let(:invitation) { create(:invitation, group: group, created_by: user) }
+    let(:new_user) { create(:user) }
+    let(:new_user_headers) { { 'Authorization' => "Bearer #{generate_jwt_token(new_user)}" } }
+
+    context "when authenticated" do
+      context "when the invitation is valid and unused" do
+        before { post "/api/v1/invitations/accept", params: { token: invitation.token }, headers: new_user_headers }
+
+        it "returns status code 200" do
+          expect(response).to have_http_status(200)
+        end
+
+        it "adds the user to the group" do
+          expect(group.users.reload).to include(new_user)
+        end
+
+        it "marks the invitation as used" do
+          expect(invitation.reload.used).to be true
+        end
+
+        it "returns a success message" do
+          expect(JSON.parse(response.body)).to include('message' => "You have successfully joined the group #{group.name}")
+        end
+      end
+
+      context "when the invitation is already used" do
+        let(:used_invitation) { create(:invitation, :used, group: group, created_by: user) }
+
+        before { post "/api/v1/invitations/accept", params: { token: used_invitation.token }, headers: new_user_headers }
+
+        it "returns status code 422" do
+          expect(response).to have_http_status(422)
+        end
+
+        it "returns an error message" do
+          expect(JSON.parse(response.body)).to include('error' => 'This invitation has already been used')
+        end
+      end
+
+      context "when the user is already a member of the group" do
+        before do
+          group.add_user(new_user)
+          post "/api/v1/invitations/accept", params: { token: invitation.token }, headers: new_user_headers
+        end
+
+        it "returns status code 422" do
+          expect(response).to have_http_status(422)
+        end
+
+        it "returns an error message" do
+          expect(JSON.parse(response.body)).to include('error' => 'You are already a member of this group')
+        end
+      end
+
+      context "when the invitation token is invalid" do
+        before { post "/api/v1/invitations/accept", params: { token: 'invalid_token' }, headers: new_user_headers }
+
+        it "returns status code 404" do
+          expect(response).to have_http_status(404)
+        end
+
+        it "returns a not found message" do
+          expect(JSON.parse(response.body)).to include('error' => 'Invalid invitation token')
+        end
+      end
+    end
+
+    context "when not authenticated" do
+      before { post "/api/v1/invitations/accept", params: { token: invitation.token } }
+
+      it "returns status code 401" do
+        expect(response).to have_http_status(401)
+      end
+
+      it "returns an unauthorized message" do
+        expect(JSON.parse(response.body)).to include('error' => 'Unauthorized')
+      end
+    end
+  end
 end
