@@ -8,4 +8,24 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+
+  namespace :api do
+    namespace :v1 do
+      devise_for :users,
+                 controllers: {
+                   sessions: 'api/v1/sessions',
+                   registrations: 'api/v1/registrations'
+                 },
+                 path: '',
+                 path_names: {
+                   sign_in: 'login',
+                   sign_out: 'logout',
+                   registration: 'signup'
+                 }
+
+      resources :users, only: [:index, :show, :update, :destroy]
+    end
+  end
+
+  root "home#index"
 end

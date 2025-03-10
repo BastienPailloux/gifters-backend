@@ -71,3 +71,4 @@ end
 
 # Authentication
 gem 'devise'
+gem 'devise-jwt'
