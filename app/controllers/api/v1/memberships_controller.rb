@@ -3,12 +3,19 @@ module Api
     class MembershipsController < BaseController
       before_action :set_group
       before_action :ensure_user_in_group
+      before_action :set_membership, only: [:show]
 
       # GET /api/v1/groups/:group_id/memberships
       def index
         @memberships = @group.memberships.includes(:user)
         render json: @memberships.as_json(include: { user: { only: [:id, :name, :email] } },
                                          methods: [:user_name, :user_email])
+      end
+
+      # GET /api/v1/groups/:group_id/memberships/:id
+      def show
+        render json: @membership.as_json(include: { user: { only: [:id, :name, :email] } },
+                                        methods: [:user_name, :user_email])
       end
 
       private
@@ -19,6 +26,14 @@ module Api
         unless @group
           render json: { error: 'Group not found' }, status: :not_found
           return
+        end
+      end
+
+      def set_membership
+        @membership = @group.memberships.find_by(id: params[:id])
+
+        unless @membership
+          render json: { error: 'Membership not found' }, status: :not_found
         end
       end
 
