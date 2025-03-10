@@ -55,6 +55,12 @@ module Api
         end
       end
 
+      # DELETE /api/v1/groups/:id
+      def destroy
+        @group.destroy
+        head :no_content
+      end
+
       private
 
       def set_group
