@@ -2,7 +2,7 @@ module Api
   module V1
     class InvitationsController < BaseController
       before_action :set_group, only: [:index, :create]
-      before_action :ensure_user_is_admin, only: [:index, :create]
+      before_action :ensure_user_is_admin_of_group, only: [:index, :create]
       before_action :set_invitation, only: [:show, :destroy]
 
       # GET /api/v1/groups/:group_id/invitations
@@ -42,7 +42,8 @@ module Api
 
       # DELETE /api/v1/invitations/:id
       def destroy
-        if @invitation.created_by != current_user && !current_user_is_admin_of_group?(@invitation.group)
+        # Vérifier si l'utilisateur est admin du groupe ou le créateur de l'invitation
+        unless current_user_is_admin_of_group?(@invitation.group) || @invitation.created_by == current_user
           render json: { error: 'You are not authorized to delete this invitation' }, status: :forbidden
           return
         end
@@ -107,7 +108,7 @@ module Api
         end
       end
 
-      def ensure_user_is_admin
+      def ensure_user_is_admin_of_group
         unless current_user_is_admin_of_group?(@group)
           render json: { error: 'You must be an admin to manage invitations' }, status: :forbidden
           return
