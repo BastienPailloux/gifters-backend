@@ -19,6 +19,21 @@ class GiftIdea < ApplicationRecord
   scope :proposed, -> { where(status: 'proposed') }
   scope :buying, -> { where(status: 'buying') }
   scope :bought, -> { where(status: 'bought') }
+  scope :for_recipient, ->(user_id) { where(for_user_id: user_id) }
+  scope :created_by_user, ->(user) { where(created_by: user) }
+  scope :not_for_user, ->(user) { where.not(for_user: user) }
+  scope :for_users_in_common_groups, ->(user) {
+    where(for_user_id: user.common_groups_with_users_ids)
+  }
+
+  # Scope principal pour les idées visibles par un utilisateur
+  scope :visible_to_user, ->(user) {
+    created_by_user(user)
+      .or(
+        not_for_user(user)
+          .where(for_user_id: user.common_groups_with_users_ids)
+      )
+  }
 
   # Methods
   def mark_as_buying

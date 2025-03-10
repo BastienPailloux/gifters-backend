@@ -8,17 +8,12 @@ module Api
 
       # GET /api/v1/gift_ideas
       def index
-        # Récupérer les idées de cadeaux visibles pour l'utilisateur actuel
-        # Un utilisateur peut voir les idées qu'il a créées, mais pas celles qui lui sont destinées
-        @gift_ideas = GiftIdea.where(created_by: current_user)
-                             .or(GiftIdea.where.not(for_user: current_user)
-                                         .where(for_user_id: current_user.common_groups_with_users_ids))
+        # Utiliser le scope principal pour récupérer les idées visibles par l'utilisateur
+        @gift_ideas = GiftIdea.visible_to_user(current_user)
 
-        # Filtrer par statut si spécifié
+        # Appliquer les filtres si nécessaire
         @gift_ideas = @gift_ideas.where(status: params[:status]) if params[:status].present?
-
-        # Filtrer par destinataire si spécifié
-        @gift_ideas = @gift_ideas.where(for_user_id: params[:for_user_id]) if params[:for_user_id].present?
+        @gift_ideas = @gift_ideas.for_recipient(params[:for_user_id]) if params[:for_user_id].present?
 
         render json: @gift_ideas
       end
