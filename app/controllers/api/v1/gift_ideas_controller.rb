@@ -23,6 +23,11 @@ module Api
         render json: @gift_ideas
       end
 
+      # GET /api/v1/gift_ideas/:id
+      def show
+        render json: @gift_idea
+      end
+
       private
 
       def set_gift_idea
