@@ -46,6 +46,15 @@ module Api
         end
       end
 
+      # PUT /api/v1/groups/:id
+      def update
+        if @group.update(group_params)
+          render json: @group, only: [:id, :name, :description, :invite_code]
+        else
+          render json: { errors: @group.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       private
 
       def set_group
