@@ -26,6 +26,7 @@ Rails.application.routes.draw do
       resources :users, only: [:index, :show, :update, :destroy]
 
       resources :groups do
+        resources :memberships
         member do
           post 'join'
           delete 'leave'

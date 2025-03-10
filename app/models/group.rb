@@ -19,6 +19,10 @@ class Group < ApplicationRecord
     memberships.where(role: 'admin').map(&:user)
   end
 
+  def admin_count
+    memberships.where(role: 'admin').count
+  end
+
   private
 
   def generate_invite_code
