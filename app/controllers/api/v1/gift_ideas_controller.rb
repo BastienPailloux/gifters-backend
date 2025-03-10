@@ -60,6 +60,24 @@ module Api
         head :no_content
       end
 
+      # PUT /api/v1/gift_ideas/:id/mark_as_buying
+      def mark_as_buying
+        if @gift_idea.mark_as_buying
+          render json: @gift_idea
+        else
+          render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
+      # PUT /api/v1/gift_ideas/:id/mark_as_bought
+      def mark_as_bought
+        if @gift_idea.mark_as_bought
+          render json: @gift_idea
+        else
+          render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       private
 
       def set_gift_idea
