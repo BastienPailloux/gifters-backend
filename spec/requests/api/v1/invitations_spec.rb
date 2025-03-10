@@ -210,4 +210,67 @@ RSpec.describe "Api::V1::Invitations", type: :request do
       end
     end
   end
+
+  describe "DELETE /api/v1/invitations/:token" do
+    let!(:invitation) { create(:invitation, group: group, created_by: user) }
+
+    context "when authenticated" do
+      context "when the user is the creator of the invitation" do
+        before { delete "/api/v1/invitations/#{invitation.token}", headers: headers }
+
+        it "returns status code 204" do
+          expect(response).to have_http_status(204)
+        end
+
+        it "deletes the invitation" do
+          expect(Invitation.find_by(id: invitation.id)).to be_nil
+        end
+      end
+
+      context "when the user is an admin of the group but not the creator" do
+        let(:admin_user) { create(:user) }
+        let(:admin_headers) { { 'Authorization' => "Bearer #{generate_jwt_token(admin_user)}" } }
+
+        before do
+          group.add_user(admin_user, 'admin')
+          delete "/api/v1/invitations/#{invitation.token}", headers: admin_headers
+        end
+
+        it "returns status code 204" do
+          expect(response).to have_http_status(204)
+        end
+
+        it "deletes the invitation" do
+          expect(Invitation.find_by(id: invitation.id)).to be_nil
+        end
+      end
+
+      context "when the user is not authorized" do
+        let(:other_user) { create(:user) }
+        let(:other_headers) { { 'Authorization' => "Bearer #{generate_jwt_token(other_user)}" } }
+
+        before { delete "/api/v1/invitations/#{invitation.token}", headers: other_headers }
+
+        it "returns status code 403" do
+          expect(response).to have_http_status(403)
+        end
+
+        it "returns a forbidden message" do
+          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to delete this invitation')
+        end
+      end
+    end
+
+    context "when not authenticated" do
+      before { delete "/api/v1/invitations/#{invitation.token}" }
+
+      it "returns status code 401" do
+        expect(response).to have_http_status(401)
+      end
+
+      it "returns an unauthorized message" do
+        expect(JSON.parse(response.body)).to include('error' => 'Unauthorized')
+      end
+    end
+  end
 end
