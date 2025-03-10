@@ -23,6 +23,15 @@ class User < ApplicationRecord
     common_groups_with(user).any?
   end
 
+  # Retourne les IDs des utilisateurs avec lesquels l'utilisateur partage un groupe
+  def common_groups_with_users_ids
+    User.joins(:memberships)
+        .where(memberships: { group_id: self.groups.pluck(:id) })
+        .where.not(id: self.id)
+        .distinct
+        .pluck(:id)
+  end
+
   # Méthode pour personnaliser les claims JWT
   def jwt_payload
     {
