@@ -8,10 +8,12 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
   # Création d'un groupe et ajout de l'utilisateur
   let(:group) { create(:group) }
   let(:another_user) { create(:user) }
+  let(:third_user) { create(:user) }
 
   before do
     group.add_user(user)
     group.add_user(another_user)
+    group.add_user(third_user)
   end
 
   # Création d'idées de cadeaux pour les tests
@@ -24,7 +26,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         # Créer quelques idées de cadeaux
         gift_idea_for_another_user
         gift_idea_for_user
-        create(:gift_idea, created_by: user, for_user: create(:user))
+        create(:gift_idea, created_by: user, for_user: third_user)
 
         get "/api/v1/gift_ideas", headers: headers
       end
@@ -255,7 +257,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
 
         it "updates the gift idea" do
           expect(JSON.parse(response.body)['title']).to eq("Updated Gift Idea")
-          expect(JSON.parse(response.body)['price']).to eq(39.99)
+          expect(JSON.parse(response.body)['price'].to_f).to eq(39.99)
         end
       end
 
@@ -311,7 +313,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to delete this gift idea')
+          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to destroy this gift idea')
         end
       end
     end
@@ -351,7 +353,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to update this gift idea')
+          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to mark_as_buying this gift idea')
         end
       end
     end
@@ -391,7 +393,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to update this gift idea')
+          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to mark_as_bought this gift idea')
         end
       end
     end

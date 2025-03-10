@@ -97,12 +97,18 @@ module Api
       end
 
       def authorize_modification
-        return false unless authorize_access
-
-        unless @gift_idea.created_by == current_user
-          render json: { error: 'You are not authorized to update this gift idea' }, status: :forbidden
+        # Vérifier d'abord si l'utilisateur peut voir l'idée de cadeau
+        unless @gift_idea.visible_to?(current_user)
+          render json: { error: "You are not authorized to #{action_name} this gift idea" }, status: :forbidden
           return false
         end
+
+        # Ensuite, vérifier si l'utilisateur est le créateur
+        unless @gift_idea.created_by == current_user
+          render json: { error: "You are not authorized to #{action_name} this gift idea" }, status: :forbidden
+          return false
+        end
+
         true
       end
 
