@@ -31,6 +31,13 @@ Rails.application.routes.draw do
           delete 'leave'
         end
       end
+
+      resources :gift_ideas do
+        member do
+          put 'mark_as_buying'
+          put 'mark_as_bought'
+        end
+      end
     end
   end
 
