@@ -12,6 +12,26 @@ module Api
         render json: @groups, only: [:id, :name, :description, :invite_code]
       end
 
+      # GET /api/v1/groups/:id
+      def show
+        members = @group.memberships.includes(:user).map do |membership|
+          {
+            id: membership.user.id,
+            name: membership.user.name,
+            email: membership.user.email,
+            role: membership.role
+          }
+        end
+
+        render json: {
+          id: @group.id,
+          name: @group.name,
+          description: @group.description,
+          invite_code: @group.invite_code,
+          members: members
+        }
+      end
+
       private
 
       def set_group
