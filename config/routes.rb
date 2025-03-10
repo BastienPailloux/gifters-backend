@@ -24,6 +24,13 @@ Rails.application.routes.draw do
                  }
 
       resources :users, only: [:index, :show, :update, :destroy]
+
+      resources :groups do
+        member do
+          post 'join'
+          delete 'leave'
+        end
+      end
     end
   end
 
