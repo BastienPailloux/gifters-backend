@@ -78,6 +78,27 @@ module Api
         end
       end
 
+      # DELETE /api/v1/groups/:id/leave
+      def leave
+        # Vérifier si l'utilisateur est membre du groupe
+        unless @group.users.include?(current_user)
+          render json: { error: 'You are not a member of this group' }, status: :unprocessable_entity
+          return
+        end
+
+        # Vérifier si l'utilisateur est le dernier administrateur du groupe
+        if @group.admin_users == [current_user]
+          render json: { error: 'You cannot leave the group as you are the last admin' }, status: :unprocessable_entity
+          return
+        end
+
+        # Supprimer l'utilisateur du groupe
+        membership = @group.memberships.find_by(user: current_user)
+        membership.destroy if membership
+
+        render json: { message: 'Successfully left the group' }, status: :ok
+      end
+
       private
 
       def set_group
