@@ -185,7 +185,7 @@ RSpec.describe "Api::V1::Memberships", type: :request do
           end
 
           it "returns an error message" do
-            expect(JSON.parse(response.body)['errors']).to include(/User has already been taken/)
+            expect(JSON.parse(response.body)['errors']).to include("User est déjà membre de ce groupe")
           end
         end
       end
@@ -252,7 +252,11 @@ RSpec.describe "Api::V1::Memberships", type: :request do
         end
 
         context "when updating own membership" do
-          before { put "/api/v1/groups/#{group.id}/memberships/#{user_membership.id}", params: { membership: { role: 'member' } }, headers: headers }
+          before do
+            # Ajouter un autre admin pour éviter d'être le dernier
+            group.add_user(third_user, 'admin')
+            put "/api/v1/groups/#{group.id}/memberships/#{user_membership.id}", params: { membership: { role: 'member' } }, headers: headers
+          end
 
           it "returns status code 200" do
             expect(response).to have_http_status(200)
