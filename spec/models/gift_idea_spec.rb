@@ -81,7 +81,7 @@ RSpec.describe GiftIdea, type: :model do
       it 'is invalid' do
         gift_idea = build(:gift_idea, created_by: creator, for_user: other_user)
         expect(gift_idea).not_to be_valid
-        expect(gift_idea.errors[:for_user]).to include("doit partager au moins un groupe avec vous")
+        expect(gift_idea.errors[:for_user]).to include("must be in a common group with you")
       end
     end
 
