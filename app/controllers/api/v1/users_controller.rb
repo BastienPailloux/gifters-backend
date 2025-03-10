@@ -33,7 +33,11 @@ module Api
       private
 
       def set_user
-        @user = User.find(params[:id])
+        @user = User.find_by(id: params[:id])
+        unless @user
+          render json: { error: 'User not found' }, status: :not_found
+          return
+        end
       end
 
       def authorize_user
