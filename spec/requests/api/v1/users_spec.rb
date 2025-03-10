@@ -5,12 +5,6 @@ RSpec.describe "Api::V1::Users", type: :request do
   let(:user) { create(:user) }
   let(:headers) { { 'Authorization' => "Bearer #{generate_jwt_token(user)}" } }
 
-  # Helper pour générer un token JWT
-  def generate_jwt_token(user)
-    payload = { user_id: user.id, exp: 24.hours.from_now.to_i }
-    JWT.encode(payload, Rails.application.credentials.secret_key_base)
-  end
-
   describe "GET /api/v1/users" do
     context "when authenticated" do
       before do
