@@ -54,6 +54,12 @@ module Api
         end
       end
 
+      # DELETE /api/v1/gift_ideas/:id
+      def destroy
+        @gift_idea.destroy
+        head :no_content
+      end
+
       private
 
       def set_gift_idea
