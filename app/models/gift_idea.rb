@@ -55,7 +55,7 @@ class GiftIdea < ApplicationRecord
 
   def creator_and_receiver_have_common_group
     return if created_by.has_common_group_with?(for_user) || created_by_id == for_user_id
-    errors.add(:for_user, "doit partager au moins un groupe avec vous")
+    errors.add(:for_user, "must be in a common group with you")
   end
 
   def set_default_status
