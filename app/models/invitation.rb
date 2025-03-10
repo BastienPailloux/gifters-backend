@@ -23,9 +23,14 @@ class Invitation < ApplicationRecord
   end
 
   def invitation_url
-    # Utiliser une URL de base par défaut si les options de configuration ne sont pas définies
-    host = Rails.application.config.action_mailer.try(:default_url_options).try(:[], :host) || 'localhost:3000'
-    Rails.application.routes.url_helpers.accept_invitation_url(token: token, host: host)
+    # Utiliser les options de configuration de l'environnement actuel
+    options = Rails.application.config.action_mailer.default_url_options || {}
+
+    # Construire l'URL avec le helper de route
+    Rails.application.routes.url_helpers.api_v1_accept_invitation_url(
+      token: token,
+      **options
+    )
   end
 
   private
