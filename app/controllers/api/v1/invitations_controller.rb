@@ -40,6 +40,53 @@ module Api
         end
       end
 
+      # DELETE /api/v1/invitations/:id
+      def destroy
+        if @invitation.created_by != current_user && !current_user_is_admin_of_group?(@invitation.group)
+          render json: { error: 'You are not authorized to delete this invitation' }, status: :forbidden
+          return
+        end
+
+        @invitation.destroy
+        head :no_content
+      end
+
+      # POST /api/v1/invitations/accept
+      def accept
+        @invitation = Invitation.find_by(token: params[:token])
+
+        unless @invitation
+          render json: { error: 'Invalid invitation token' }, status: :not_found
+          return
+        end
+
+        if @invitation.used?
+          render json: { error: 'This invitation has already been used' }, status: :unprocessable_entity
+          return
+        end
+
+        # Vérifier si l'utilisateur est déjà membre du groupe
+        if current_user.groups.include?(@invitation.group)
+          render json: { error: 'You are already a member of this group' }, status: :unprocessable_entity
+          return
+        end
+
+        # Ajouter l'utilisateur au groupe avec le rôle spécifié dans l'invitation
+        membership = @invitation.group.add_user(current_user, @invitation.role)
+
+        if membership.persisted?
+          # Marquer l'invitation comme utilisée
+          @invitation.mark_as_used!
+
+          render json: {
+            message: "You have successfully joined the group #{@invitation.group.name}",
+            group: @invitation.group.as_json(only: [:id, :name])
+          }
+        else
+          render json: { errors: membership.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       private
 
       def set_group
