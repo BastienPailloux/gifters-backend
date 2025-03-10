@@ -4,6 +4,7 @@ module Api
       before_action :authenticate_user!
       before_action :set_group, only: [:show, :update, :destroy, :join, :leave]
       before_action :ensure_member, only: [:show]
+      before_action :ensure_member_for_update_destroy, only: [:update, :destroy]
       before_action :ensure_admin, only: [:update, :destroy]
 
       # GET /api/v1/groups
@@ -112,9 +113,20 @@ module Api
         end
       end
 
+      def ensure_member_for_update_destroy
+        unless @group && @group.users.include?(current_user)
+          render json: { error: 'You are not a member of this group' }, status: :forbidden
+          return false
+        end
+        true
+      end
+
       def ensure_admin
-        unless @group && @group.admin_users.include?(current_user)
-          render json: { error: 'You must be an admin to update this group' }, status: :forbidden
+        return unless ensure_member_for_update_destroy
+
+        unless @group.admin_users.include?(current_user)
+          action = action_name == 'update' ? 'update' : 'delete'
+          render json: { error: "You must be an admin to #{action} this group" }, status: :forbidden
         end
       end
 
