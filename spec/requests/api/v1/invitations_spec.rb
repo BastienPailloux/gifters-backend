@@ -79,4 +79,67 @@ RSpec.describe "Api::V1::Invitations", type: :request do
       end
     end
   end
+
+  describe "GET /api/v1/invitations/:token" do
+    let(:invitation) { create(:invitation, group: group, created_by: user) }
+
+    context "when authenticated" do
+      context "when the invitation is valid and unused" do
+        before { get "/api/v1/invitations/#{invitation.token}", headers: headers }
+
+        it "returns status code 200" do
+          expect(response).to have_http_status(200)
+        end
+
+        it "returns the invitation" do
+          expect(JSON.parse(response.body)['id']).to eq(invitation.id)
+        end
+
+        it "returns invitation with correct attributes" do
+          invitation_response = JSON.parse(response.body)
+          expect(invitation_response).to include('id', 'token', 'group_id', 'created_by_id', 'role', 'used')
+          expect(invitation_response['group']).to include('id', 'name')
+          expect(invitation_response['created_by']).to include('id', 'name', 'email')
+        end
+      end
+
+      context "when the invitation is used" do
+        let(:used_invitation) { create(:invitation, :used, group: group, created_by: user) }
+
+        before { get "/api/v1/invitations/#{used_invitation.token}", headers: headers }
+
+        it "returns status code 422" do
+          expect(response).to have_http_status(422)
+        end
+
+        it "returns an error message" do
+          expect(JSON.parse(response.body)).to include('error' => 'This invitation has already been used')
+        end
+      end
+
+      context "when the invitation does not exist" do
+        before { get "/api/v1/invitations/invalid_token", headers: headers }
+
+        it "returns status code 404" do
+          expect(response).to have_http_status(404)
+        end
+
+        it "returns a not found message" do
+          expect(JSON.parse(response.body)).to include('error' => 'Invitation not found')
+        end
+      end
+    end
+
+    context "when not authenticated" do
+      before { get "/api/v1/invitations/#{invitation.token}" }
+
+      it "returns status code 401" do
+        expect(response).to have_http_status(401)
+      end
+
+      it "returns an unauthorized message" do
+        expect(JSON.parse(response.body)).to include('error' => 'Unauthorized')
+      end
+    end
+  end
 end
