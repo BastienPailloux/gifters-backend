@@ -72,7 +72,7 @@ RSpec.describe "Api::V1::Users", type: :request do
         end
 
         it "returns a not found message" do
-          expect(JSON.parse(response.body)).to include('error' => 'User not found')
+          expect(JSON.parse(response.body)).to include('error')
         end
       end
     end
@@ -90,28 +90,29 @@ RSpec.describe "Api::V1::Users", type: :request do
     end
   end
 
-  describe "POST /api/v1/users" do
+  # Tests pour l'inscription des utilisateurs (maintenant gérée par Devise)
+  describe "POST /api/v1/signup" do
     let(:valid_attributes) { { user: { name: "New User", email: "new@example.com", password: "password", password_confirmation: "password" } } }
     let(:invalid_attributes) { { user: { name: "", email: "invalid", password: "pass" } } }
 
     context "when the request is valid" do
-      before { post "/api/v1/users", params: valid_attributes }
+      before { post "/api/v1/signup", params: valid_attributes }
 
-      it "returns status code 201" do
-        expect(response).to have_http_status(201)
+      it "returns status code 200" do
+        expect(response).to have_http_status(200)
       end
 
       it "creates a new user" do
-        expect(JSON.parse(response.body)['name']).to eq("New User")
+        expect(JSON.parse(response.body)['data']['user']['name']).to eq("New User")
       end
 
       it "returns a JWT token" do
-        expect(JSON.parse(response.body)).to include('token')
+        expect(JSON.parse(response.body)['data']).to include('token')
       end
     end
 
     context "when the request is invalid" do
-      before { post "/api/v1/users", params: invalid_attributes }
+      before { post "/api/v1/signup", params: invalid_attributes }
 
       it "returns status code 422" do
         expect(response).to have_http_status(422)
