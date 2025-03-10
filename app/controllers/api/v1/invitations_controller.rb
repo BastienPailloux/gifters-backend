@@ -11,6 +11,19 @@ module Api
         render json: @invitations.as_json(include: { created_by: { only: [:id, :name, :email] } })
       end
 
+      # GET /api/v1/invitations/:token
+      def show
+        if @invitation.used?
+          render json: { error: 'This invitation has already been used' }, status: :unprocessable_entity
+          return
+        end
+
+        render json: @invitation.as_json(include: {
+          group: { only: [:id, :name] },
+          created_by: { only: [:id, :name, :email] }
+        })
+      end
+
       private
 
       def set_group
