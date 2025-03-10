@@ -3,8 +3,9 @@ module Api
     class MembershipsController < BaseController
       before_action :set_group
       before_action :ensure_user_in_group, except: [:create]
-      before_action :set_membership, only: [:show, :update]
+      before_action :set_membership, only: [:show, :update, :destroy]
       before_action :ensure_admin, only: [:create, :update], unless: :updating_own_membership?
+      before_action :ensure_admin, only: [:destroy], unless: :deleting_own_membership?
 
       # GET /api/v1/groups/:group_id/memberships
       def index
@@ -54,6 +55,18 @@ module Api
         end
       end
 
+      # DELETE /api/v1/groups/:group_id/memberships/:id
+      def destroy
+        # Vérifier si c'est le dernier admin
+        if @membership.role == 'admin' && @group.admin_count == 1
+          render json: { errors: ['Cannot delete membership: group must have at least one admin'] }, status: :unprocessable_entity
+          return
+        end
+
+        @membership.destroy
+        head :no_content
+      end
+
       private
 
       def set_group
@@ -93,6 +106,10 @@ module Api
       end
 
       def updating_own_membership?
+        @membership&.user_id == current_user.id
+      end
+
+      def deleting_own_membership?
         @membership&.user_id == current_user.id
       end
 
