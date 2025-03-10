@@ -24,6 +24,22 @@ module Api
         })
       end
 
+      # POST /api/v1/groups/:group_id/invitations
+      def create
+        @invitation = @group.invitations.new(invitation_params)
+        @invitation.created_by = current_user
+
+        if @invitation.save
+          render json: {
+            invitation: @invitation.as_json,
+            invitation_url: @invitation.invitation_url,
+            token: @invitation.token
+          }, status: :created
+        else
+          render json: { errors: @invitation.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       private
 
       def set_group
