@@ -12,6 +12,19 @@ class Membership < ApplicationRecord
   # Callbacks
   before_validation :set_default_role
 
+  # Methods
+  def admin?
+    role == 'admin'
+  end
+
+  def user_name
+    user&.name
+  end
+
+  def user_email
+    user&.email
+  end
+
   private
 
   def set_default_role
