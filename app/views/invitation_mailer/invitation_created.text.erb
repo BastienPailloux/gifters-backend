@@ -1,0 +1,23 @@
+Invitation à rejoindre un groupe
+===============================
+
+Bonjour,
+
+<%= @sender.name %> vous invite à rejoindre le groupe <%= @group.name %> sur Gifters.
+
+<% if @group.description.present? %>
+Description du groupe : <%= @group.description %>
+<% end %>
+
+Pour rejoindre ce groupe, vous pouvez visiter le lien suivant :
+<%= @invitation_url %>
+
+Ou vous pouvez utiliser ce code d'invitation dans l'application :
+<%= @token %>
+
+Cette invitation n'a pas de date d'expiration, mais elle ne peut être utilisée qu'une seule fois.
+
+À bientôt sur Gifters !
+
+--
+Cet email a été envoyé automatiquement par Gifters. Merci de ne pas y répondre.
