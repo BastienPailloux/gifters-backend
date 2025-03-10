@@ -27,7 +27,7 @@ class Invitation < ApplicationRecord
     options = Rails.application.config.action_mailer.default_url_options || {}
 
     # Construire l'URL avec le helper de route
-    Rails.application.routes.url_helpers.api_v1_accept_invitation_url(
+    Rails.application.routes.url_helpers.accept_api_v1_invitations_url(
       token: token,
       **options
     )
