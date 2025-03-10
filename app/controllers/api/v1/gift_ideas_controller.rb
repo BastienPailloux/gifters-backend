@@ -33,6 +33,18 @@ module Api
         render json: @gift_idea
       end
 
+      # POST /api/v1/gift_ideas
+      def create
+        @gift_idea = GiftIdea.new(gift_idea_params)
+        @gift_idea.created_by = current_user
+
+        if @gift_idea.save
+          render json: @gift_idea, status: :created
+        else
+          render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       private
 
       def set_gift_idea
