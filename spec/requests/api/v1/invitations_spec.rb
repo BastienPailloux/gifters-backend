@@ -142,4 +142,72 @@ RSpec.describe "Api::V1::Invitations", type: :request do
       end
     end
   end
+
+  describe "POST /api/v1/groups/:group_id/invitations" do
+    let(:valid_attributes) { { invitation: { role: 'member' } } }
+    let(:invalid_attributes) { { invitation: { role: 'invalid_role' } } }
+
+    context "when authenticated" do
+      context "when the user is an admin of the group" do
+        context "when the request is valid" do
+          before { post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes, headers: headers }
+
+          it "returns status code 201" do
+            expect(response).to have_http_status(201)
+          end
+
+          it "creates a new invitation" do
+            expect(JSON.parse(response.body)['invitation']['role']).to eq('member')
+          end
+
+          it "returns the invitation URL and token" do
+            response_body = JSON.parse(response.body)
+            expect(response_body).to include('invitation_url', 'token')
+          end
+        end
+
+        context "when the request is invalid" do
+          before { post "/api/v1/groups/#{group.id}/invitations", params: invalid_attributes, headers: headers }
+
+          it "returns status code 422" do
+            expect(response).to have_http_status(422)
+          end
+
+          it "returns a validation failure message" do
+            expect(JSON.parse(response.body)).to include('errors')
+          end
+        end
+      end
+
+      context "when the user is not an admin of the group" do
+        before do
+          # Changer le rôle de l'utilisateur à membre
+          membership = group.memberships.find_by(user: user)
+          membership.update(role: 'member')
+
+          post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes, headers: headers
+        end
+
+        it "returns status code 403" do
+          expect(response).to have_http_status(403)
+        end
+
+        it "returns a forbidden message" do
+          expect(JSON.parse(response.body)).to include('error' => 'You must be an admin to manage invitations')
+        end
+      end
+    end
+
+    context "when not authenticated" do
+      before { post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes }
+
+      it "returns status code 401" do
+        expect(response).to have_http_status(401)
+      end
+
+      it "returns an unauthorized message" do
+        expect(JSON.parse(response.body)).to include('error' => 'Unauthorized')
+      end
+    end
+  end
 end
