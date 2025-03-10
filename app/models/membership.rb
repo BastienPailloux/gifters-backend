@@ -7,7 +7,7 @@ class Membership < ApplicationRecord
 
   # Validations
   validates :role, presence: true, inclusion: { in: ROLES }
-  validates :user_id, uniqueness: { scope: :group_id, message: "est déjà membre de ce groupe" }
+  validates :user_id, uniqueness: { scope: :group_id, message: "has already been taken for this group" }
 
   # Callbacks
   before_validation :set_default_role

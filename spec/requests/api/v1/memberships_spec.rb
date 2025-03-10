@@ -185,7 +185,7 @@ RSpec.describe "Api::V1::Memberships", type: :request do
           end
 
           it "returns an error message" do
-            expect(JSON.parse(response.body)['errors']).to include("User est déjà membre de ce groupe")
+            expect(JSON.parse(response.body)['errors']).to include("User has already been taken for this group")
           end
         end
       end

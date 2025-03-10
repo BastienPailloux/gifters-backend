@@ -27,6 +27,7 @@ Rails.application.routes.draw do
 
       resources :groups do
         resources :memberships
+        resources :invitations, only: [:index, :create]
         member do
           post 'join'
           delete 'leave'
@@ -37,6 +38,12 @@ Rails.application.routes.draw do
         member do
           put 'mark_as_buying'
           put 'mark_as_bought'
+        end
+      end
+
+      resources :invitations, only: [:show, :destroy], param: :token do
+        collection do
+          post 'accept'
         end
       end
     end

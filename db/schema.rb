@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_08_083949) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_10_141919) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -36,6 +36,19 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_08_083949) do
     t.datetime "updated_at", null: false
     t.string "invite_code"
     t.index ["invite_code"], name: "index_groups_on_invite_code", unique: true
+  end
+
+  create_table "invitations", force: :cascade do |t|
+    t.string "token", null: false
+    t.bigint "group_id", null: false
+    t.bigint "created_by_id", null: false
+    t.string "role", default: "member", null: false
+    t.boolean "used", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_invitations_on_created_by_id"
+    t.index ["group_id"], name: "index_invitations_on_group_id"
+    t.index ["token"], name: "index_invitations_on_token", unique: true
   end
 
   create_table "jwt_denylists", force: :cascade do |t|
@@ -79,6 +92,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_08_083949) do
 
   add_foreign_key "gift_ideas", "users", column: "created_by_id"
   add_foreign_key "gift_ideas", "users", column: "for_user_id"
+  add_foreign_key "invitations", "groups"
+  add_foreign_key "invitations", "users", column: "created_by_id"
   add_foreign_key "memberships", "groups"
   add_foreign_key "memberships", "users"
 end

@@ -22,7 +22,7 @@ RSpec.describe Membership, type: :model do
       create(:membership, user: user, group: group)
       duplicate = build(:membership, user: user, group: group)
       expect(duplicate).not_to be_valid
-      expect(duplicate.errors[:user_id]).to include("est déjà membre de ce groupe")
+      expect(duplicate.errors[:user_id]).to include("has already been taken for this group")
     end
   end
 
