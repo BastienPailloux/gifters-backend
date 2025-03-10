@@ -12,7 +12,17 @@ module Api
         @gift_ideas = GiftIdea.visible_to_user(current_user)
 
         # Appliquer les filtres si nécessaire
-        @gift_ideas = @gift_ideas.where(status: params[:status]) if params[:status].present?
+        @gift_ideas = case params[:status]
+                      when 'proposed'
+                        @gift_ideas.proposed
+                      when 'buying'
+                        @gift_ideas.buying
+                      when 'bought'
+                        @gift_ideas.bought
+                      else
+                        @gift_ideas
+                      end
+
         @gift_ideas = @gift_ideas.for_recipient(params[:for_user_id]) if params[:for_user_id].present?
 
         render json: @gift_ideas
