@@ -21,7 +21,6 @@ module Api
           sign_in(resource_name, user)
 
           # Le token JWT est automatiquement généré par devise-jwt
-          # Nous pouvons l'obtenir à partir de l'environnement de la requête
           token = request.env['warden-jwt_auth.token']
 
           # Répondre avec succès
