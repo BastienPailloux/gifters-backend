@@ -263,7 +263,7 @@ Devise.setup do |config|
   # should add them to the navigational formats lists.
   #
   # The "*/*" below is required to match Internet Explorer requests.
-  # config.navigational_formats = ['*/*', :html, :turbo_stream]
+  config.navigational_formats = []
 
   # The default HTTP method used to sign out a resource. Default is :delete.
   config.sign_out_via = :delete
@@ -314,12 +314,21 @@ Devise.setup do |config|
   # ==> Configuration for :jwt
   config.jwt do |jwt|
     jwt.secret = Rails.application.credentials.secret_key_base
+
+    # Route pour la connexion et la génération de token
     jwt.dispatch_requests = [
       ['POST', %r{^/api/v1/login$}]
     ]
+
+    # Route pour la déconnexion et la révocation de token
     jwt.revocation_requests = [
       ['DELETE', %r{^/api/v1/logout$}]
     ]
+
+    # Durée de validité du token
     jwt.expiration_time = 24.hours.to_i
+
+    # Personnalisation du token
+    jwt.request_formats = { user: [:json] }
   end
 end
