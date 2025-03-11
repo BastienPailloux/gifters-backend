@@ -1,48 +1,54 @@
 module Api
   module V1
     class BaseController < ActionController::API
-      before_action :authenticate_user!
+      include ActionController::MimeResponds
       respond_to :json
+
+      include Devise::Controllers::Helpers
+      before_action :authenticate_user!
 
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
       private
 
       def authenticate_user!
-        if request.headers['Authorization'].present?
-          header = request.headers['Authorization']
-          token = header.split(' ').last if header
-
-          Rails.logger.info("BaseController#authenticate_user! - Token présent: #{token ? 'oui' : 'non'}")
-
-          if token
-            begin
-              # Décoder le token JWT
-              decoded_token = JWT.decode(token, Rails.application.credentials.secret_key_base)
-              user_id = decoded_token[0]['user_id']
-
-              # Chercher l'utilisateur
-              @current_user = User.find_by(id: user_id)
-
-              if @current_user
-                Rails.logger.info("BaseController#authenticate_user! - Utilisateur authentifié: #{@current_user.email}")
-                return
-              else
-                Rails.logger.error("BaseController#authenticate_user! - Utilisateur non trouvé pour l'ID: #{user_id}")
-              end
-            rescue JWT::DecodeError => e
-              Rails.logger.error("BaseController#authenticate_user! - Erreur de décodage JWT: #{e.message}")
-            end
-          end
-        else
-          Rails.logger.warn("BaseController#authenticate_user! - Aucun en-tête Authorization")
+        unless current_user
+          render json: { error: 'Unauthorized' }, status: :unauthorized
         end
-
-        render json: { error: 'Non autorisé' }, status: :unauthorized
       end
 
       def current_user
-        @current_user
+        @current_user ||= warden_user || jwt_user
+      end
+
+      def warden_user
+        warden.authenticate(scope: :user) if warden.present?
+      end
+
+      def jwt_user
+        return nil unless auth_header.present?
+
+        token = auth_header.split(' ').last
+        begin
+          decoded = JWT.decode(token, Rails.application.credentials.secret_key_base)[0]
+          User.find_by(id: decoded['user_id'])
+        rescue JWT::DecodeError
+          nil
+        end
+      end
+
+      def auth_header
+        request.headers['Authorization']
+      end
+
+      def print_params
+        Rails.logger.info("BaseController#print_params - Paramètres reçus: #{params.inspect}")
+      end
+
+      def configure_permitted_parameters
+        devise_parameter_sanitizer.permit(:sign_in, keys: [:email, :password])
+        devise_parameter_sanitizer.permit(:sign_up, keys: [:name, :email, :password, :password_confirmation])
+        devise_parameter_sanitizer.permit(:account_update, keys: [:name, :email, :password, :password_confirmation, :current_password])
       end
 
       def not_found
