@@ -7,6 +7,9 @@ module Api
       include Devise::Controllers::Helpers
       before_action :authenticate_user!
 
+      # Définir current_user comme scope pour les sérialiseurs
+      serialization_scope :current_user
+
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
       private
