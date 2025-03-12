@@ -41,7 +41,7 @@ module Api
 
       # GET /api/v1/gift_ideas/:id
       def show
-        render json: @gift_idea
+        render json: { giftIdea: GiftIdeaSerializer.new(@gift_idea, scope: current_user).as_json }
       end
 
       # POST /api/v1/gift_ideas
@@ -51,7 +51,7 @@ module Api
         @gift_idea.created_by = current_user
 
         if @gift_idea.save
-          render json: @gift_idea, status: :created
+          render json: { giftIdea: GiftIdeaSerializer.new(@gift_idea, scope: current_user).as_json }, status: :created
         else
           render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
         end
@@ -60,7 +60,7 @@ module Api
       # PUT /api/v1/gift_ideas/:id
       def update
         if @gift_idea.update(gift_idea_params)
-          render json: @gift_idea
+          render json: { giftIdea: GiftIdeaSerializer.new(@gift_idea, scope: current_user).as_json }
         else
           render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
         end
@@ -75,7 +75,7 @@ module Api
       # PUT /api/v1/gift_ideas/:id/mark_as_buying
       def mark_as_buying
         if @gift_idea.mark_as_buying(current_user)
-          render json: @gift_idea
+          render json: { giftIdea: GiftIdeaSerializer.new(@gift_idea, scope: current_user).as_json }
         else
           render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
         end
@@ -84,7 +84,7 @@ module Api
       # PUT /api/v1/gift_ideas/:id/mark_as_bought
       def mark_as_bought
         if @gift_idea.mark_as_bought(current_user)
-          render json: @gift_idea
+          render json: { giftIdea: GiftIdeaSerializer.new(@gift_idea, scope: current_user).as_json }
         else
           render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
         end
@@ -129,7 +129,7 @@ module Api
         # Pour les changements de statut, il suffit que l'utilisateur puisse voir le cadeau
         # Cela permet à n'importe quel membre du groupe de marquer un cadeau comme "en cours d'achat" ou "acheté"
         unless @gift_idea.visible_to?(current_user)
-          render json: { error: "You are not authorized to change the status of this gift idea" }, status: :forbidden
+          render json: { error: "You are not authorized to #{action_name} this gift idea" }, status: :forbidden
           return false
         end
 

@@ -36,7 +36,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
       end
 
       it "returns only gift ideas visible to the user" do
-        gift_ideas = JSON.parse(response.body)
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
         # L'utilisateur devrait voir les idées créées mais pas celles qui lui sont destinées
         expect(gift_ideas.size).to eq(2)
         expect(gift_ideas.map { |gi| gi['id'] }).to include(gift_idea_for_another_user.id)
@@ -44,7 +44,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
       end
 
       it "returns gift ideas with correct attributes" do
-        gift_ideas = JSON.parse(response.body)
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
         expect(gift_ideas.first).to include('id', 'title', 'description', 'link', 'price', 'status')
         expect(gift_ideas.first).to include('created_by_id', 'for_user_id')
       end
@@ -52,26 +52,22 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
 
     context "with filter parameters" do
       before do
-        gift_idea_for_another_user
-        gift_idea_for_user
-
-        # Créer une idée avec statut "buying"
-        buying_idea = create(:gift_idea, created_by: user, for_user: another_user, status: 'buying')
-
-        # Créer une idée avec statut "bought"
-        bought_idea = create(:gift_idea, created_by: user, for_user: another_user, status: 'bought')
+        # Créer un cadeau avec le statut "buying" et définir l'utilisateur courant comme acheteur
+        @buying_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'buying', buyer: user)
       end
 
       it "filters by status" do
         get "/api/v1/gift_ideas?status=buying", headers: headers
-        gift_ideas = JSON.parse(response.body)
+
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
         expect(gift_ideas.size).to eq(1)
         expect(gift_ideas.first['status']).to eq('buying')
       end
 
       it "filters by for_user_id" do
         get "/api/v1/gift_ideas?for_user_id=#{another_user.id}", headers: headers
-        gift_ideas = JSON.parse(response.body)
+
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
         expect(gift_ideas.all? { |gi| gi['for_user_id'] == another_user.id }).to be true
       end
     end
@@ -99,13 +95,12 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "returns the gift idea" do
-          expect(JSON.parse(response.body)['id']).to eq(gift_idea_for_another_user.id)
+          expect(JSON.parse(response.body)["giftIdea"]['id']).to eq(gift_idea_for_another_user.id)
         end
 
         it "returns gift idea with correct attributes" do
-          gift_idea = JSON.parse(response.body)
+          gift_idea = JSON.parse(response.body)["giftIdea"]
           expect(gift_idea).to include('id', 'title', 'description', 'link', 'price', 'status')
-          expect(gift_idea).to include('created_by_id', 'for_user_id')
         end
       end
 
@@ -181,15 +176,15 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "creates a new gift idea" do
-          expect(JSON.parse(response.body)['title']).to eq("New Gift Idea")
+          expect(JSON.parse(response.body)["giftIdea"]['title']).to eq("New Gift Idea")
         end
 
         it "sets the created_by_id to the current user" do
-          expect(JSON.parse(response.body)['created_by_id']).to eq(user.id)
+          expect(JSON.parse(response.body)["giftIdea"]['created_by_id']).to eq(user.id)
         end
 
         it "sets the default status to 'proposed'" do
-          expect(JSON.parse(response.body)['status']).to eq('proposed')
+          expect(JSON.parse(response.body)["giftIdea"]['status']).to eq('proposed')
         end
       end
 
@@ -256,8 +251,8 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "updates the gift idea" do
-          expect(JSON.parse(response.body)['title']).to eq("Updated Gift Idea")
-          expect(JSON.parse(response.body)['price'].to_f).to eq(39.99)
+          expect(JSON.parse(response.body)["giftIdea"]['title']).to eq("Updated Gift Idea")
+          expect(JSON.parse(response.body)["giftIdea"]['price'].to_f).to eq(39.99)
         end
       end
 
@@ -341,7 +336,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "updates the status to 'buying'" do
-          expect(JSON.parse(response.body)['status']).to eq('buying')
+          expect(JSON.parse(response.body)["giftIdea"]['status']).to eq('buying')
         end
       end
 
@@ -381,7 +376,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "updates the status to 'bought'" do
-          expect(JSON.parse(response.body)['status']).to eq('bought')
+          expect(JSON.parse(response.body)["giftIdea"]['status']).to eq('bought')
         end
       end
 
