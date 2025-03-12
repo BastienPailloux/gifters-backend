@@ -28,6 +28,12 @@ class GiftIdea < ApplicationRecord
   }
   scope :bought_by_user, ->(user) { where(buyer: user) }
 
+  # Scope pour filtrer par acheteur
+  scope :with_buyer, ->(buyer_id) {
+    # Si l'acheteur existe, retourner les cadeaux correspondants
+    buyer_id.present? && User.exists?(buyer_id) ? where(buyer_id: buyer_id) : none
+  }
+
   # Nouveau scope pour filtrer par groupe
   scope :for_group, ->(group_id) {
     group = Group.find_by(id: group_id)

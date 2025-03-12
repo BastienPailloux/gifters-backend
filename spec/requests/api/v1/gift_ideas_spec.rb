@@ -151,6 +151,36 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         gift_ideas = JSON.parse(response.body)["giftIdeas"]
         expect(gift_ideas).to be_empty
       end
+
+      it "filters by buyer_id" do
+        # Supprimer toutes les idées de cadeaux existantes pour ce test
+        GiftIdea.destroy_all
+
+        # Créer différents cadeaux avec différents acheteurs
+        user_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'buying', buyer: user)
+        another_user_gift = create(:gift_idea, created_by: user, for_user: third_user, status: 'buying', buyer: another_user)
+        third_user_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'buying', buyer: third_user)
+
+        # Vérifier le filtrage par buyer_id
+        get "/api/v1/gift_ideas?buyer_id=#{user.id}", headers: headers
+
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
+        expect(gift_ideas.size).to eq(1)
+        expect(gift_ideas.first['id']).to eq(user_gift.id)
+
+        # Vérifier avec un autre acheteur
+        get "/api/v1/gift_ideas?buyer_id=#{another_user.id}", headers: headers
+
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
+        expect(gift_ideas.size).to eq(1)
+        expect(gift_ideas.first['id']).to eq(another_user_gift.id)
+
+        # Vérifier avec un acheteur qui n'existe pas
+        get "/api/v1/gift_ideas?buyer_id=999", headers: headers
+
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
+        expect(gift_ideas).to be_empty
+      end
     end
 
     context "when not authenticated" do

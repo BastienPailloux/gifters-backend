@@ -26,11 +26,9 @@ module Api
               when 'proposed'
                 @gift_ideas.proposed
               when 'buying'
-                # Pour 'buying', ne montrer que les cadeaux où l'utilisateur actuel est l'acheteur
-                @gift_ideas.buying.where(buyer_id: current_user.id)
+                @gift_ideas.buying
               when 'bought'
-                # Pour 'bought', ne montrer que les cadeaux où l'utilisateur actuel est l'acheteur
-                @gift_ideas.bought.where(buyer_id: current_user.id)
+                @gift_ideas.bought
               else
                 nil
               end
@@ -58,6 +56,9 @@ module Api
             @gift_ideas = GiftIdea.none
           end
         end
+
+        # Ajouter un filtre pour limiter par acheteur (buyer_id) si demandé
+        @gift_ideas = @gift_ideas.with_buyer(params[:buyer_id]) if params[:buyer_id].present?
 
         # Inclure les associations pour le sérialiseur
         @gift_ideas = @gift_ideas.includes(:for_user, :created_by)
