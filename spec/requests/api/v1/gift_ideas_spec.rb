@@ -64,11 +64,92 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         expect(gift_ideas.first['status']).to eq('buying')
       end
 
+      it "filters by multiple statuses" do
+        # Supprimer toutes les idées de cadeaux existantes pour ce test
+        GiftIdea.destroy_all
+
+        # Créer des cadeaux avec différents statuts
+        proposed_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'proposed')
+        buying_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'buying', buyer: user)
+        bought_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'bought', buyer: user)
+
+        # Vérifier le filtrage pour plusieurs statuts
+        get "/api/v1/gift_ideas?status[]=proposed&status[]=buying", headers: headers
+
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
+        expect(gift_ideas.size).to eq(2)
+        statuses = gift_ideas.map { |gi| gi['status'] }
+        expect(statuses).to include('proposed')
+        expect(statuses).to include('buying')
+        expect(statuses).not_to include('bought')
+
+        # Test avec un seul statut pour confirmer
+        get "/api/v1/gift_ideas?status[]=proposed", headers: headers
+
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
+        expect(gift_ideas.size).to eq(1)
+        expect(gift_ideas.first['status']).to eq('proposed')
+      end
+
       it "filters by for_user_id" do
         get "/api/v1/gift_ideas?for_user_id=#{another_user.id}", headers: headers
 
         gift_ideas = JSON.parse(response.body)["giftIdeas"]
         expect(gift_ideas.all? { |gi| gi['for_user_id'] == another_user.id }).to be true
+      end
+
+      it "filters by group_id" do
+        # Créer un autre groupe avec un autre utilisateur
+        other_group = create(:group)
+        other_user = create(:user)
+        other_group.add_user(user)
+        other_group.add_user(other_user)
+
+        # Créer des idées de cadeaux pour les deux groupes
+        gift_in_first_group = create(:gift_idea, created_by: user, for_user: another_user)
+
+        # Vérifier le filtrage pour le premier groupe
+        get "/api/v1/gift_ideas?group_id=#{group.id}", headers: headers
+
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
+        expect(gift_ideas.map { |gi| gi['id'] }).to include(gift_in_first_group.id)
+
+        # Créer un cadeau pour un utilisateur qui n'est pas dans le premier groupe
+        # mais qui est dans le second groupe avec l'utilisateur courant
+        gift_in_second_group = GiftIdea.new(
+          title: "Gift for user in second group",
+          description: "A gift for testing",
+          link: "https://example.com/gift",
+          price: 29.99,
+          created_by: user,
+          for_user: other_user
+        )
+        # Contourner la validation
+        gift_in_second_group.save(validate: false)
+
+        # Vérifier le filtrage pour le second groupe
+        get "/api/v1/gift_ideas?group_id=#{other_group.id}", headers: headers
+
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
+        expect(gift_ideas.map { |gi| gi['id'] }).to include(gift_in_second_group.id)
+        expect(gift_ideas.map { |gi| gi['id'] }).not_to include(gift_in_first_group.id)
+      end
+
+      it "returns empty array for non-existent group" do
+        get "/api/v1/gift_ideas?group_id=999", headers: headers
+
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
+        expect(gift_ideas).to be_empty
+      end
+
+      it "returns empty array for group user is not a member of" do
+        # Créer un groupe dont l'utilisateur n'est pas membre
+        non_member_group = create(:group)
+
+        get "/api/v1/gift_ideas?group_id=#{non_member_group.id}", headers: headers
+
+        gift_ideas = JSON.parse(response.body)["giftIdeas"]
+        expect(gift_ideas).to be_empty
       end
     end
 

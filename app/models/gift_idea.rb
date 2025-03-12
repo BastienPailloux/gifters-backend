@@ -28,6 +28,14 @@ class GiftIdea < ApplicationRecord
   }
   scope :bought_by_user, ->(user) { where(buyer: user) }
 
+  # Nouveau scope pour filtrer par groupe
+  scope :for_group, ->(group_id) {
+    group = Group.find_by(id: group_id)
+    return none unless group
+
+    where(for_user_id: group.users.pluck(:id))
+  }
+
   # Scope principal pour les idées visibles par un utilisateur
   scope :visible_to_user, ->(user) {
     created_by_user(user)
