@@ -25,10 +25,17 @@ module Api
 
         # Ajouter des filtres pour limiter par utilisateur si demandé
         @gift_ideas = @gift_ideas.for_recipient(params[:for_user_id]) if params[:for_user_id].present?
-        # Ajouter des filtres pour limiter par groupe si demandé
-        # TODO: implémenter la logique de filtrage par groupe
 
-        render json: { giftIdeas: @gift_ideas }
+        # Inclure les associations pour le sérialiseur
+        @gift_ideas = @gift_ideas.includes(:for_user, :created_by)
+
+        # Sérialiser chaque idée de cadeau individuellement pour s'assurer que tous les attributs sont inclus
+        serialized_gift_ideas = @gift_ideas.map do |gift|
+          GiftIdeaSerializer.new(gift, scope: current_user).as_json
+        end
+
+        # Retourner les données sérialisées
+        render json: { giftIdeas: serialized_gift_ideas }
       end
 
       # GET /api/v1/gift_ideas/:id
