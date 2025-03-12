@@ -7,11 +7,12 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 > The backend API for Gifters, an open-source application that helps you manage your gift ideas and events with friends and family.
+> The project is still on going, not all functionnalities are implemented or are susceptible of changes
 
 ## ✨ Features
 
 - 🔐 Secure user authentication system with JWT
-- 👥 Group and membership management
+- 👥 Group and membership management - ONGOING
 - 🎁 Gift ideas and wishlists management
 - 📅 Events and reminders
 - 🔍 Search and filtering capabilities
