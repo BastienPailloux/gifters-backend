@@ -7,18 +7,19 @@ module Api
       # GET /api/v1/users
       def index
         @users = User.all
-        render json: @users, only: [:id, :name, :email]
+        users_data = @users.map { |user| user.as_json(only: [:id, :name, :email]) }
+        render json: { users: users_data }
       end
 
       # GET /api/v1/users/:id
       def show
-        render json: @user, only: [:id, :name, :email]
+        render json: { user: @user.as_json(only: [:id, :name, :email]) }
       end
 
       # PUT /api/v1/users/:id
       def update
         if @user.update(user_params)
-          render json: @user, only: [:id, :name, :email]
+          render json: { user: @user.as_json(only: [:id, :name, :email]) }
         else
           render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
         end

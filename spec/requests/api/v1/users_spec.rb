@@ -18,11 +18,11 @@ RSpec.describe "Api::V1::Users", type: :request do
       end
 
       it "returns all users" do
-        expect(JSON.parse(response.body).size).to eq(4) # 3 créés + 1 utilisateur authentifié
+        expect(JSON.parse(response.body)["users"].size).to eq(4) # 3 créés + 1 utilisateur authentifié
       end
 
       it "returns users with correct attributes" do
-        users = JSON.parse(response.body)
+        users = JSON.parse(response.body)["users"]
         expect(users.first).to include('id', 'name', 'email')
         expect(users.first).not_to include('password_digest', 'created_at', 'updated_at')
       end
@@ -53,11 +53,11 @@ RSpec.describe "Api::V1::Users", type: :request do
         end
 
         it "returns the user" do
-          expect(JSON.parse(response.body)['id']).to eq(user_id)
+          expect(JSON.parse(response.body)["user"]['id']).to eq(user_id)
         end
 
         it "returns user with correct attributes" do
-          user_response = JSON.parse(response.body)
+          user_response = JSON.parse(response.body)["user"]
           expect(user_response).to include('id', 'name', 'email')
           expect(user_response).not_to include('password_digest', 'created_at', 'updated_at')
         end
@@ -137,7 +137,7 @@ RSpec.describe "Api::V1::Users", type: :request do
         end
 
         it "updates the user" do
-          expect(JSON.parse(response.body)['name']).to eq("Updated Name")
+          expect(JSON.parse(response.body)["user"]['name']).to eq("Updated Name")
         end
       end
 

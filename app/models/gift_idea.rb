@@ -39,7 +39,11 @@ class GiftIdea < ApplicationRecord
 
   # Methods
   def mark_as_buying(user = nil)
-    update(status: 'buying', buyer: user) if user
+    # Mettre à jour le statut même si aucun utilisateur n'est fourni
+    result = update(status: 'buying')
+    # Si un utilisateur est fourni, mettre à jour l'acheteur également
+    update(buyer: user) if user && result
+    result
   end
 
   def mark_as_bought(user = nil)
