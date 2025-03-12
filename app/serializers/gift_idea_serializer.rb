@@ -1,15 +1,19 @@
 class GiftIdeaSerializer < ActiveModel::Serializer
   attributes :id, :title, :description, :price, :link, :status, :image_url,
-            :created_at, :updated_at, :for_user_id, :created_by_id
+            :created_at, :updated_at, :for_user_id, :created_by_id, :buyer_id
 
   # Ajouter les attributs au format camelCase pour le frontend
   attribute :forUser
   attribute :forUserName
   attribute :groupName
+  attribute :buyerId
+  attribute :buyerName
+  attribute :buyer
 
   # Les anciennes associations pour compatibilité
   belongs_to :for_user, serializer: UserSerializer
   belongs_to :created_by, serializer: UserSerializer
+  belongs_to :buyer, serializer: UserSerializer, optional: true
 
   # Définir les attributs camelCase pour l'intégration frontend
   def forUser
@@ -31,6 +35,22 @@ class GiftIdeaSerializer < ActiveModel::Serializer
 
     # Trier par nom pour avoir une réponse cohérente
     common_groups.sort_by(&:name).first.name
+  end
+
+  def buyerId
+    object.buyer_id
+  end
+
+  def buyerName
+    object.buyer&.name
+  end
+
+  def buyer
+    return nil if object.buyer.nil?
+    {
+      id: object.buyer.id,
+      name: object.buyer.name
+    }
   end
 
   # Ces méthodes sont gardées pour compatibilité mais ne sont plus utilisées dans le frontend

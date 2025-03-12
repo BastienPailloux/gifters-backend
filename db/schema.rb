@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_10_141919) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_12_021228) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -25,6 +25,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_10_141919) do
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "buyer_id"
+    t.index ["buyer_id"], name: "index_gift_ideas_on_buyer_id"
     t.index ["created_by_id"], name: "index_gift_ideas_on_created_by_id"
     t.index ["for_user_id"], name: "index_gift_ideas_on_for_user_id"
   end
@@ -90,6 +92,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_10_141919) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "gift_ideas", "users", column: "buyer_id"
   add_foreign_key "gift_ideas", "users", column: "created_by_id"
   add_foreign_key "gift_ideas", "users", column: "for_user_id"
   add_foreign_key "invitations", "groups"

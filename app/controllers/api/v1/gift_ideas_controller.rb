@@ -73,7 +73,7 @@ module Api
 
       # PUT /api/v1/gift_ideas/:id/mark_as_buying
       def mark_as_buying
-        if @gift_idea.mark_as_buying
+        if @gift_idea.mark_as_buying(current_user)
           render json: @gift_idea
         else
           render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
@@ -82,7 +82,7 @@ module Api
 
       # PUT /api/v1/gift_ideas/:id/mark_as_bought
       def mark_as_bought
-        if @gift_idea.mark_as_bought
+        if @gift_idea.mark_as_bought(current_user)
           render json: @gift_idea
         else
           render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity

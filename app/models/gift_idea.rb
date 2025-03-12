@@ -1,6 +1,7 @@
 class GiftIdea < ApplicationRecord
   belongs_to :for_user, class_name: 'User'
   belongs_to :created_by, class_name: 'User'
+  belongs_to :buyer, class_name: 'User', optional: true
 
   # Constants
   STATUSES = %w[proposed buying bought].freeze
@@ -25,6 +26,7 @@ class GiftIdea < ApplicationRecord
   scope :for_users_in_common_groups, ->(user) {
     where(for_user_id: user.common_groups_with_users_ids)
   }
+  scope :bought_by_user, ->(user) { where(buyer: user) }
 
   # Scope principal pour les idées visibles par un utilisateur
   scope :visible_to_user, ->(user) {
@@ -36,12 +38,13 @@ class GiftIdea < ApplicationRecord
   }
 
   # Methods
-  def mark_as_buying
-    update(status: 'buying')
+  def mark_as_buying(user = nil)
+    update(status: 'buying', buyer: user) if user
   end
 
-  def mark_as_bought
-    update(status: 'bought')
+  def mark_as_bought(user = nil)
+    buyer_to_set = user || self.buyer
+    update(status: 'bought', buyer: buyer_to_set)
   end
 
   def visible_to?(user)
