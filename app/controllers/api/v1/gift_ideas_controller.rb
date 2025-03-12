@@ -11,21 +11,53 @@ module Api
         # Utiliser le scope principal pour récupérer les idées visibles par l'utilisateur
         @gift_ideas = GiftIdea.visible_to_user(current_user)
 
-        # Appliquer les filtres si nécessaire
-        @gift_ideas = case params[:status]
-                      when 'proposed'
-                        @gift_ideas.proposed
-                      when 'buying'
-                        # Si le statut est 'buying', ne montrer que les cadeaux où l'utilisateur actuel est l'acheteur
-                        @gift_ideas.buying.where(buyer_id: current_user.id)
-                      when 'bought'
-                        @gift_ideas.bought.where(buyer_id: current_user.id)
-                      else
-                        @gift_ideas
-                      end
+        # Appliquer les filtres par statut si nécessaire
+        if params[:status].present?
+          # Convertir le paramètre en tableau (s'il ne l'est pas déjà)
+          statuses = params[:status].is_a?(Array) ? params[:status] : [params[:status]].flatten
+
+          if statuses.present?
+            # Initialiser une requête vide
+            status_query = nil
+
+            # Construire la requête pour chaque statut demandé
+            statuses.each do |status|
+              sub_query = case status.to_s
+              when 'proposed'
+                @gift_ideas.proposed
+              when 'buying'
+                # Pour 'buying', ne montrer que les cadeaux où l'utilisateur actuel est l'acheteur
+                @gift_ideas.buying.where(buyer_id: current_user.id)
+              when 'bought'
+                # Pour 'bought', ne montrer que les cadeaux où l'utilisateur actuel est l'acheteur
+                @gift_ideas.bought.where(buyer_id: current_user.id)
+              else
+                nil
+              end
+
+              if sub_query
+                status_query = status_query ? status_query.or(sub_query) : sub_query
+              end
+            end
+
+            # Appliquer la requête combinée si elle a été construite
+            @gift_ideas = status_query if status_query
+          end
+        end
 
         # Ajouter des filtres pour limiter par utilisateur si demandé
         @gift_ideas = @gift_ideas.for_recipient(params[:for_user_id]) if params[:for_user_id].present?
+
+        # Ajouter un filtre pour limiter par groupe si demandé
+        if params[:group_id].present?
+          group = Group.find_by(id: params[:group_id])
+          if group && group.users.include?(current_user)
+            @gift_ideas = @gift_ideas.for_group(params[:group_id])
+          else
+            # Si le groupe n'existe pas ou si l'utilisateur n'en est pas membre, retourner une liste vide
+            @gift_ideas = GiftIdea.none
+          end
+        end
 
         # Inclure les associations pour le sérialiseur
         @gift_ideas = @gift_ideas.includes(:for_user, :created_by)
