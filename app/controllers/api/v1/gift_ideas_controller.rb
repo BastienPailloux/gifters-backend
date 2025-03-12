@@ -3,7 +3,8 @@ module Api
     class GiftIdeasController < Api::V1::BaseController
       before_action :set_gift_idea, only: [:show, :update, :destroy, :mark_as_buying, :mark_as_bought]
       before_action :authorize_access, only: [:show]
-      before_action :authorize_modification, only: [:update, :destroy, :mark_as_buying, :mark_as_bought]
+      before_action :authorize_modification, only: [:update, :destroy]
+      before_action :authorize_status_change, only: [:mark_as_buying, :mark_as_bought]
 
       # GET /api/v1/gift_ideas
       def index
@@ -22,9 +23,12 @@ module Api
                         @gift_ideas
                       end
 
+        # Ajouter des filtres pour limiter par utilisateur si demandé
         @gift_ideas = @gift_ideas.for_recipient(params[:for_user_id]) if params[:for_user_id].present?
+        # Ajouter des filtres pour limiter par groupe si demandé
+        # TODO: implémenter la logique de filtrage par groupe
 
-        render json: @gift_ideas
+        render json: { giftIdeas: @gift_ideas }
       end
 
       # GET /api/v1/gift_ideas/:id
@@ -35,6 +39,7 @@ module Api
       # POST /api/v1/gift_ideas
       def create
         @gift_idea = GiftIdea.new(gift_idea_params)
+        # Assigner l'utilisateur courant comme créateur
         @gift_idea.created_by = current_user
 
         if @gift_idea.save
@@ -82,14 +87,14 @@ module Api
       def set_gift_idea
         @gift_idea = GiftIdea.find_by(id: params[:id])
         unless @gift_idea
-          render json: { error: 'Gift idea not found' }, status: :not_found
-          return
+          render json: { error: "Gift idea not found" }, status: :not_found
+          return false
         end
       end
 
       def authorize_access
         unless @gift_idea.visible_to?(current_user)
-          render json: { error: 'You are not authorized to view this gift idea' }, status: :forbidden
+          render json: { error: "You are not authorized to view this gift idea" }, status: :forbidden
           return false
         end
         true
@@ -105,6 +110,24 @@ module Api
         # Ensuite, vérifier si l'utilisateur est le créateur
         unless @gift_idea.created_by == current_user
           render json: { error: "You are not authorized to #{action_name} this gift idea" }, status: :forbidden
+          return false
+        end
+
+        true
+      end
+
+      # Nouvelle méthode pour autoriser les changements de statut (buying/bought)
+      def authorize_status_change
+        # Pour les changements de statut, il suffit que l'utilisateur puisse voir le cadeau
+        # Cela permet à n'importe quel membre du groupe de marquer un cadeau comme "en cours d'achat" ou "acheté"
+        unless @gift_idea.visible_to?(current_user)
+          render json: { error: "You are not authorized to change the status of this gift idea" }, status: :forbidden
+          return false
+        end
+
+        # Ne pas autoriser le destinataire du cadeau à changer son statut
+        if @gift_idea.for_user_id == current_user.id
+          render json: { error: "You cannot change the status of your own gift" }, status: :forbidden
           return false
         end
 
