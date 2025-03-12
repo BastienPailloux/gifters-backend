@@ -16,9 +16,10 @@ module Api
                       when 'proposed'
                         @gift_ideas.proposed
                       when 'buying'
-                        @gift_ideas.buying
+                        # Si le statut est 'buying', ne montrer que les cadeaux où l'utilisateur actuel est l'acheteur
+                        @gift_ideas.buying.where(buyer_id: current_user.id)
                       when 'bought'
-                        @gift_ideas.bought
+                        @gift_ideas.bought.where(buyer_id: current_user.id)
                       else
                         @gift_ideas
                       end
@@ -73,7 +74,7 @@ module Api
 
       # PUT /api/v1/gift_ideas/:id/mark_as_buying
       def mark_as_buying
-        if @gift_idea.mark_as_buying
+        if @gift_idea.mark_as_buying(current_user)
           render json: @gift_idea
         else
           render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
@@ -82,7 +83,7 @@ module Api
 
       # PUT /api/v1/gift_ideas/:id/mark_as_bought
       def mark_as_bought
-        if @gift_idea.mark_as_bought
+        if @gift_idea.mark_as_bought(current_user)
           render json: @gift_idea
         else
           render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
