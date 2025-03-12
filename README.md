@@ -13,9 +13,9 @@
 
 - 🔐 Secure user authentication system with JWT
 - 👥 Group and membership management - ONGOING
-- 🎁 Gift ideas and wishlists management
-- 📅 Events and reminders
-- 🔍 Search and filtering capabilities
+- 🎁 Gift ideas and wishlists management - ONGOING
+- 📅 Events and reminders - NOT YET STARTED
+- 🔍 Search and filtering capabilities - NOT YET STARTED
 - 📊 RESTful API with comprehensive documentation
 - 🧪 Extensive test coverage with RSpec
 
@@ -102,6 +102,7 @@ docker-compose exec app bin/rails spec
 
 ### API Documentation
 
+NOT YET IMPLEMENTED
 We use Swagger for API documentation. After starting the server, you can access the documentation at:
 
 ```
@@ -137,8 +138,7 @@ users                # User accounts
   ├── memberships    # User membership in groups
   ├── gift_ideas     # Gift ideas created by users
   ├── events         # Events created by users
-  ├── wishlists      # User wishlists
-  └── reservations   # Gift reservations
+  ├── invitations    # Invitations to join a Group
 ```
 
 ## 🛠️ Technologies
