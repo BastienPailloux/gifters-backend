@@ -8,7 +8,7 @@ class GiftIdeaSerializer < ActiveModel::Serializer
   attribute :groupName
   attribute :buyerId
   attribute :buyerName
-  attribute :buyer
+  attribute :buyer_data
 
   # Les anciennes associations pour compatibilité
   belongs_to :for_user, serializer: UserSerializer
@@ -45,7 +45,7 @@ class GiftIdeaSerializer < ActiveModel::Serializer
     object.buyer&.name
   end
 
-  def buyer
+  def buyer_data
     return nil if object.buyer.nil?
     {
       id: object.buyer.id,

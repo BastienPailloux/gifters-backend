@@ -16,9 +16,10 @@ module Api
                       when 'proposed'
                         @gift_ideas.proposed
                       when 'buying'
-                        @gift_ideas.buying
+                        # Si le statut est 'buying', ne montrer que les cadeaux où l'utilisateur actuel est l'acheteur
+                        @gift_ideas.buying.where(buyer_id: current_user.id)
                       when 'bought'
-                        @gift_ideas.bought
+                        @gift_ideas.bought.where(buyer_id: current_user.id)
                       else
                         @gift_ideas
                       end
