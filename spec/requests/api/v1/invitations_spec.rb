@@ -17,7 +17,6 @@ RSpec.describe "Api::V1::Invitations", type: :request do
   describe "GET /api/v1/groups/:group_id/invitations" do
     context "when user is admin of the group" do
       before do
-        create(:membership, user: user, group: group, role: 'admin')
         create_list(:invitation, 3, group: group, created_by: user)
         get "/api/v1/groups/#{group.id}/invitations", headers: headers
       end
@@ -33,8 +32,9 @@ RSpec.describe "Api::V1::Invitations", type: :request do
     end
 
     context "when user is not admin of the group" do
+      let(:user) { another_user }  # Utiliser another_user qui est déjà un membre standard
+
       before do
-        create(:membership, user: user, group: group, role: 'member')
         get "/api/v1/groups/#{group.id}/invitations", headers: headers
       end
 
@@ -90,10 +90,6 @@ RSpec.describe "Api::V1::Invitations", type: :request do
     let(:invalid_attributes) { { invitation: { role: 'invalid_role' } } }
 
     context "when user is admin of the group" do
-      before do
-        create(:membership, user: user, group: group, role: 'admin')
-      end
-
       context "with valid parameters" do
         let(:valid_params) { { invitation: { role: 'member' }, email: 'test@example.com', message: 'Join our group!' } }
 
@@ -125,8 +121,10 @@ RSpec.describe "Api::V1::Invitations", type: :request do
     end
 
     context "when user is not admin of the group" do
+      # Utiliser another_user qui est déjà un membre standard
+      let(:user) { another_user }
+
       before do
-        create(:membership, user: user, group: group, role: 'member')
         post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes, headers: headers
       end
 
@@ -152,9 +150,7 @@ RSpec.describe "Api::V1::Invitations", type: :request do
     let!(:invitation) { create(:invitation, group: group, created_by: user) }
 
     context "when user is admin of the group" do
-      before do
-        create(:membership, user: user, group: group, role: 'admin')
-      end
+      # L'utilisateur est déjà admin du groupe dans le before global
 
       it "deletes the invitation" do
         delete "/api/v1/invitations/#{invitation.token}", headers: headers

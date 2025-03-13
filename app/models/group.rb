@@ -11,7 +11,13 @@ class Group < ApplicationRecord
 
   # Methods
   def add_user(user, role = 'member')
-    memberships.create(user: user, role: role)
+    existing_membership = memberships.find_by(user: user)
+    if existing_membership
+      existing_membership.update(role: role)
+      existing_membership
+    else
+      memberships.create(user: user, role: role)
+    end
   end
 
   def admin_users
