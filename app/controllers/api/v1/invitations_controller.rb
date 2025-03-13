@@ -13,11 +13,6 @@ module Api
 
       # GET /api/v1/invitations/:token
       def show
-        if @invitation.used?
-          render json: { error: 'This invitation has already been used' }, status: :unprocessable_entity
-          return
-        end
-
         render json: @invitation.as_json(include: {
           group: { only: [:id, :name] },
           created_by: { only: [:id, :name, :email] }
@@ -72,11 +67,6 @@ module Api
           return
         end
 
-        if @invitation.used?
-          render json: { error: 'This invitation has already been used' }, status: :unprocessable_entity
-          return
-        end
-
         # Vérifier si l'utilisateur est déjà membre du groupe
         if current_user.groups.include?(@invitation.group)
           render json: { error: 'You are already a member of this group' }, status: :unprocessable_entity
@@ -87,9 +77,6 @@ module Api
         membership = @invitation.group.add_user(current_user, @invitation.role)
 
         if membership.persisted?
-          # Marquer l'invitation comme utilisée
-          @invitation.mark_as_used!
-
           # Envoyer un email de notification aux admins du groupe
           notify_admins_about_new_member(@invitation, current_user)
 

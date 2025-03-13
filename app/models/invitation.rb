@@ -9,19 +9,11 @@ class Invitation < ApplicationRecord
   # Validations
   validates :token, presence: true, uniqueness: true
   validates :role, presence: true, inclusion: { in: ROLES }
-  validates :used, inclusion: { in: [true, false] }
 
   # Callbacks
   before_validation :generate_token, on: :create
 
-  # Scopes
-  scope :unused, -> { where(used: false) }
-
   # Methods
-  def mark_as_used!
-    update!(used: true)
-  end
-
   def invitation_url
     # Utiliser les options de configuration de l'environnement actuel
     options = Rails.application.config.action_mailer.default_url_options || {}
