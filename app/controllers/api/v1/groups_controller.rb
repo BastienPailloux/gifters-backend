@@ -9,27 +9,20 @@ module Api
       # GET /api/v1/groups
       def index
         @groups = current_user.groups
-        render json: @groups, only: [:id, :name, :description, :invite_code]
+        render json: @groups, only: [:id, :name, :description]
       end
 
       # GET /api/v1/groups/:id
       def show
-        members = @group.memberships.includes(:user).map do |membership|
-          {
-            id: membership.user.id,
-            name: membership.user.name,
-            email: membership.user.email,
-            role: membership.role
-          }
-        end
-
-        render json: {
+        members = @group.users
+        response_data = {
           id: @group.id,
           name: @group.name,
           description: @group.description,
-          invite_code: @group.invite_code,
-          members: members
+          members: members.as_json(only: [:id, :name, :email])
         }
+
+        render json: response_data
       end
 
       # POST /api/v1/groups
@@ -37,10 +30,9 @@ module Api
         @group = Group.new(group_params)
 
         if @group.save
-          # Ajouter l'utilisateur actuel comme administrateur du groupe
-          @group.add_user(current_user, 'admin')
+          @group.memberships.create(user: current_user, role: 'admin')
 
-          render json: @group, status: :created, only: [:id, :name, :description, :invite_code]
+          render json: @group, status: :created, only: [:id, :name, :description]
         else
           render json: { errors: @group.errors.full_messages }, status: :unprocessable_entity
         end
@@ -49,7 +41,7 @@ module Api
       # PUT /api/v1/groups/:id
       def update
         if @group.update(group_params)
-          render json: @group, only: [:id, :name, :description, :invite_code]
+          render json: @group, only: [:id, :name, :description]
         else
           render json: { errors: @group.errors.full_messages }, status: :unprocessable_entity
         end
@@ -59,23 +51,6 @@ module Api
       def destroy
         @group.destroy
         head :no_content
-      end
-
-      # POST /api/v1/groups/:id/join
-      def join
-        # Vérifier si l'utilisateur est déjà membre du groupe
-        if @group.users.include?(current_user)
-          render json: { error: 'You are already a member of this group' }, status: :unprocessable_entity
-          return
-        end
-
-        # Vérifier si le code d'invitation est valide
-        if @group.invite_code == params[:invite_code]
-          @group.add_user(current_user)
-          render json: { message: 'Successfully joined the group' }, status: :ok
-        else
-          render json: { error: 'Invalid invite code' }, status: :unprocessable_entity
-        end
       end
 
       # DELETE /api/v1/groups/:id/leave

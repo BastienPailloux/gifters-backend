@@ -105,22 +105,19 @@ puts "Création des invitations..."
 Invitation.create!(
   group: family_group,
   created_by: admin,
-  role: "member",
-  used: false
+  role: "member"
 )
 
 Invitation.create!(
   group: friends_group,
   created_by: bob,
-  role: "member",
-  used: false
+  role: "member"
 )
 
 Invitation.create!(
   group: work_group,
   created_by: admin,
-  role: "member",
-  used: true
+  role: "member"
 )
 puts "#{Invitation.count} invitations créées."
 

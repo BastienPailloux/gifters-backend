@@ -34,7 +34,7 @@ RSpec.describe "Api::V1::Groups", type: :request do
 
       it "returns groups with correct attributes" do
         groups = JSON.parse(response.body)
-        expect(groups.first).to include('id', 'name', 'description', 'invite_code')
+        expect(groups.first).to include('id', 'name', 'description')
       end
     end
 
@@ -72,7 +72,7 @@ RSpec.describe "Api::V1::Groups", type: :request do
 
         it "returns group with correct attributes" do
           group_response = JSON.parse(response.body)
-          expect(group_response).to include('id', 'name', 'description', 'invite_code')
+          expect(group_response).to include('id', 'name', 'description')
           expect(group_response).to include('members')
         end
 
