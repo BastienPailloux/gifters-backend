@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_12_021228) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_13_154505) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -36,8 +36,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_12_021228) do
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "invite_code"
-    t.index ["invite_code"], name: "index_groups_on_invite_code", unique: true
   end
 
   create_table "invitations", force: :cascade do |t|
@@ -45,7 +43,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_12_021228) do
     t.bigint "group_id", null: false
     t.bigint "created_by_id", null: false
     t.string "role", default: "member", null: false
-    t.boolean "used", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["created_by_id"], name: "index_invitations_on_created_by_id"

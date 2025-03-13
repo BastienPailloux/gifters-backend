@@ -34,7 +34,7 @@ RSpec.describe "Api::V1::Groups", type: :request do
 
       it "returns groups with correct attributes" do
         groups = JSON.parse(response.body)
-        expect(groups.first).to include('id', 'name', 'description', 'invite_code')
+        expect(groups.first).to include('id', 'name', 'description')
       end
     end
 
@@ -72,7 +72,7 @@ RSpec.describe "Api::V1::Groups", type: :request do
 
         it "returns group with correct attributes" do
           group_response = JSON.parse(response.body)
-          expect(group_response).to include('id', 'name', 'description', 'invite_code')
+          expect(group_response).to include('id', 'name', 'description')
           expect(group_response).to include('members')
         end
 
@@ -286,70 +286,6 @@ RSpec.describe "Api::V1::Groups", type: :request do
 
     context "when not authenticated" do
       before { delete "/api/v1/groups/#{group_id}" }
-
-      it "returns status code 401" do
-        expect(response).to have_http_status(401)
-      end
-
-      it "returns an unauthorized message" do
-        expect(JSON.parse(response.body)).to include('error' => 'Unauthorized')
-      end
-    end
-  end
-
-  describe "POST /api/v1/groups/:id/join" do
-    let(:group) { create(:group) }
-    let(:group_id) { group.id }
-    let(:valid_attributes) { { invite_code: group.invite_code } }
-    let(:invalid_attributes) { { invite_code: "WRONG123" } }
-
-    context "when authenticated" do
-      context "when the invite code is valid" do
-        before { post "/api/v1/groups/#{group_id}/join", params: valid_attributes, headers: headers }
-
-        it "returns status code 200" do
-          expect(response).to have_http_status(200)
-        end
-
-        it "adds the user to the group" do
-          expect(group.users.reload).to include(user)
-        end
-
-        it "returns a success message" do
-          expect(JSON.parse(response.body)).to include('message' => 'Successfully joined the group')
-        end
-      end
-
-      context "when the user is already a member of the group" do
-        before do
-          group.add_user(user)
-          post "/api/v1/groups/#{group_id}/join", params: valid_attributes, headers: headers
-        end
-
-        it "returns status code 422" do
-          expect(response).to have_http_status(422)
-        end
-
-        it "returns an error message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are already a member of this group')
-        end
-      end
-
-      context "when the invite code is invalid" do
-        before { post "/api/v1/groups/#{group_id}/join", params: invalid_attributes, headers: headers }
-
-        it "returns status code 422" do
-          expect(response).to have_http_status(422)
-        end
-
-        it "returns an error message" do
-          expect(JSON.parse(response.body)).to include('error' => 'Invalid invite code')
-        end
-      end
-    end
-
-    context "when not authenticated" do
-      before { post "/api/v1/groups/#{group_id}/join", params: valid_attributes }
 
       it "returns status code 401" do
         expect(response).to have_http_status(401)

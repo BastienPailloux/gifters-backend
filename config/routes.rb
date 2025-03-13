@@ -29,7 +29,6 @@ Rails.application.routes.draw do
         resources :memberships
         resources :invitations, only: [:index, :create]
         member do
-          post 'join'
           delete 'leave'
         end
       end

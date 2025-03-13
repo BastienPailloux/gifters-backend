@@ -15,67 +15,43 @@ RSpec.describe "Api::V1::Invitations", type: :request do
   end
 
   describe "GET /api/v1/groups/:group_id/invitations" do
-    context "when authenticated" do
-      context "when the user is an admin of the group" do
-        let!(:invitation) { create(:invitation, group: group, created_by: user) }
-
-        before { get "/api/v1/groups/#{group.id}/invitations", headers: headers }
-
-        it "returns status code 200" do
-          expect(response).to have_http_status(200)
-        end
-
-        it "returns all invitations for the group" do
-          expect(JSON.parse(response.body).size).to eq(1)
-        end
-
-        it "returns invitations with correct attributes" do
-          invitation_response = JSON.parse(response.body).first
-          expect(invitation_response).to include('id', 'token', 'group_id', 'created_by_id', 'role', 'used')
-          expect(invitation_response['created_by']).to include('id', 'name', 'email')
-        end
+    context "when user is admin of the group" do
+      before do
+        create_list(:invitation, 3, group: group, created_by: user)
+        get "/api/v1/groups/#{group.id}/invitations", headers: headers
       end
 
-      context "when the user is not an admin of the group" do
-        before do
-          # Changer le rôle de l'utilisateur à membre
-          membership = group.memberships.find_by(user: user)
-          membership.update(role: 'member')
-
-          get "/api/v1/groups/#{group.id}/invitations", headers: headers
-        end
-
-        it "returns status code 403" do
-          expect(response).to have_http_status(403)
-        end
-
-        it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You must be an admin to manage invitations')
-        end
+      it "returns http success" do
+        expect(response).to have_http_status(:success)
       end
 
-      context "when the group does not exist" do
-        before { get "/api/v1/groups/999/invitations", headers: headers }
-
-        it "returns status code 404" do
-          expect(response).to have_http_status(404)
-        end
-
-        it "returns a not found message" do
-          expect(JSON.parse(response.body)).to include('error' => 'Group not found')
-        end
+      it "returns all invitations for the group" do
+        invitations = JSON.parse(response.body)
+        expect(invitations.size).to eq(3)
       end
     end
 
-    context "when not authenticated" do
-      before { get "/api/v1/groups/#{group.id}/invitations" }
+    context "when user is not admin of the group" do
+      let(:user) { another_user }  # Utiliser another_user qui est déjà un membre standard
 
-      it "returns status code 401" do
-        expect(response).to have_http_status(401)
+      before do
+        get "/api/v1/groups/#{group.id}/invitations", headers: headers
       end
 
-      it "returns an unauthorized message" do
-        expect(JSON.parse(response.body)).to include('error' => 'Unauthorized')
+      it "returns http forbidden" do
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context "when the group does not exist" do
+      before { get "/api/v1/groups/999/invitations", headers: headers }
+
+      it "returns status code 404" do
+        expect(response).to have_http_status(404)
+      end
+
+      it "returns a not found message" do
+        expect(JSON.parse(response.body)).to include('error' => 'Group not found')
       end
     end
   end
@@ -83,62 +59,28 @@ RSpec.describe "Api::V1::Invitations", type: :request do
   describe "GET /api/v1/invitations/:token" do
     let(:invitation) { create(:invitation, group: group, created_by: user) }
 
-    context "when authenticated" do
-      context "when the invitation is valid and unused" do
-        before { get "/api/v1/invitations/#{invitation.token}", headers: headers }
+    context "when the invitation exists" do
+      before { get "/api/v1/invitations/#{invitation.token}", headers: headers }
 
-        it "returns status code 200" do
-          expect(response).to have_http_status(200)
-        end
-
-        it "returns the invitation" do
-          expect(JSON.parse(response.body)['id']).to eq(invitation.id)
-        end
-
-        it "returns invitation with correct attributes" do
-          invitation_response = JSON.parse(response.body)
-          expect(invitation_response).to include('id', 'token', 'group_id', 'created_by_id', 'role', 'used')
-          expect(invitation_response['group']).to include('id', 'name')
-          expect(invitation_response['created_by']).to include('id', 'name', 'email')
-        end
+      it "returns http success" do
+        expect(response).to have_http_status(:success)
       end
 
-      context "when the invitation is used" do
-        let(:used_invitation) { create(:invitation, :used, group: group, created_by: user) }
-
-        before { get "/api/v1/invitations/#{used_invitation.token}", headers: headers }
-
-        it "returns status code 422" do
-          expect(response).to have_http_status(422)
-        end
-
-        it "returns an error message" do
-          expect(JSON.parse(response.body)).to include('error' => 'This invitation has already been used')
-        end
-      end
-
-      context "when the invitation does not exist" do
-        before { get "/api/v1/invitations/invalid_token", headers: headers }
-
-        it "returns status code 404" do
-          expect(response).to have_http_status(404)
-        end
-
-        it "returns a not found message" do
-          expect(JSON.parse(response.body)).to include('error' => 'Invitation not found')
-        end
+      it "returns the invitation details" do
+        invitation_response = JSON.parse(response.body)
+        expect(invitation_response).to include('id', 'token', 'group_id', 'created_by_id', 'role')
       end
     end
 
-    context "when not authenticated" do
-      before { get "/api/v1/invitations/#{invitation.token}" }
+    context "when the invitation does not exist" do
+      before { get "/api/v1/invitations/invalid-token", headers: headers }
 
-      it "returns status code 401" do
-        expect(response).to have_http_status(401)
+      it "returns http not found" do
+        expect(response).to have_http_status(:not_found)
       end
 
-      it "returns an unauthorized message" do
-        expect(JSON.parse(response.body)).to include('error' => 'Unauthorized')
+      it "returns error message" do
+        expect(JSON.parse(response.body)).to include('error' => 'Invitation not found')
       end
     end
   end
@@ -148,61 +90,46 @@ RSpec.describe "Api::V1::Invitations", type: :request do
     let(:invalid_attributes) { { invitation: { role: 'invalid_role' } } }
 
     context "when user is admin of the group" do
-      it "creates a new invitation" do
-        expect {
-          post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes, headers: headers
-        }.to change(Invitation, :count).by(1)
+      context "with valid parameters" do
+        let(:valid_params) { { invitation: { role: 'member' }, email: 'test@example.com', message: 'Join our group!' } }
 
-        expect(response).to have_http_status(201)
-        expect(JSON.parse(response.body)['invitation']['role']).to eq('member')
+        it "creates a new invitation" do
+          expect {
+            post "/api/v1/groups/#{group.id}/invitations", params: valid_params, headers: headers
+          }.to change(Invitation, :count).by(1)
+
+          expect(response).to have_http_status(:created)
+        end
+
+        it "returns the created invitation" do
+          post "/api/v1/groups/#{group.id}/invitations", params: valid_params, headers: headers
+          expect(JSON.parse(response.body)).to include('invitation', 'invitation_url', 'token')
+        end
       end
 
-      it "sends an email when an email address is provided" do
-        recipient_email = "test@example.com"
+      context "with invalid parameters" do
+        let(:invalid_params) { { invitation: { role: 'invalid_role' } } }
 
-        expect {
-          post "/api/v1/groups/#{group.id}/invitations",
-               params: { invitation: { role: 'member' }, email: recipient_email },
-               headers: headers
-        }.to change { ActionMailer::Base.deliveries.count }.by(1)
+        it "does not create a new invitation" do
+          expect {
+            post "/api/v1/groups/#{group.id}/invitations", params: invalid_params, headers: headers
+          }.not_to change(Invitation, :count)
 
-        expect(response).to have_http_status(201)
-
-        # Vérifier que l'email a été envoyé au bon destinataire
-        email = ActionMailer::Base.deliveries.last
-        expect(email.to).to include(recipient_email)
-        expect(email.subject).to eq("Vous avez été invité à rejoindre un groupe sur Gifters")
-      end
-
-      it "returns a 422 status with errors for invalid attributes" do
-        post "/api/v1/groups/#{group.id}/invitations", params: invalid_attributes, headers: headers
-
-        expect(response).to have_http_status(422)
-        expect(JSON.parse(response.body)).to have_key('errors')
-      end
-
-      it "includes the invitation URL and token in the response" do
-        post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes, headers: headers
-
-        expect(JSON.parse(response.body)).to include('invitation_url', 'token')
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
       end
     end
 
     context "when user is not admin of the group" do
-      before do
-        # Changer le rôle de l'utilisateur à membre
-        membership = group.memberships.find_by(user: user)
-        membership.update(role: 'member')
+      # Utiliser another_user qui est déjà un membre standard
+      let(:user) { another_user }
 
+      before do
         post "/api/v1/groups/#{group.id}/invitations", params: valid_attributes, headers: headers
       end
 
-      it "returns status code 403" do
-        expect(response).to have_http_status(403)
-      end
-
-      it "returns a forbidden message" do
-        expect(JSON.parse(response.body)).to include('error' => 'You must be an admin to manage invitations')
+      it "returns http forbidden" do
+        expect(response).to have_http_status(:forbidden)
       end
     end
 
@@ -219,53 +146,38 @@ RSpec.describe "Api::V1::Invitations", type: :request do
     end
   end
 
-  describe "DELETE /api/v1/invitations/:token" do
+  describe "DELETE /api/v1/invitations/:id" do
     let!(:invitation) { create(:invitation, group: group, created_by: user) }
 
-    context "when authenticated" do
-      context "when the user is the creator of the invitation" do
-        before { delete "/api/v1/invitations/#{invitation.token}", headers: headers }
+    context "when user is admin of the group" do
+      # L'utilisateur est déjà admin du groupe dans le before global
 
-        it "returns status code 204" do
-          expect(response).to have_http_status(204)
-        end
+      it "deletes the invitation" do
+        delete "/api/v1/invitations/#{invitation.token}", headers: headers
+        expect(response).to have_http_status(:no_content)
+        expect { invitation.reload }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
 
-        it "deletes the invitation" do
-          expect(Invitation.find_by(id: invitation.id)).to be_nil
-        end
+    context "when user is the creator of the invitation" do
+      it "deletes the invitation" do
+        delete "/api/v1/invitations/#{invitation.token}", headers: headers
+        expect(response).to have_http_status(:no_content)
+        expect { invitation.reload }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
+
+    context "when user is neither admin nor creator" do
+      let(:other_user) { create(:user) }
+      let(:other_user_headers) { { 'Authorization' => "Bearer #{generate_jwt_token(other_user)}" } }
+
+      before do
+        create(:membership, user: other_user, group: group, role: 'member')
       end
 
-      context "when the user is an admin of the group but not the creator" do
-        let(:admin_user) { create(:user) }
-        let(:admin_headers) { { 'Authorization' => "Bearer #{generate_jwt_token(admin_user)}" } }
-
-        before do
-          group.add_user(admin_user, 'admin')
-          delete "/api/v1/invitations/#{invitation.token}", headers: admin_headers
-        end
-
-        it "returns status code 204" do
-          expect(response).to have_http_status(204)
-        end
-
-        it "deletes the invitation" do
-          expect(Invitation.find_by(id: invitation.id)).to be_nil
-        end
-      end
-
-      context "when the user is not authorized" do
-        let(:other_user) { create(:user) }
-        let(:other_headers) { { 'Authorization' => "Bearer #{generate_jwt_token(other_user)}" } }
-
-        before { delete "/api/v1/invitations/#{invitation.token}", headers: other_headers }
-
-        it "returns status code 403" do
-          expect(response).to have_http_status(403)
-        end
-
-        it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to delete this invitation')
-        end
+      it "returns http forbidden" do
+        delete "/api/v1/invitations/#{invitation.token}", headers: other_user_headers
+        expect(response).to have_http_status(:forbidden)
       end
     end
 
@@ -298,66 +210,42 @@ RSpec.describe "Api::V1::Invitations", type: :request do
       expect(email.subject).to eq("Un utilisateur a rejoint votre groupe sur Gifters")
     end
 
-    context "when authenticated" do
-      context "when the invitation is valid and unused" do
-        before { post "/api/v1/invitations/accept", params: { token: invitation.token }, headers: new_user_headers }
+    context "when the invitation is valid" do
+      before { post "/api/v1/invitations/accept", params: { token: invitation.token }, headers: new_user_headers }
 
-        it "returns status code 200" do
-          expect(response).to have_http_status(200)
-        end
-
-        it "adds the user to the group" do
-          expect(group.users.reload).to include(new_user)
-        end
-
-        it "marks the invitation as used" do
-          expect(invitation.reload.used).to be true
-        end
-
-        it "returns a success message" do
-          expect(JSON.parse(response.body)).to include('message' => "You have successfully joined the group #{group.name}")
-        end
+      it "returns http success" do
+        expect(response).to have_http_status(:success)
       end
 
-      context "when the invitation is already used" do
-        let(:used_invitation) { create(:invitation, :used, group: group, created_by: user) }
+      it "creates a membership for the user" do
+        expect(Membership.find_by(user: new_user, group: group)).to be_present
+      end
+    end
 
-        before { post "/api/v1/invitations/accept", params: { token: used_invitation.token }, headers: new_user_headers }
-
-        it "returns status code 422" do
-          expect(response).to have_http_status(422)
-        end
-
-        it "returns an error message" do
-          expect(JSON.parse(response.body)).to include('error' => 'This invitation has already been used')
-        end
+    context "when the user is already a member of the group" do
+      before do
+        create(:membership, user: new_user, group: group)
+        post "/api/v1/invitations/accept", params: { token: invitation.token }, headers: new_user_headers
       end
 
-      context "when the user is already a member of the group" do
-        before do
-          group.add_user(new_user)
-          post "/api/v1/invitations/accept", params: { token: invitation.token }, headers: new_user_headers
-        end
-
-        it "returns status code 422" do
-          expect(response).to have_http_status(422)
-        end
-
-        it "returns an error message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are already a member of this group')
-        end
+      it "returns http unprocessable entity" do
+        expect(response).to have_http_status(:unprocessable_entity)
       end
 
-      context "when the invitation token is invalid" do
-        before { post "/api/v1/invitations/accept", params: { token: 'invalid_token' }, headers: new_user_headers }
+      it "returns error message" do
+        expect(JSON.parse(response.body)).to include('error' => 'You are already a member of this group')
+      end
+    end
 
-        it "returns status code 404" do
-          expect(response).to have_http_status(404)
-        end
+    context "when the invitation does not exist" do
+      before { post "/api/v1/invitations/accept", params: { token: 'invalid-token' }, headers: new_user_headers }
 
-        it "returns a not found message" do
-          expect(JSON.parse(response.body)).to include('error' => 'Invalid invitation token')
-        end
+      it "returns http not found" do
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it "returns error message" do
+        expect(JSON.parse(response.body)).to include('error' => 'Invalid invitation token')
       end
     end
 

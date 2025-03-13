@@ -5,18 +5,15 @@ module Api
       skip_before_action :verify_authenticity_token
       before_action :configure_permitted_parameters, only: [:create]
       def create
-
         # Récupérer les paramètres d'authentification
         auth_params = sign_in_params
         email = auth_params[:email]
         password = auth_params[:password]
 
-
         # Vérifier si l'utilisateur existe
         user = User.find_by(email: email)
 
         if user && user.valid_password?(password)
-
           # Connecter l'utilisateur avec Devise
           sign_in(resource_name, user)
 

@@ -13,11 +13,6 @@ module Api
 
       # GET /api/v1/invitations/:token
       def show
-        if @invitation.used?
-          render json: { error: 'This invitation has already been used' }, status: :unprocessable_entity
-          return
-        end
-
         render json: @invitation.as_json(include: {
           group: { only: [:id, :name] },
           created_by: { only: [:id, :name, :email] }
@@ -31,12 +26,13 @@ module Api
 
         if @invitation.save
           # Envoyer l'email d'invitation si un email est fourni
-          if params[:email].present?
+          # Utiliser email_params au lieu de params[:email] pour une meilleure sécurité
+          if email_params[:email].present?
             # Utiliser deliver_now en environnement de test pour que les tests puissent vérifier l'envoi
             if Rails.env.test?
-              InvitationMailer.invitation_created(@invitation, params[:email]).deliver_now
+              InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_now
             else
-              InvitationMailer.invitation_created(@invitation, params[:email]).deliver_later
+              InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_later
             end
           end
 
@@ -71,11 +67,6 @@ module Api
           return
         end
 
-        if @invitation.used?
-          render json: { error: 'This invitation has already been used' }, status: :unprocessable_entity
-          return
-        end
-
         # Vérifier si l'utilisateur est déjà membre du groupe
         if current_user.groups.include?(@invitation.group)
           render json: { error: 'You are already a member of this group' }, status: :unprocessable_entity
@@ -86,9 +77,6 @@ module Api
         membership = @invitation.group.add_user(current_user, @invitation.role)
 
         if membership.persisted?
-          # Marquer l'invitation comme utilisée
-          @invitation.mark_as_used!
-
           # Envoyer un email de notification aux admins du groupe
           notify_admins_about_new_member(@invitation, current_user)
 
@@ -135,6 +123,11 @@ module Api
 
       def invitation_params
         params.require(:invitation).permit(:role)
+      end
+
+      # Méthode sécurisée pour filtrer les paramètres email et message
+      def email_params
+        params.permit(:email, :message)
       end
 
       def notify_admins_about_new_member(invitation, user)
