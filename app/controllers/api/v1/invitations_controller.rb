@@ -31,12 +31,13 @@ module Api
 
         if @invitation.save
           # Envoyer l'email d'invitation si un email est fourni
-          if params[:email].present?
+          # Utiliser email_params au lieu de params[:email] pour une meilleure sécurité
+          if email_params[:email].present?
             # Utiliser deliver_now en environnement de test pour que les tests puissent vérifier l'envoi
             if Rails.env.test?
-              InvitationMailer.invitation_created(@invitation, params[:email]).deliver_now
+              InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_now
             else
-              InvitationMailer.invitation_created(@invitation, params[:email]).deliver_later
+              InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_later
             end
           end
 
@@ -135,6 +136,11 @@ module Api
 
       def invitation_params
         params.require(:invitation).permit(:role)
+      end
+
+      # Méthode sécurisée pour filtrer les paramètres email et message
+      def email_params
+        params.permit(:email, :message)
       end
 
       def notify_admins_about_new_member(invitation, user)
