@@ -124,119 +124,170 @@ puts "#{Invitation.count} invitations créées."
 # Création des idées de cadeaux
 puts "Création des idées de cadeaux..."
 # Pour Alice
-GiftIdea.create!(
+livre_cuisine = GiftIdea.new(
   title: "Livre de cuisine végétarienne",
   description: "Un livre avec des recettes végétariennes du monde entier",
   price: 25.99,
   link: "https://example.com/livre-cuisine",
   image_url: "https://example.com/image-livre.jpg",
-  for_user: alice,
   created_by: bob,
   status: "proposed"
 )
+livre_cuisine.recipients = [alice]
+livre_cuisine.save!
 
-GiftIdea.create!(
+coffret_the = GiftIdea.new(
   title: "Coffret de thés bio",
   description: "Assortiment de thés biologiques de différentes saveurs",
   price: 39.99,
   link: "https://example.com/coffret-thes",
   image_url: "https://example.com/image-the.jpg",
-  for_user: alice,
   created_by: charlie,
   status: "buying"
 )
+coffret_the.recipients = [alice]
+coffret_the.save!
 
 # Pour Bob
-GiftIdea.create!(
+bieres = GiftIdea.new(
   title: "Set de bières artisanales",
   description: "Ensemble de 6 bières artisanales de différentes brasseries",
   price: 32.50,
   link: "https://example.com/bieres-artisanales",
   image_url: "https://example.com/image-bieres.jpg",
-  for_user: bob,
   created_by: alice,
   status: "proposed"
 )
+bieres.recipients = [bob]
+bieres.save!
 
-GiftIdea.create!(
+enceinte = GiftIdea.new(
   title: "Enceinte Bluetooth portable",
   description: "Enceinte portable avec une autonomie de 20 heures",
   price: 79.99,
   link: "https://example.com/enceinte-bluetooth",
   image_url: "https://example.com/image-enceinte.jpg",
-  for_user: bob,
   created_by: diane,
   status: "buying"
 )
+enceinte.recipients = [bob]
+enceinte.save!
 
 # Pour Charlie
-GiftIdea.create!(
+casque = GiftIdea.new(
   title: "Casque audio sans fil",
   description: "Casque avec réduction de bruit active",
   price: 149.99,
   link: "https://example.com/casque-audio",
   image_url: "https://example.com/image-casque.jpg",
-  for_user: charlie,
   created_by: bob,
   status: "proposed"
 )
+casque.recipients = [charlie]
+casque.save!
 
-GiftIdea.create!(
+whisky = GiftIdea.new(
   title: "Set de dégustation de whiskys",
   description: "Coffret avec 4 whiskys du monde et verres de dégustation",
   price: 89.99,
   link: "https://example.com/whisky-set",
   image_url: "https://example.com/image-whisky.jpg",
-  for_user: charlie,
   created_by: admin,
   status: "bought"
 )
+whisky.recipients = [charlie]
+whisky.save!
 
 # Pour Diane
-GiftIdea.create!(
+beaute = GiftIdea.new(
   title: "Abonnement mensuel de box beauté",
   description: "Box mensuelle avec des produits de beauté bio",
   price: 29.99,
   link: "https://example.com/box-beaute",
   image_url: "https://example.com/image-box.jpg",
-  for_user: diane,
   created_by: alice,
   status: "buying"
 )
+beaute.recipients = [diane]
+beaute.save!
 
-GiftIdea.create!(
+yoga = GiftIdea.new(
   title: "Cours de yoga en ligne (annuel)",
   description: "Abonnement annuel à des cours de yoga en ligne",
   price: 119.99,
   link: "https://example.com/cours-yoga",
   image_url: "https://example.com/image-yoga.jpg",
-  for_user: diane,
   created_by: charlie,
   status: "proposed"
 )
+yoga.recipients = [diane]
+yoga.save!
 
 # Pour Admin
-GiftIdea.create!(
+jardinage = GiftIdea.new(
   title: "Kit de jardinage intérieur",
   description: "Kit pour faire pousser des herbes aromatiques en intérieur",
   price: 45.00,
   link: "https://example.com/kit-jardinage",
   image_url: "https://example.com/image-jardinage.jpg",
-  for_user: admin,
   created_by: diane,
   status: "proposed"
 )
+jardinage.recipients = [admin]
+jardinage.save!
 
-GiftIdea.create!(
+stylo = GiftIdea.new(
   title: "Stylo de luxe personnalisé",
   description: "Stylo haut de gamme avec gravure personnalisée",
   price: 65.00,
   link: "https://example.com/stylo-luxe",
   image_url: "https://example.com/image-stylo.jpg",
-  for_user: admin,
   created_by: alice,
   status: "buying"
 )
+stylo.recipients = [admin]
+stylo.save!
+
+# Création de quelques idées de cadeaux avec plusieurs destinataires
+puts "Création d'idées de cadeaux avec plusieurs destinataires..."
+
+cadeaux_groupe = GiftIdea.new(
+  title: "Jeu de société collaboratif",
+  description: "Un jeu de société collaboratif pour soirées entre amis",
+  price: 49.99,
+  link: "https://example.com/jeu-societe",
+  image_url: "https://example.com/image-jeu.jpg",
+  created_by: admin,
+  status: "proposed"
+)
+cadeaux_groupe.recipients = [bob, charlie, diane]
+cadeaux_groupe.save!
+
+atelier_cuisine = GiftIdea.new(
+  title: "Atelier de cuisine en ligne",
+  description: "Un atelier de cuisine en ligne pour apprendre à faire des plats gourmets",
+  price: 89.99,
+  link: "https://example.com/atelier-cuisine",
+  image_url: "https://example.com/image-atelier.jpg",
+  created_by: bob,
+  status: "buying"
+)
+atelier_cuisine.recipients = [alice, diane]
+atelier_cuisine.save!
+
+escape_game = GiftIdea.new(
+  title: "Session d'escape game",
+  description: "Une session d'escape game pour toute l'équipe",
+  price: 120.00,
+  link: "https://example.com/escape-game",
+  image_url: "https://example.com/image-escape.jpg",
+  created_by: alice,
+  status: "proposed"
+)
+escape_game.recipients = [admin, bob, charlie, diane]
+escape_game.save!
+
 puts "#{GiftIdea.count} idées de cadeaux créées."
+puts "#{GiftRecipient.count} associations gift_recipients créées."
 
 puts "Génération des données terminée avec succès!"

@@ -1,40 +1,43 @@
 class GiftIdeaSerializer < ActiveModel::Serializer
   attributes :id, :title, :description, :price, :link, :status, :image_url,
-            :created_at, :updated_at, :for_user_id, :created_by_id, :buyer_id
+            :created_at, :updated_at, :created_by_id, :buyer_id
 
   # Ajouter les attributs au format camelCase pour le frontend
-  attribute :forUser
-  attribute :forUserName
+  attribute :recipients
   attribute :groupName
   attribute :buyerId
   attribute :buyerName
   attribute :buyer_data
 
-  # Les anciennes associations pour compatibilité
-  belongs_to :for_user, serializer: UserSerializer
+  # Les associations pour les relations
   belongs_to :created_by, serializer: UserSerializer
   belongs_to :buyer, serializer: UserSerializer, optional: true
 
   # Définir les attributs camelCase pour l'intégration frontend
-  def forUser
-    return nil if object.for_user.nil?
-    {
-      id: object.for_user.id,
-      name: object.for_user.name
-    }
-  end
-
-  def forUserName
-    object.for_user&.name
+  def recipients
+    object.recipients.map do |recipient|
+      {
+        id: recipient.id,
+        name: recipient.name
+      }
+    end
   end
 
   def groupName
-    # Trouver le groupe commun (s'il y en a plusieurs, prend le premier)
-    common_groups = object.for_user&.common_groups_with(object.created_by)
+    # Trouver les groupes communs entre le créateur et les destinataires
+    recipient_ids = object.recipients.pluck(:id)
+    return "Aucun groupe commun" if recipient_ids.blank?
+
+    # Trouver le premier groupe commun entre le créateur et au moins un destinataire
+    common_groups = Membership.where(user_id: recipient_ids)
+                               .joins("INNER JOIN memberships AS creator_memberships ON memberships.group_id = creator_memberships.group_id")
+                               .where("creator_memberships.user_id = ?", object.created_by_id)
+                               .select("DISTINCT memberships.group_id")
+                               .limit(1)
+
     return "Aucun groupe commun" if common_groups.blank?
 
-    # Trier par nom pour avoir une réponse cohérente
-    common_groups.sort_by(&:name).first.name
+    Group.find(common_groups.first.group_id)&.name || "Aucun groupe commun"
   end
 
   def buyerId
@@ -55,7 +58,7 @@ class GiftIdeaSerializer < ActiveModel::Serializer
 
   # Ces méthodes sont gardées pour compatibilité mais ne sont plus utilisées dans le frontend
   def for_user_name
-    object.for_user&.name
+    object.recipients.first&.name || "Aucun destinataire"
   end
 
   def created_by_name

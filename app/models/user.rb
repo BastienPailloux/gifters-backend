@@ -8,8 +8,11 @@ class User < ApplicationRecord
   has_many :memberships, dependent: :destroy
   has_many :groups, through: :memberships
   has_many :created_gift_ideas, class_name: 'GiftIdea', foreign_key: 'created_by_id', dependent: :destroy
-  has_many :received_gift_ideas, class_name: 'GiftIdea', foreign_key: 'for_user_id', dependent: :destroy
   has_many :created_invitations, class_name: 'Invitation', foreign_key: 'created_by_id', dependent: :destroy
+
+  # Relations pour les destinataires de cadeaux
+  has_many :gift_recipients, dependent: :destroy
+  has_many :received_gift_ideas, through: :gift_recipients, source: :gift_idea
 
   # Validations
   validates :name, presence: true

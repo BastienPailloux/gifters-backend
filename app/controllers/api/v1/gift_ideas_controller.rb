@@ -43,8 +43,13 @@ module Api
           end
         end
 
-        # Ajouter des filtres pour limiter par utilisateur si demandé
-        @gift_ideas = @gift_ideas.for_recipient(params[:for_user_id]) if params[:for_user_id].present?
+        # Ajouter des filtres pour limiter par utilisateur destinataire si demandé
+        if params[:for_user_id].present?
+          # Pour la compatibilité avec l'ancien format
+          @gift_ideas = @gift_ideas.for_recipient(params[:for_user_id])
+        elsif params[:recipient_id].present?
+          @gift_ideas = @gift_ideas.for_recipient(params[:recipient_id])
+        end
 
         # Ajouter un filtre pour limiter par groupe si demandé
         if params[:group_id].present?
@@ -61,7 +66,7 @@ module Api
         @gift_ideas = @gift_ideas.with_buyer(params[:buyer_id]) if params[:buyer_id].present?
 
         # Inclure les associations pour le sérialiseur
-        @gift_ideas = @gift_ideas.includes(:for_user, :created_by)
+        @gift_ideas = @gift_ideas.includes(:recipients, :created_by)
 
         # Sérialiser chaque idée de cadeau individuellement pour s'assurer que tous les attributs sont inclus
         serialized_gift_ideas = @gift_ideas.map do |gift|
@@ -82,6 +87,21 @@ module Api
         @gift_idea = GiftIdea.new(gift_idea_params)
         # Assigner l'utilisateur courant comme créateur
         @gift_idea.created_by = current_user
+
+        # Traiter les destinataires
+        if params[:gift_idea][:recipient_ids].present?
+          recipient_ids = params[:gift_idea][:recipient_ids]
+          recipient_ids = [recipient_ids] unless recipient_ids.is_a?(Array)
+
+          # Vérifier que tous les utilisateurs existent
+          recipients = User.where(id: recipient_ids)
+          if recipients.count != recipient_ids.uniq.count
+            return render json: { errors: ["Some recipient users don't exist"] }, status: :unprocessable_entity
+          end
+
+          # Associer les destinataires
+          @gift_idea.recipients = recipients
+        end
 
         if @gift_idea.save
           render json: { giftIdea: GiftIdeaSerializer.new(@gift_idea, scope: current_user).as_json }, status: :created
@@ -167,7 +187,7 @@ module Api
         end
 
         # Ne pas autoriser le destinataire du cadeau à changer son statut
-        if @gift_idea.for_user_id == current_user.id
+        if @gift_idea.is_recipient?(current_user)
           render json: { error: "You cannot change the status of your own gift" }, status: :forbidden
           return false
         end
@@ -176,7 +196,7 @@ module Api
       end
 
       def gift_idea_params
-        params.require(:gift_idea).permit(:title, :description, :link, :price, :for_user_id)
+        params.require(:gift_idea).permit(:title, :description, :link, :price, recipient_ids: [])
       end
     end
   end
