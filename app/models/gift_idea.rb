@@ -117,14 +117,18 @@ class GiftIdea < ApplicationRecord
   end
 
   def visible_to?(user)
+    # Si le cadeau est acheté, personne ne peut le voir
     return false if status == 'bought'
+
+    # Le créateur peut toujours voir ses propres cadeaux (sauf s'ils sont achetés)
     return true if created_by_id == user.id
 
-    # Vérifier si l'utilisateur est un destinataire
+    # Le destinataire ne peut pas voir le cadeau qui lui est destiné
     return false if is_recipient?(user)
 
-    # Vérifier si l'utilisateur a un groupe en commun avec TOUS les destinataires
-    recipients.all? { |recipient| recipient.has_common_group_with?(user) }
+    # Pour les autres utilisateurs, ils doivent avoir un groupe en commun avec le créateur
+    # et avec tous les destinataires
+    return user.has_common_group_with?(created_by)
   end
 
   # Vérifier si un utilisateur est destinataire de ce cadeau

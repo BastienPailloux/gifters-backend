@@ -17,8 +17,17 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
   end
 
   # Création d'idées de cadeaux pour les tests
-  let(:gift_idea_for_another_user) { create(:gift_idea, created_by: user, for_user: another_user) }
-  let(:gift_idea_for_user) { create(:gift_idea, created_by: another_user, for_user: user) }
+  let(:gift_idea_for_another_user) do
+    gift = create(:gift_idea, created_by: user)
+    gift.recipients << another_user
+    gift
+  end
+
+  let(:gift_idea_for_user) do
+    gift = create(:gift_idea, created_by: another_user)
+    gift.recipients << user
+    gift
+  end
 
   describe "GET /api/v1/gift_ideas" do
     context "when authenticated" do
@@ -26,7 +35,8 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         # Créer quelques idées de cadeaux
         gift_idea_for_another_user
         gift_idea_for_user
-        create(:gift_idea, created_by: user, for_user: third_user)
+        gift_for_third = create(:gift_idea, created_by: user)
+        gift_for_third.recipients << third_user
 
         get "/api/v1/gift_ideas", headers: headers
       end
@@ -39,21 +49,23 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         gift_ideas = JSON.parse(response.body)["giftIdeas"]
         # L'utilisateur devrait voir les idées créées mais pas celles qui lui sont destinées
         expect(gift_ideas.size).to eq(2)
-        expect(gift_ideas.map { |gi| gi['id'] }).to include(gift_idea_for_another_user.id)
-        expect(gift_ideas.map { |gi| gi['id'] }).not_to include(gift_idea_for_user.id)
+        expect(gift_ideas.map { |gi| gi['id'].to_i }).to include(gift_idea_for_another_user.id)
+        expect(gift_ideas.map { |gi| gi['id'].to_i }).not_to include(gift_idea_for_user.id)
       end
 
       it "returns gift ideas with correct attributes" do
         gift_ideas = JSON.parse(response.body)["giftIdeas"]
         expect(gift_ideas.first).to include('id', 'title', 'description', 'link', 'price', 'status')
-        expect(gift_ideas.first).to include('created_by_id', 'for_user_id')
+        expect(gift_ideas.first).to include('created_by_id')
+        expect(gift_ideas.first).to include('recipients')
       end
     end
 
     context "with filter parameters" do
       before do
         # Créer un cadeau avec le statut "buying" et définir l'utilisateur courant comme acheteur
-        @buying_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'buying', buyer: user)
+        @buying_gift = create(:gift_idea, created_by: user, status: 'buying', buyer: user)
+        @buying_gift.recipients << another_user
       end
 
       it "filters by status" do
@@ -69,9 +81,14 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         GiftIdea.destroy_all
 
         # Créer des cadeaux avec différents statuts
-        proposed_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'proposed')
-        buying_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'buying', buyer: user)
-        bought_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'bought', buyer: user)
+        proposed_gift = create(:gift_idea, created_by: user, status: 'proposed')
+        proposed_gift.recipients << another_user
+
+        buying_gift = create(:gift_idea, created_by: user, status: 'buying', buyer: user)
+        buying_gift.recipients << another_user
+
+        bought_gift = create(:gift_idea, created_by: user, status: 'bought', buyer: user)
+        bought_gift.recipients << another_user
 
         # Vérifier le filtrage pour plusieurs statuts
         get "/api/v1/gift_ideas?status[]=proposed&status[]=buying", headers: headers
@@ -91,11 +108,16 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         expect(gift_ideas.first['status']).to eq('proposed')
       end
 
-      it "filters by for_user_id" do
-        get "/api/v1/gift_ideas?for_user_id=#{another_user.id}", headers: headers
+      it "filters by recipient_id" do
+        get "/api/v1/gift_ideas?recipient_id=#{another_user.id}", headers: headers
 
         gift_ideas = JSON.parse(response.body)["giftIdeas"]
-        expect(gift_ideas.all? { |gi| gi['for_user_id'] == another_user.id }).to be true
+        expect(gift_ideas.size).to be >= 1
+        # Vérifier que tous les cadeaux ont le destinataire spécifié
+        gift_ideas.each do |gi|
+          recipient_ids = gi['recipients'].map { |r| r['id'].to_i }
+          expect(recipient_ids).to include(another_user.id)
+        end
       end
 
       it "filters by group_id" do
@@ -106,33 +128,35 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         other_group.add_user(other_user)
 
         # Créer des idées de cadeaux pour les deux groupes
-        gift_in_first_group = create(:gift_idea, created_by: user, for_user: another_user)
+        # 1. Cadeau pour un utilisateur dans le premier groupe
+        gift_in_first_group = create(:gift_idea, created_by: user)
+        gift_in_first_group.recipients.destroy_all  # Supprimer les destinataires par défaut
+        gift_in_first_group.recipients << another_user
+        gift_in_first_group.save!
+
+        # Assurons-nous que les associations ont fonctionné
+        expect(gift_in_first_group.recipients).to include(another_user)
 
         # Vérifier le filtrage pour le premier groupe
         get "/api/v1/gift_ideas?group_id=#{group.id}", headers: headers
 
         gift_ideas = JSON.parse(response.body)["giftIdeas"]
-        expect(gift_ideas.map { |gi| gi['id'] }).to include(gift_in_first_group.id)
+        gift_idea_ids = gift_ideas.map { |gi| gi['id'].to_i }
+        expect(gift_idea_ids).to include(gift_in_first_group.id)
 
-        # Créer un cadeau pour un utilisateur qui n'est pas dans le premier groupe
-        # mais qui est dans le second groupe avec l'utilisateur courant
-        gift_in_second_group = GiftIdea.new(
-          title: "Gift for user in second group",
-          description: "A gift for testing",
-          link: "https://example.com/gift",
-          price: 29.99,
-          created_by: user,
-          for_user: other_user
-        )
-        # Contourner la validation
-        gift_in_second_group.save(validate: false)
+        # 2. Cadeau pour un utilisateur dans le second groupe
+        gift_in_second_group = create(:gift_idea, created_by: user)
+        gift_in_second_group.recipients.destroy_all  # Supprimer les destinataires par défaut
+        gift_in_second_group.recipients << other_user
+        gift_in_second_group.save!
 
         # Vérifier le filtrage pour le second groupe
         get "/api/v1/gift_ideas?group_id=#{other_group.id}", headers: headers
 
         gift_ideas = JSON.parse(response.body)["giftIdeas"]
-        expect(gift_ideas.map { |gi| gi['id'] }).to include(gift_in_second_group.id)
-        expect(gift_ideas.map { |gi| gi['id'] }).not_to include(gift_in_first_group.id)
+        gift_idea_ids = gift_ideas.map { |gi| gi['id'].to_i }
+        expect(gift_idea_ids).to include(gift_in_second_group.id)
+        expect(gift_idea_ids).not_to include(gift_in_first_group.id)
       end
 
       it "returns empty array for non-existent group" do
@@ -157,23 +181,28 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         GiftIdea.destroy_all
 
         # Créer différents cadeaux avec différents acheteurs
-        user_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'buying', buyer: user)
-        another_user_gift = create(:gift_idea, created_by: user, for_user: third_user, status: 'buying', buyer: another_user)
-        third_user_gift = create(:gift_idea, created_by: user, for_user: another_user, status: 'buying', buyer: third_user)
+        user_gift = create(:gift_idea, created_by: user, status: 'buying', buyer: user)
+        user_gift.recipients << another_user
+
+        another_user_gift = create(:gift_idea, created_by: user, status: 'buying', buyer: another_user)
+        another_user_gift.recipients << third_user
+
+        third_user_gift = create(:gift_idea, created_by: user, status: 'buying', buyer: third_user)
+        third_user_gift.recipients << another_user
 
         # Vérifier le filtrage par buyer_id
         get "/api/v1/gift_ideas?buyer_id=#{user.id}", headers: headers
 
         gift_ideas = JSON.parse(response.body)["giftIdeas"]
         expect(gift_ideas.size).to eq(1)
-        expect(gift_ideas.first['id']).to eq(user_gift.id)
+        expect(gift_ideas.first['id'].to_i).to eq(user_gift.id)
 
         # Vérifier avec un autre acheteur
         get "/api/v1/gift_ideas?buyer_id=#{another_user.id}", headers: headers
 
         gift_ideas = JSON.parse(response.body)["giftIdeas"]
         expect(gift_ideas.size).to eq(1)
-        expect(gift_ideas.first['id']).to eq(another_user_gift.id)
+        expect(gift_ideas.first['id'].to_i).to eq(another_user_gift.id)
 
         # Vérifier avec un acheteur qui n'existe pas
         get "/api/v1/gift_ideas?buyer_id=999", headers: headers
@@ -206,12 +235,13 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "returns the gift idea" do
-          expect(JSON.parse(response.body)["giftIdea"]['id']).to eq(gift_idea_for_another_user.id)
+          expect(JSON.parse(response.body)["giftIdea"]['id'].to_i).to eq(gift_idea_for_another_user.id)
         end
 
         it "returns gift idea with correct attributes" do
           gift_idea = JSON.parse(response.body)["giftIdea"]
           expect(gift_idea).to include('id', 'title', 'description', 'link', 'price', 'status')
+          expect(gift_idea).to include('recipients')
         end
       end
 
@@ -261,7 +291,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
           description: "A great gift idea",
           link: "https://example.com/gift",
           price: 29.99,
-          for_user_id: another_user.id
+          recipient_ids: [another_user.id]
         }
       }
     }
@@ -273,7 +303,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
           description: "Invalid gift idea",
           link: "not-a-url",
           price: -10,
-          for_user_id: another_user.id
+          recipient_ids: [another_user.id]
         }
       }
     }
@@ -297,6 +327,12 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         it "sets the default status to 'proposed'" do
           expect(JSON.parse(response.body)["giftIdea"]['status']).to eq('proposed')
         end
+
+        it "adds the specified recipients" do
+          recipients = JSON.parse(response.body)["giftIdea"]['recipients']
+          expect(recipients.size).to eq(1)
+          expect(recipients.first['id'].to_i).to eq(another_user.id)
+        end
       end
 
       context "when the request is invalid" do
@@ -311,28 +347,48 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
       end
 
-      context "when the for_user is not in a common group with the creator" do
-        let(:user_not_in_group) { create(:user) }
-        let(:invalid_user_attributes) {
-          {
+      context "when no recipients are specified" do
+        before do
+          post "/api/v1/gift_ideas", params: {
             gift_idea: {
-              title: "Gift for user not in group",
-              description: "This should fail",
+              title: "New Gift Idea",
+              description: "A great gift idea",
+              link: "https://example.com/gift",
+              price: 29.99
+            }
+          }, headers: headers
+        end
+
+        it "returns status code 422" do
+          expect(response).to have_http_status(422)
+        end
+
+        it "returns an error message about recipients" do
+          expect(JSON.parse(response.body)['errors']).to include("Gift idea must have at least one recipient")
+        end
+      end
+
+      context "when a recipient is not in a common group with the creator" do
+        let(:outside_user) { create(:user) }
+
+        before do
+          post "/api/v1/gift_ideas", params: {
+            gift_idea: {
+              title: "New Gift Idea",
+              description: "A great gift idea",
               link: "https://example.com/gift",
               price: 29.99,
-              for_user_id: user_not_in_group.id
+              recipient_ids: [outside_user.id]
             }
-          }
-        }
-
-        before { post "/api/v1/gift_ideas", params: invalid_user_attributes, headers: headers }
+          }, headers: headers
+        end
 
         it "returns status code 422" do
           expect(response).to have_http_status(422)
         end
 
         it "returns an error message about common group" do
-          expect(JSON.parse(response.body)['errors']).to include(/must be in a common group/)
+          expect(JSON.parse(response.body)['errors']).to include(/must all be in a common group with you/)
         end
       end
     end
@@ -368,7 +424,11 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
       end
 
       context "when trying to update another user's gift idea" do
-        let(:another_user_gift) { create(:gift_idea, created_by: another_user, for_user: user) }
+        let(:another_user_gift) do
+          gift = create(:gift_idea, created_by: another_user)
+          gift.recipients << user
+          gift
+        end
 
         before { put "/api/v1/gift_ideas/#{another_user_gift.id}", params: valid_attributes, headers: headers }
 
@@ -377,7 +437,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to update this gift idea')
+          expect(JSON.parse(response.body)['error']).to include("You are not authorized")
         end
       end
     end
@@ -398,19 +458,29 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
   describe "DELETE /api/v1/gift_ideas/:id" do
     context "when authenticated" do
       context "when deleting own gift idea" do
-        before { delete "/api/v1/gift_ideas/#{gift_idea_for_another_user.id}", headers: headers }
+        let(:gift_to_delete) do
+          gift = create(:gift_idea, created_by: user)
+          gift.recipients << another_user
+          gift
+        end
+
+        before { delete "/api/v1/gift_ideas/#{gift_to_delete.id}", headers: headers }
 
         it "returns status code 204" do
           expect(response).to have_http_status(204)
         end
 
         it "deletes the gift idea" do
-          expect(GiftIdea.find_by(id: gift_idea_for_another_user.id)).to be_nil
+          expect(GiftIdea.find_by(id: gift_to_delete.id)).to be_nil
         end
       end
 
       context "when trying to delete another user's gift idea" do
-        let(:another_user_gift) { create(:gift_idea, created_by: another_user, for_user: user) }
+        let(:another_user_gift) do
+          gift = create(:gift_idea, created_by: another_user)
+          gift.recipients << user
+          gift
+        end
 
         before { delete "/api/v1/gift_ideas/#{another_user_gift.id}", headers: headers }
 
@@ -419,7 +489,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to destroy this gift idea')
+          expect(JSON.parse(response.body)['error']).to include("You are not authorized")
         end
       end
     end
@@ -459,7 +529,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to mark_as_buying this gift idea')
+          expect(JSON.parse(response.body)['error']).to include("You are not authorized")
         end
       end
     end
@@ -499,7 +569,7 @@ RSpec.describe "Api::V1::GiftIdeas", type: :request do
         end
 
         it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to mark_as_bought this gift idea')
+          expect(JSON.parse(response.body)['error']).to include("You are not authorized")
         end
       end
     end

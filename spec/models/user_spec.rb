@@ -18,7 +18,8 @@ RSpec.describe User, type: :model do
     it { should have_many(:memberships).dependent(:destroy) }
     it { should have_many(:groups).through(:memberships) }
     it { should have_many(:created_gift_ideas).dependent(:destroy) }
-    it { should have_many(:received_gift_ideas).dependent(:destroy) }
+    it { should have_many(:gift_recipients).dependent(:destroy) }
+    it { should have_many(:received_gift_ideas).through(:gift_recipients).source(:gift_idea) }
   end
 
   describe '#common_groups_with' do
