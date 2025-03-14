@@ -32,11 +32,29 @@ class GiftIdea < ApplicationRecord
     where.not(id: GiftRecipient.where(user_id: user.id).select(:gift_idea_id))
   }
   scope :for_users_in_common_groups, ->(user) {
-    # Trouver les idées où au moins un destinataire est dans un groupe commun avec l'utilisateur
-    where(id: GiftRecipient.joins("INNER JOIN memberships AS recipient_memberships ON gift_recipients.user_id = recipient_memberships.user_id")
-                           .joins("INNER JOIN memberships AS user_memberships ON recipient_memberships.group_id = user_memberships.group_id")
-                           .where("user_memberships.user_id = ?", user.id)
-                           .select(:gift_idea_id))
+    # Cette requête trouve les idées de cadeaux où tous les destinataires ont un groupe commun avec l'utilisateur
+    gift_idea_ids_with_recipient_count = GiftRecipient.group(:gift_idea_id).count
+
+    # Pour chaque idée de cadeau, compter combien de destinataires ont un groupe commun avec l'utilisateur
+    gift_idea_ids_with_common_group_count =
+      GiftRecipient.joins("INNER JOIN memberships AS recipient_memberships ON gift_recipients.user_id = recipient_memberships.user_id")
+                  .joins("INNER JOIN memberships AS user_memberships ON recipient_memberships.group_id = user_memberships.group_id")
+                  .where("user_memberships.user_id = ?", user.id)
+                  .select("gift_recipients.gift_idea_id, COUNT(DISTINCT gift_recipients.user_id) as recipient_count_with_common_group")
+                  .group("gift_recipients.gift_idea_id")
+                  .to_a
+                  .map { |r| [r.gift_idea_id, r.recipient_count_with_common_group.to_i] }
+                  .to_h
+
+    # Trouver les idées de cadeaux où le nombre de destinataires avec un groupe commun
+    # est égal au nombre total de destinataires
+    gift_idea_ids = gift_idea_ids_with_recipient_count.keys.select do |gift_idea_id|
+      total_recipients = gift_idea_ids_with_recipient_count[gift_idea_id]
+      recipients_with_common_group = gift_idea_ids_with_common_group_count[gift_idea_id] || 0
+      recipients_with_common_group == total_recipients
+    end
+
+    where(id: gift_idea_ids)
   }
   scope :bought_by_user, ->(user) { where(buyer: user) }
 
@@ -51,10 +69,28 @@ class GiftIdea < ApplicationRecord
     group = Group.find_by(id: group_id)
     return none unless group
 
-    # Inclure les idées pour les destinataires dans ce groupe
-    where(id: GiftRecipient.joins("INNER JOIN memberships ON gift_recipients.user_id = memberships.user_id")
-                          .where("memberships.group_id = ?", group_id)
-                          .select(:gift_idea_id))
+    # Cette requête trouve les idées de cadeaux où tous les destinataires sont dans le groupe
+    gift_idea_ids_with_recipient_count = GiftRecipient.group(:gift_idea_id).count
+
+    # Pour chaque idée de cadeau, compter combien de destinataires sont membres du groupe
+    gift_idea_ids_with_group_membership_count =
+      GiftRecipient.joins("INNER JOIN memberships ON gift_recipients.user_id = memberships.user_id")
+                  .where("memberships.group_id = ?", group_id)
+                  .select("gift_recipients.gift_idea_id, COUNT(DISTINCT gift_recipients.user_id) as recipient_count_in_group")
+                  .group("gift_recipients.gift_idea_id")
+                  .to_a
+                  .map { |r| [r.gift_idea_id, r.recipient_count_in_group.to_i] }
+                  .to_h
+
+    # Trouver les idées de cadeaux où le nombre de destinataires membres du groupe
+    # est égal au nombre total de destinataires
+    gift_idea_ids = gift_idea_ids_with_recipient_count.keys.select do |gift_idea_id|
+      total_recipients = gift_idea_ids_with_recipient_count[gift_idea_id]
+      recipients_in_group = gift_idea_ids_with_group_membership_count[gift_idea_id] || 0
+      recipients_in_group == total_recipients
+    end
+
+    where(id: gift_idea_ids)
   }
 
   # Scope principal pour les idées visibles par un utilisateur
@@ -62,10 +98,7 @@ class GiftIdea < ApplicationRecord
     created_by_user(user)
       .or(
         not_for_user(user)
-          .where(id: GiftRecipient.joins("INNER JOIN memberships AS recipient_memberships ON gift_recipients.user_id = recipient_memberships.user_id")
-                                 .joins("INNER JOIN memberships AS user_memberships ON recipient_memberships.group_id = user_memberships.group_id")
-                                 .where("user_memberships.user_id = ?", user.id)
-                                 .select(:gift_idea_id))
+          .for_users_in_common_groups(user)
       )
   }
 
@@ -90,8 +123,8 @@ class GiftIdea < ApplicationRecord
     # Vérifier si l'utilisateur est un destinataire
     return false if is_recipient?(user)
 
-    # Vérifier si l'utilisateur a un groupe en commun avec au moins un destinataire
-    recipients.any? { |recipient| recipient.has_common_group_with?(user) }
+    # Vérifier si l'utilisateur a un groupe en commun avec TOUS les destinataires
+    recipients.all? { |recipient| recipient.has_common_group_with?(user) }
   end
 
   # Vérifier si un utilisateur est destinataire de ce cadeau
