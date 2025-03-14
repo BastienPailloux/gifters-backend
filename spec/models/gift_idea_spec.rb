@@ -14,12 +14,13 @@ RSpec.describe GiftIdea, type: :model do
 
   # Sujet valide pour les tests de validation
   subject {
-    build(:gift_idea,
+    gift = build(:gift_idea,
       title: "Test Gift",
       link: "https://example.com/gift",
-      created_by: creator,
-      for_user: receiver
+      created_by: creator
     )
+    gift.recipients << receiver
+    gift
   }
 
   describe 'validations' do
@@ -30,7 +31,8 @@ RSpec.describe GiftIdea, type: :model do
 
     context 'when validating link format' do
       it 'is invalid with an invalid URL format' do
-        gift_idea = build(:gift_idea, link: 'invalid-url', created_by: creator, for_user: receiver)
+        gift_idea = build(:gift_idea, link: 'invalid-url', created_by: creator)
+        gift_idea.recipients << receiver
         expect(gift_idea).not_to be_valid
         expect(gift_idea.errors[:link]).to include("n'est pas une URL valide")
       end
@@ -40,22 +42,26 @@ RSpec.describe GiftIdea, type: :model do
   describe 'associations' do
     # Désactiver temporairement la validation personnalisée pour les tests d'association
     before do
-      allow_any_instance_of(GiftIdea).to receive(:creator_and_receiver_have_common_group).and_return(true)
+      allow_any_instance_of(GiftIdea).to receive(:creator_and_recipients_have_common_group).and_return(true)
+      allow_any_instance_of(GiftIdea).to receive(:at_least_one_recipient).and_return(true)
     end
 
-    it { should belong_to(:for_user).class_name('User') }
     it { should belong_to(:created_by).class_name('User') }
+    it { should have_many(:gift_recipients).dependent(:destroy) }
+    it { should have_many(:recipients).through(:gift_recipients).source(:user) }
   end
 
   describe 'callbacks' do
     it 'sets default status to proposed if not specified' do
-      gift_idea = build(:gift_idea, status: nil, created_by: creator, for_user: receiver)
+      gift_idea = build(:gift_idea, status: nil, created_by: creator)
+      gift_idea.recipients << receiver
       gift_idea.valid?
       expect(gift_idea.status).to eq('proposed')
     end
 
     it 'does not override status if already set' do
-      gift_idea = build(:gift_idea, status: 'buying', created_by: creator, for_user: receiver)
+      gift_idea = build(:gift_idea, status: 'buying', created_by: creator)
+      gift_idea.recipients << receiver
       gift_idea.valid?
       expect(gift_idea.status).to eq('buying')
     end
@@ -68,34 +74,49 @@ RSpec.describe GiftIdea, type: :model do
   end
 
   describe 'custom validations' do
-    context 'when creator and receiver have common group' do
+    context 'when creator and recipients have common group' do
       it 'is valid' do
-        gift_idea = build(:gift_idea, created_by: creator, for_user: receiver)
+        gift_idea = build(:gift_idea, created_by: creator)
+        gift_idea.recipients << receiver
         expect(gift_idea).to be_valid
       end
     end
 
-    context 'when creator and receiver have no common group' do
+    context 'when creator and recipients have no common group' do
       let(:other_user) { create(:user) }
 
       it 'is invalid' do
-        gift_idea = build(:gift_idea, created_by: creator, for_user: other_user)
+        gift_idea = build(:gift_idea, created_by: creator)
+        gift_idea.recipients << other_user
         expect(gift_idea).not_to be_valid
-        expect(gift_idea.errors[:for_user]).to include("must be in a common group with you")
+        expect(gift_idea.errors[:recipients]).to include("must all be in a common group with you")
       end
     end
 
-    context 'when creator and receiver are the same person' do
+    context 'when creator and recipient are the same person' do
       it 'is valid' do
-        gift_idea = build(:gift_idea, created_by: creator, for_user: creator)
+        gift_idea = build(:gift_idea, created_by: creator)
+        gift_idea.recipients << creator
         expect(gift_idea).to be_valid
+      end
+    end
+
+    context 'when no recipients' do
+      it 'is invalid' do
+        gift_idea = build(:gift_idea, created_by: creator)
+        gift_idea.recipients.clear
+        expect(gift_idea).not_to be_valid
+        expect(gift_idea.errors[:base]).to include("Gift idea must have at least one recipient")
       end
     end
   end
 
   describe '#mark_as_buying' do
     it 'changes status to buying' do
-      gift_idea = create(:gift_idea, created_by: creator, for_user: receiver)
+      gift_idea = build(:gift_idea, created_by: creator)
+      gift_idea.recipients << receiver
+      gift_idea.save!
+
       gift_idea.mark_as_buying
       expect(gift_idea.reload.status).to eq('buying')
     end
@@ -103,7 +124,10 @@ RSpec.describe GiftIdea, type: :model do
 
   describe '#mark_as_bought' do
     it 'changes status to bought' do
-      gift_idea = create(:gift_idea, :buying, created_by: creator, for_user: receiver)
+      gift_idea = build(:gift_idea, status: 'buying', created_by: creator)
+      gift_idea.recipients << receiver
+      gift_idea.save!
+
       gift_idea.mark_as_bought
       expect(gift_idea.reload.status).to eq('bought')
     end
@@ -114,17 +138,24 @@ RSpec.describe GiftIdea, type: :model do
     let(:non_group_member) { create(:user) }
 
     before do
+      # S'assurer que tout le monde est dans le bon groupe
       create(:membership, user: group_member, group: group)
     end
 
     context 'when gift idea is proposed' do
-      let(:gift_idea) { create(:gift_idea, created_by: creator, for_user: receiver) }
+      let!(:gift_idea) do
+        # Créer un GiftIdea en désactivant les validations pour les tests
+        idea = build(:gift_idea, created_by: creator)
+        idea.recipients << receiver
+        idea.save(validate: false)
+        idea
+      end
 
       it 'is visible to creator' do
         expect(gift_idea.visible_to?(creator)).to be true
       end
 
-      it 'is not visible to receiver' do
+      it 'is not visible to recipient' do
         expect(gift_idea.visible_to?(receiver)).to be false
       end
 
@@ -138,13 +169,18 @@ RSpec.describe GiftIdea, type: :model do
     end
 
     context 'when gift idea is buying' do
-      let(:gift_idea) { create(:gift_idea, :buying, created_by: creator, for_user: receiver) }
+      let!(:gift_idea) do
+        idea = build(:gift_idea, status: 'buying', created_by: creator)
+        idea.recipients << receiver
+        idea.save(validate: false)
+        idea
+      end
 
       it 'is visible to creator' do
         expect(gift_idea.visible_to?(creator)).to be true
       end
 
-      it 'is not visible to receiver' do
+      it 'is not visible to recipient' do
         expect(gift_idea.visible_to?(receiver)).to be false
       end
 
@@ -154,13 +190,18 @@ RSpec.describe GiftIdea, type: :model do
     end
 
     context 'when gift idea is bought' do
-      let(:gift_idea) { create(:gift_idea, :bought, created_by: creator, for_user: receiver) }
+      let!(:gift_idea) do
+        idea = build(:gift_idea, status: 'bought', created_by: creator)
+        idea.recipients << receiver
+        idea.save(validate: false)
+        idea
+      end
 
       it 'is not visible to creator' do
         expect(gift_idea.visible_to?(creator)).to be false
       end
 
-      it 'is not visible to receiver' do
+      it 'is not visible to recipient' do
         expect(gift_idea.visible_to?(receiver)).to be false
       end
 
