@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_13_154505) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_14_083439) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -20,7 +20,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_13_154505) do
     t.decimal "price"
     t.string "link"
     t.string "image_url"
-    t.bigint "for_user_id", null: false
     t.bigint "created_by_id", null: false
     t.string "status"
     t.datetime "created_at", null: false
@@ -28,7 +27,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_13_154505) do
     t.integer "buyer_id"
     t.index ["buyer_id"], name: "index_gift_ideas_on_buyer_id"
     t.index ["created_by_id"], name: "index_gift_ideas_on_created_by_id"
-    t.index ["for_user_id"], name: "index_gift_ideas_on_for_user_id"
+  end
+
+  create_table "gift_recipients", force: :cascade do |t|
+    t.bigint "gift_idea_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gift_idea_id", "user_id"], name: "index_gift_recipients_on_gift_idea_id_and_user_id", unique: true
+    t.index ["gift_idea_id"], name: "index_gift_recipients_on_gift_idea_id"
+    t.index ["user_id"], name: "index_gift_recipients_on_user_id"
   end
 
   create_table "groups", force: :cascade do |t|
@@ -91,7 +99,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_13_154505) do
 
   add_foreign_key "gift_ideas", "users", column: "buyer_id"
   add_foreign_key "gift_ideas", "users", column: "created_by_id"
-  add_foreign_key "gift_ideas", "users", column: "for_user_id"
+  add_foreign_key "gift_recipients", "gift_ideas"
+  add_foreign_key "gift_recipients", "users"
   add_foreign_key "invitations", "groups"
   add_foreign_key "invitations", "users", column: "created_by_id"
   add_foreign_key "memberships", "groups"
