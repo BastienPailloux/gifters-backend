@@ -1,16 +1,28 @@
 module Api
   module V1
     class MetadataController < Api::V1::BaseController
+      # TODO: SCRAPING_FEATURE - Ce contrôleur est temporairement désactivé côté frontend
+      # en raison de problèmes de scraping (timeouts, CORS, blocage par certains sites).
+      # Le code est maintenu en place pour une utilisation future lorsque ces problèmes
+      # seront résolus.
+
       require 'open-uri'
       require 'nokogiri'
       require 'uri'
       require 'timeout'
+      require 'open_uri_redirections'
 
       # Maximum time to wait for a URL response
-      URL_TIMEOUT = 5 # seconds
+      URL_TIMEOUT = 10 # secondes (augmenté pour les sites lents)
 
       # Maximum redirects to follow
       MAX_REDIRECTS = 3
+
+      # Maximum number of retry attempts
+      MAX_RETRIES = 2
+
+      # Delay between retries in seconds
+      RETRY_DELAY = 1
 
       # POST /api/v1/metadata/fetch
       def fetch
@@ -31,10 +43,30 @@ module Api
         rescue Timeout::Error
           render json: { error: 'Request timed out' }, status: :request_timeout
         rescue OpenURI::HTTPError => e
-          render json: { error: "HTTP Error: #{e.message}" }, status: :bad_gateway
+          # Extraire le code HTTP et le message
+          code, message = e.message.split(' ', 2)
+          code = code.to_i
+
+          # Log détaillé
+          Rails.logger.error("HTTP Error #{code} when fetching metadata for #{url}: #{message}")
+
+          # Réponse adaptée au code d'erreur
+          case code
+          when 403
+            render json: { error: "Access forbidden (403). This website may block web scraping." }, status: :forbidden
+          when 404
+            render json: { error: "Page not found (404). The URL might be invalid." }, status: :not_found
+          when 429
+            render json: { error: "Too many requests (429). The website has rate-limited our requests." }, status: :too_many_requests
+          when 500..599
+            render json: { error: "Remote server error (#{code}). The website is experiencing issues." }, status: :bad_gateway
+          else
+            render json: { error: "HTTP Error: #{e.message}" }, status: :bad_gateway
+          end
         rescue => e
           # Log l'erreur réelle mais ne pas exposer les détails à l'utilisateur
-          Rails.logger.error("Metadata fetch error: #{e.message}")
+          Rails.logger.error("Metadata fetch error for #{url}: #{e.message}")
+          Rails.logger.error(e.backtrace.join("\n"))
           render json: { error: 'Failed to fetch metadata' }, status: :internal_server_error
         end
       end
@@ -51,7 +83,7 @@ module Api
         false
       end
 
-      def fetch_metadata(url, redirect_count = 0)
+      def fetch_metadata(url, redirect_count = 0, retry_count = 0)
         # Vérifier le nombre de redirections
         if redirect_count >= MAX_REDIRECTS
           raise "Too many redirects"
@@ -64,29 +96,56 @@ module Api
           raise "Invalid URL protocol"
         end
 
-        # Ouverture sécurisée de l'URL
-        response = URI.open(
-          url,
-          'User-Agent' => 'Gifters/1.0', # Identifiant de notre application
-          allow_redirections: :safe,      # Ne suit que les redirections HTTP vers HTTPS
-          ssl_verify_mode: OpenSSL::SSL::VERIFY_PEER # Vérifier les certificats SSL
-        )
+        begin
+          # Ouverture sécurisée de l'URL avec support des redirections
+          headers = {
+            'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language' => 'fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3',
+            'Accept-Encoding' => 'gzip, deflate, br',
+            'Connection' => 'keep-alive',
+            'Upgrade-Insecure-Requests' => '1',
+            'Sec-Fetch-Dest' => 'document',
+            'Sec-Fetch-Mode' => 'navigate',
+            'Sec-Fetch-Site' => 'none',
+            'Sec-Fetch-User' => '?1',
+            'Cache-Control' => 'max-age=0'
+          }
 
-        # Suivre une redirection si nécessaire
-        if response.base_uri.to_s != url
-          return fetch_metadata(response.base_uri.to_s, redirect_count + 1)
+          response = URI.open(
+            url,
+            {
+              allow_redirections: :safe,
+              ssl_verify_mode: OpenSSL::SSL::VERIFY_PEER
+            }.merge(headers)
+          )
+
+          # Vérifier si nous avons atteint l'URL finale ou s'il y a encore une redirection
+          if response.base_uri.to_s != url && redirect_count < MAX_REDIRECTS - 1
+            return fetch_metadata(response.base_uri.to_s, redirect_count + 1, retry_count)
+          end
+
+          # Parse le HTML
+          doc = Nokogiri::HTML(response)
+
+          # Récupérer les métadonnées
+          {
+            title: extract_title(doc),
+            description: extract_description(doc),
+            price: extract_price(doc),
+            image_url: extract_image(doc, uri)
+          }
+        rescue OpenURI::HTTPError, SocketError, Errno::ECONNRESET => e
+          # Retenter en cas d'erreur si nous n'avons pas atteint le nombre maximum de tentatives
+          if retry_count < MAX_RETRIES
+            Rails.logger.info("Retrying fetch for #{url} after error: #{e.message} (attempt #{retry_count + 1}/#{MAX_RETRIES})")
+            sleep RETRY_DELAY # Pause avant de réessayer
+            return fetch_metadata(url, redirect_count, retry_count + 1)
+          else
+            # Si nous avons épuisé toutes les tentatives, relancer l'erreur
+            raise
+          end
         end
-
-        # Parse le HTML
-        doc = Nokogiri::HTML(response)
-
-        # Récupérer les métadonnées
-        {
-          title: extract_title(doc),
-          description: extract_description(doc),
-          price: extract_price(doc),
-          image_url: extract_image(doc, uri)
-        }
       end
 
       def extract_title(doc)
