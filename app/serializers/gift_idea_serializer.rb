@@ -2,18 +2,16 @@ class GiftIdeaSerializer < ActiveModel::Serializer
   attributes :id, :title, :description, :price, :link, :status, :image_url,
             :created_at, :updated_at, :created_by_id, :buyer_id
 
-  # Ajouter les attributs au format camelCase pour le frontend
+  # Attributs standardisés et simplifiés
   attribute :recipients
-  attribute :groupName
-  attribute :buyerId
-  attribute :buyerName
-  attribute :buyer_data
+  attribute :group_name
+  attribute :buyer
 
-  # Les associations pour les relations
+  # Association pour le créateur
   belongs_to :created_by, serializer: UserSerializer
   belongs_to :buyer, serializer: UserSerializer, optional: true
 
-  # Définir les attributs camelCase pour l'intégration frontend
+  # Définir l'attribut recipients pour retourner une liste simplifiée
   def recipients
     object.recipients.map do |recipient|
       {
@@ -23,7 +21,8 @@ class GiftIdeaSerializer < ActiveModel::Serializer
     end
   end
 
-  def groupName
+  # Trouver le groupe commun (renommé de groupName à group_name pour cohérence)
+  def group_name
     # Trouver les groupes communs entre le créateur et les destinataires
     recipient_ids = object.recipients.pluck(:id)
     return "Aucun groupe commun" if recipient_ids.blank?
@@ -40,15 +39,8 @@ class GiftIdeaSerializer < ActiveModel::Serializer
     Group.find(common_groups.first.group_id)&.name || "Aucun groupe commun"
   end
 
-  def buyerId
-    object.buyer_id
-  end
-
-  def buyerName
-    object.buyer&.name
-  end
-
-  def buyer_data
+  # Format standard pour l'acheteur, retourne null si aucun acheteur
+  def buyer
     return nil if object.buyer.nil?
     {
       id: object.buyer.id,
