@@ -45,6 +45,9 @@ Rails.application.routes.draw do
           post 'accept'
         end
       end
+
+      # Route pour récupérer les métadonnées d'une URL
+      post 'metadata/fetch', to: 'metadata#fetch'
     end
   end
 

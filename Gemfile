@@ -55,6 +55,10 @@ gem 'jsonapi-serializer'
 # Serialization
 gem 'active_model_serializers', '~> 0.10.13'
 
+# HTML parsing
+gem 'nokogiri', '~> 1.15'
+gem 'open_uri_redirections', '~> 0.2.1' # Support des redirections pour open-uri
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ]
