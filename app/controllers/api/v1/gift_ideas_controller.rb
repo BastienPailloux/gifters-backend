@@ -196,7 +196,7 @@ module Api
       end
 
       def gift_idea_params
-        params.require(:gift_idea).permit(:title, :description, :link, :price, recipient_ids: [])
+        params.require(:gift_idea).permit(:title, :description, :link, :price, :url, recipient_ids: [])
       end
     end
   end
