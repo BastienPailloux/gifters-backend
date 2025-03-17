@@ -5,9 +5,8 @@ class GiftIdeaSerializer < ActiveModel::Serializer
   # Attributs standardisés et simplifiés
   attribute :recipients
   attribute :group_name
-  attribute :buyer
 
-  # Association pour le créateur
+  # Associations
   belongs_to :created_by, serializer: UserSerializer
   belongs_to :buyer, serializer: UserSerializer, optional: true
 
@@ -37,15 +36,6 @@ class GiftIdeaSerializer < ActiveModel::Serializer
     return "Aucun groupe commun" if common_groups.blank?
 
     Group.find(common_groups.first.group_id)&.name || "Aucun groupe commun"
-  end
-
-  # Format standard pour l'acheteur, retourne null si aucun acheteur
-  def buyer
-    return nil if object.buyer.nil?
-    {
-      id: object.buyer.id,
-      name: object.buyer.name
-    }
   end
 
   # Ces méthodes sont gardées pour compatibilité mais ne sont plus utilisées dans le frontend
