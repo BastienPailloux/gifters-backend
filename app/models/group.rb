@@ -28,6 +28,10 @@ class Group < ApplicationRecord
     memberships.where(role: 'admin').count
   end
 
+  def members_count
+    memberships.count
+  end
+
   def create_invitation(created_by, role = 'member')
     invitations.create(created_by: created_by, role: role)
   end

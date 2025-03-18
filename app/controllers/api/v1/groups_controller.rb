@@ -9,7 +9,9 @@ module Api
       # GET /api/v1/groups
       def index
         @groups = current_user.groups
-        render json: @groups, only: [:id, :name, :description]
+        render json: @groups.map { |group|
+          group.as_json(only: [:id, :name, :description]).merge(members_count: group.members_count)
+        }
       end
 
       # GET /api/v1/groups/:id
@@ -19,6 +21,7 @@ module Api
           id: @group.id,
           name: @group.name,
           description: @group.description,
+          members_count: @group.members_count,
           members: @group.memberships.includes(:user).map { |m| m.user.as_json(only: [:id, :name, :email]).merge(role: m.role) }
         }
 
@@ -32,7 +35,8 @@ module Api
         if @group.save
           @group.memberships.create(user: current_user, role: 'admin')
 
-          render json: @group, status: :created, only: [:id, :name, :description]
+          render json: @group.as_json(only: [:id, :name, :description]).merge(members_count: @group.members_count),
+                 status: :created
         else
           render json: { errors: @group.errors.full_messages }, status: :unprocessable_entity
         end
@@ -41,7 +45,7 @@ module Api
       # PUT /api/v1/groups/:id
       def update
         if @group.update(group_params)
-          render json: @group, only: [:id, :name, :description]
+          render json: @group.as_json(only: [:id, :name, :description]).merge(members_count: @group.members_count)
         else
           render json: { errors: @group.errors.full_messages }, status: :unprocessable_entity
         end
