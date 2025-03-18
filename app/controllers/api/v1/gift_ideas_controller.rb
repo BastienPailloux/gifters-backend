@@ -51,6 +51,11 @@ module Api
           @gift_ideas = @gift_ideas.for_recipient(params[:recipient_id])
         end
 
+        # Ajouter un filtre pour limiter par créateur si demandé
+        if params[:created_by_id].present?
+          @gift_ideas = @gift_ideas.where(created_by_id: params[:created_by_id])
+        end
+
         # Ajouter un filtre pour limiter par groupe si demandé
         if params[:group_id].present?
           group = Group.find_by(id: params[:group_id])
