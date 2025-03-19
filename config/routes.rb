@@ -23,7 +23,11 @@ Rails.application.routes.draw do
                    registration: 'signup'
                  }
 
-      resources :users, only: [:index, :show, :update, :destroy]
+      resources :users, only: [:index, :show, :update, :destroy] do
+        collection do
+          get 'shared_users'
+        end
+      end
 
       resources :groups do
         resources :memberships

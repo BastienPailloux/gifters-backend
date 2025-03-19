@@ -29,8 +29,12 @@ class User < ApplicationRecord
 
   # Retourne les IDs des utilisateurs avec lesquels l'utilisateur partage un groupe
   def common_groups_with_users_ids
+    # Retourner un tableau vide si l'utilisateur n'a pas de groupes
+    group_ids = self.groups.pluck(:id)
+    return [] if group_ids.empty?
+
     User.joins(:memberships)
-        .where(memberships: { group_id: self.groups.pluck(:id) })
+        .where(memberships: { group_id: group_ids })
         .where.not(id: self.id)
         .distinct
         .pluck(:id)
