@@ -14,13 +14,15 @@ Rails.application.routes.draw do
       devise_for :users,
                  controllers: {
                    sessions: 'api/v1/sessions',
-                   registrations: 'api/v1/registrations'
+                   registrations: 'api/v1/registrations',
+                   passwords: 'api/v1/passwords'
                  },
                  path: '',
                  path_names: {
                    sign_in: 'login',
                    sign_out: 'logout',
-                   registration: 'signup'
+                   registration: 'signup',
+                   password: 'password'
                  }
 
       resources :users, only: [:index, :show, :update, :destroy] do

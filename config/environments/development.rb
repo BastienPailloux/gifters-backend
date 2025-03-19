@@ -44,6 +44,9 @@ Rails.application.configure do
   # Configuration des URL pour les emails
   config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
 
+  # URL du frontend pour les liens de réinitialisation de mot de passe
+  config.frontend_url = ENV['FRONTEND_URL'] || 'http://localhost:5173'
+
   # Configuration pour l'envoi d'emails en développement
   config.action_mailer.delivery_method = :letter_opener
   config.action_mailer.perform_deliveries = true

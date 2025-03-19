@@ -80,6 +80,9 @@ Rails.application.configure do
   # Configuration des URL pour les emails en production
   config.action_mailer.default_url_options = { host: ENV['APPLICATION_HOST'] }
 
+  # URL du frontend pour les liens de réinitialisation de mot de passe
+  config.frontend_url = ENV['FRONTEND_URL']
+
   # Configuration SMTP pour l'envoi d'emails en production
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
