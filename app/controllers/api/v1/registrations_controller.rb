@@ -47,7 +47,7 @@ module Api
       end
 
       def sign_up_params
-        params.require(:user).permit(:name, :email, :password, :password_confirmation)
+        params.require(:user).permit(:name, :email, :password, :password_confirmation, :locale)
       rescue ActionController::ParameterMissing => e
         # Informer sur l'erreur
         Rails.logger.error("RegistrationsController#sign_up_params - Erreur: #{e.message}")

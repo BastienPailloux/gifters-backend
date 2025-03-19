@@ -3,6 +3,7 @@ module Api
     class PasswordsController < Devise::PasswordsController
       respond_to :json
       skip_before_action :verify_authenticity_token
+      before_action :update_user_locale, only: [:create]
 
       # POST /api/v1/password - Création d'une demande de réinitialisation
       def create
@@ -39,7 +40,20 @@ module Api
       private
 
       def resource_params
-        params.require(:user).permit(:email, :password, :password_confirmation, :reset_password_token)
+        params.require(:user).permit(:email, :password, :password_confirmation, :reset_password_token, :locale)
+      end
+
+      # Met à jour la locale de l'utilisateur avant d'envoyer l'email
+      def update_user_locale
+        # Récupérer l'utilisateur par email
+        if params[:user] && params[:user][:email]
+          user = User.find_by(email: params[:user][:email])
+
+          # Si l'utilisateur existe et qu'une locale a été fournie, mise à jour
+          if user && params[:user][:locale].present?
+            user.update(locale: params[:user][:locale])
+          end
+        end
       end
     end
   end

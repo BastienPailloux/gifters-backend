@@ -27,7 +27,10 @@ Rails.application.routes.draw do
 
       resources :users, only: [:index, :show, :update, :destroy] do
         collection do
-          get 'shared_users'
+          get :shared_users
+        end
+        member do
+          patch :update_locale
         end
       end
 
