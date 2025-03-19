@@ -1,47 +1,66 @@
 class InvitationMailer < ApplicationMailer
+  default from: 'norepy@gifters.fr'
 
   # Subject can be set in your I18n file at config/locales/en.yml
   # with the following lookup:
   #
   #   en.invitation_mailer.invitation_created.subject
   #
-  def invitation_created(invitation, recipient_email)
+  def invitation_created(invitation)
     @invitation = invitation
+    @sender = invitation.sender
     @group = invitation.group
-    @sender = invitation.created_by
     @token = invitation.token
-    @invitation_url = invitation.invitation_url
 
-    mail(
-      to: recipient_email,
-      subject: "Vous avez été invité à rejoindre un groupe sur Gifters"
-    )
+    # Determine preferred locale based on sender's locale
+    locale = @sender.locale
+
+    # Validate locale
+    unless I18n.available_locales.map(&:to_s).include?(locale.to_s)
+      locale = I18n.default_locale
+    end
+
+    @invitation_url = "#{ENV['FRONTEND_URL'] || 'http://localhost:3000'}/invitations/#{@invitation.token}"
+
+    I18n.with_locale(locale) do
+      mail(
+        to: @invitation.email,
+        subject: I18n.t('mailers.invitation.created.subject', group: @group.name)
+      )
+    end
   end
 
   # Envoie un email lorsqu'une invitation est acceptée
-  def invitation_accepted(invitation, user)
+  def invitation_accepted(invitation)
     @invitation = invitation
+    @user = invitation.user
     @group = invitation.group
-    @user = user
-    @admin = invitation.created_by
+
+    # Obtenir l'administrateur du groupe (le premier admin ou le créateur de l'invitation)
+    admin_user = @group.admin_users.first || invitation.created_by
+    @admin = admin_user
+
+    # Determine preferred locale based on admin's locale
+    locale = @admin.locale
+
+    # Validate locale
+    unless I18n.available_locales.map(&:to_s).include?(locale.to_s)
+      locale = I18n.default_locale
+    end
+
     @group_url = group_url(@group)
 
-    mail(
-      to: @admin.email,
-      subject: "Un utilisateur a rejoint votre groupe sur Gifters"
-    )
+    I18n.with_locale(locale) do
+      mail(
+        to: @admin.email,
+        subject: I18n.t('mailers.invitation.accepted.subject', user: @user.name)
+      )
+    end
   end
 
   private
 
   def group_url(group)
-    # Utiliser les options de configuration de l'environnement actuel
-    options = Rails.application.config.action_mailer.default_url_options || {}
-
-    # Construire l'URL avec le helper de route
-    Rails.application.routes.url_helpers.api_v1_group_url(
-      group,
-      **options
-    )
+    "#{ENV['FRONTEND_URL'] || 'http://localhost:3000'}/groups/#{group.id}"
   end
 end

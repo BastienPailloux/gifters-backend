@@ -131,12 +131,16 @@ module Api
       end
 
       def notify_admins_about_new_member(invitation, user)
+        # Mettre à jour l'invitation avec l'utilisateur qui l'a acceptée
+        invitation.user = user
+        invitation.save if invitation.changed?
+
         # Envoyer un email à l'admin qui a créé l'invitation
         # Utiliser deliver_now en environnement de test pour que les tests puissent vérifier l'envoi
         if Rails.env.test?
-          InvitationMailer.invitation_accepted(invitation, user).deliver_now
+          InvitationMailer.invitation_accepted(invitation).deliver_now
         else
-          InvitationMailer.invitation_accepted(invitation, user).deliver_later
+          InvitationMailer.invitation_accepted(invitation).deliver_later
         end
       end
     end

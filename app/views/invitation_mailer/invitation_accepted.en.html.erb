@@ -43,25 +43,25 @@
   </head>
   <body>
     <div class="header">
-      <h1>Nouveau membre dans votre groupe</h1>
+      <h1>New member in your group</h1>
     </div>
 
     <div class="content">
-      <p>Bonjour <%= @admin.name %>,</p>
+      <p>Hello <%= @admin.name %>,</p>
 
-      <p><strong><%= @user.name %></strong> a rejoint votre groupe <strong><%= @group.name %></strong> sur Gifters.</p>
+      <p><strong><%= @user.name %></strong> has joined your group <strong><%= @group.name %></strong> on Gifters.</p>
 
-      <p>Vous pouvez maintenant voir ce membre dans la liste des membres du groupe et partager des idées de cadeaux avec lui.</p>
+      <p>You can now see this member in the group's member list and share gift ideas with them.</p>
 
       <p>
-        <a href="<%= @group_url %>" class="button">Voir le groupe</a>
+        <a href="<%= @group_url %>" class="button">View group</a>
       </p>
 
-      <p>À bientôt sur Gifters !</p>
+      <p>See you soon on Gifters!</p>
     </div>
 
     <div class="footer">
-      <p>Cet email a été envoyé automatiquement par Gifters. Merci de ne pas y répondre.</p>
+      <p>This email was automatically sent by Gifters. Please do not reply to this message.</p>
     </div>
   </body>
 </html>

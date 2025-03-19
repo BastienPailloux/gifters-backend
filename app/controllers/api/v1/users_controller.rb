@@ -1,7 +1,7 @@
 module Api
   module V1
     class UsersController < Api::V1::BaseController
-      before_action :set_user, only: [:show, :update, :destroy]
+      before_action :set_user, only: [:show, :update, :destroy, :update_locale]
       before_action :authorize_user, only: [:update, :destroy]
 
       # GET /api/v1/users
@@ -49,6 +49,28 @@ module Api
         head :no_content
       end
 
+      # PATCH/PUT /api/v1/users/:id/update_locale
+      def update_locale
+        # Autorise uniquement la mise à jour de sa propre locale
+        if @user.id.to_s == current_user.id.to_s
+          if @user.update(locale_params)
+            render json: {
+              status: { code: 200, message: 'Locale updated successfully' },
+              data: { locale: @user.locale }
+            }, status: :ok
+          else
+            render json: {
+              status: { code: 422, message: 'Could not update locale' },
+              errors: @user.errors.full_messages
+            }, status: :unprocessable_entity
+          end
+        else
+          render json: {
+            status: { code: 403, message: 'Not authorized to update this user locale' }
+          }, status: :forbidden
+        end
+      end
+
       private
 
       def set_user
@@ -80,6 +102,10 @@ module Api
           :zip_code,
           :country
         )
+      end
+
+      def locale_params
+        params.require(:user).permit(:locale)
       end
     end
   end
