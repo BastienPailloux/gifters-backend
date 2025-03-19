@@ -70,6 +70,11 @@ module Api
         # Ajouter un filtre pour limiter par acheteur (buyer_id) si demandé
         @gift_ideas = @gift_ideas.with_buyer(params[:buyer_id]) if params[:buyer_id].present?
 
+        # Exclure les idées cadeaux dont l'utilisateur courant est destinataire si demandé
+        if params[:exclude_own_wishlist].present? && params[:exclude_own_wishlist] == 'true'
+          @gift_ideas = @gift_ideas.not_for_user(current_user)
+        end
+
         # Inclure les associations pour le sérialiseur
         @gift_ideas = @gift_ideas.includes(:recipients, :created_by)
 
