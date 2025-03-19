@@ -8,9 +8,21 @@ module Api
 
       # GET /api/v1/groups
       def index
-        @groups = current_user.groups
+        @groups = current_user.groups || []
+
+        # Utiliser to_json et éviter l'utilisation du serializer qui génère l'erreur
+        if @groups.empty?
+          render json: { groups: [] }, adapter: nil
+          return
+        end
+
         render json: @groups.map { |group|
-          group.as_json(only: [:id, :name, :description]).merge(members_count: group.members_count)
+          # S'assurer que group est valide avant d'appeler members_count
+          if group.respond_to?(:members_count)
+            group.as_json(only: [:id, :name, :description]).merge(members_count: group.members_count)
+          else
+            group.as_json(only: [:id, :name, :description]).merge(members_count: 0)
+          end
         }
       end
 
