@@ -1,0 +1,9 @@
+  mailers:
+    devise:
+      reset_password_instructions:
+        subject: "Instructions pour réinitialiser votre mot de passe"
+    invitation:
+      created:
+        subject: "Invitation à rejoindre %{group} sur Gifters"
+      accepted:
+        subject: "%{user} a rejoint votre groupe sur Gifters"

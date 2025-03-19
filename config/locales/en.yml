@@ -29,3 +29,12 @@
 
 en:
   hello: "Hello world"
+  mailers:
+    devise:
+      reset_password_instructions:
+        subject: "Reset Password Instructions"
+    invitation:
+      created:
+        subject: "Invitation to join %{group} on Gifters"
+      accepted:
+        subject: "%{user} has joined your group on Gifters"
