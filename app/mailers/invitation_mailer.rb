@@ -31,9 +31,9 @@ class InvitationMailer < ApplicationMailer
   end
 
   # Envoie un email lorsqu'une invitation est acceptée
-  def invitation_accepted(invitation)
+  def invitation_accepted(invitation, user)
     @invitation = invitation
-    @user = invitation.user
+    @user = user
     @group = invitation.group
 
     # Obtenir l'administrateur du groupe (le premier admin ou le créateur de l'invitation)
@@ -42,9 +42,11 @@ class InvitationMailer < ApplicationMailer
 
     # Determine preferred locale based on admin's locale
     locale = @admin.locale
+    Rails.logger.info("Sending invitation accepted email with locale: #{locale}")
 
     # Validate locale
     unless I18n.available_locales.map(&:to_s).include?(locale.to_s)
+      Rails.logger.info("Invalid locale #{locale}, defaulting to #{I18n.default_locale}")
       locale = I18n.default_locale
     end
 

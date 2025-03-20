@@ -2,7 +2,6 @@ class Invitation < ApplicationRecord
   # Associations
   belongs_to :group
   belongs_to :created_by, class_name: 'User'
-  belongs_to :user, class_name: 'User', optional: true
 
   # Constants
   ROLES = %w[member admin].freeze
