@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #333;
+        line-height: 1.5;
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        padding: 20px;
+        border: 1px solid #e0e0e0;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 10px;
+      }
+      .content {
+        background-color: white;
+        padding: 15px;
+        border-radius: 4px;
+        border: 1px solid #e0e0e0;
+      }
+      .info {
+        margin-top: 20px;
+        font-size: 0.9em;
+        color: #666;
+      }
+      .label {
+        font-weight: bold;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Nouveau message depuis le formulaire de contact</h1>
+      </div>
+
+      <div class="content">
+        <p><span class="label">De :</span> <%= @name %> (<%= @email %>)</p>
+        <p><span class="label">Sujet :</span> <%= @subject %></p>
+
+        <p><span class="label">Message :</span></p>
+        <p><%= simple_format(@message) %></p>
+      </div>
+
+      <div class="info">
+        <p>Ce message a été envoyé depuis le formulaire de contact Gifters le <%= l(@sent_at, format: :long) %>.</p>
+        <p>Pour répondre à ce message, utilisez simplement le bouton répondre de votre messagerie.</p>
+      </div>
+    </div>
+  </body>
+</html>
