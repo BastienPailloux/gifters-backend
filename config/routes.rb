@@ -57,6 +57,9 @@ Rails.application.routes.draw do
 
       # Route pour récupérer les métadonnées d'une URL
       post 'metadata/fetch', to: 'metadata#fetch'
+
+      # Route pour envoyer un message via le formulaire de contact
+      post 'contact', to: 'contacts#create'
     end
   end
 

@@ -1,0 +1,13 @@
+NOUVEAU MESSAGE DEPUIS LE FORMULAIRE DE CONTACT
+==================================================
+
+De : <%= @name %> (<%= @email %>)
+Sujet : <%= @subject %>
+
+Message :
+-----------
+<%= @message %>
+
+==================================================
+Ce message a été envoyé depuis le formulaire de contact Gifters le <%= l(@sent_at, format: :long) %>.
+Pour répondre à ce message, utilisez simplement le bouton répondre de votre messagerie.
