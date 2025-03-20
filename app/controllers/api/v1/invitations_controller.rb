@@ -8,7 +8,13 @@ module Api
       # GET /api/v1/groups/:group_id/invitations
       def index
         @invitations = @group.invitations.includes(:created_by)
-        render json: @invitations.as_json(include: { created_by: { only: [:id, :name, :email] } })
+
+        # Assurer que le rendu est toujours un tableau, même vide
+        if @invitations.empty?
+          render json: { invitations: [] }
+        else
+          render json: { invitations: @invitations.as_json(include: { created_by: { only: [:id, :name, :email] } }) }
+        end
       end
 
       # GET /api/v1/invitations/:token
