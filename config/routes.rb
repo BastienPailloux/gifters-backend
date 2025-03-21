@@ -60,6 +60,12 @@ Rails.application.routes.draw do
 
       # Route pour envoyer un message via le formulaire de contact
       post 'contact', to: 'contacts#create'
+
+      # Route pour s'abonner à la newsletter via Brevo
+      post 'newsletter/subscribe', to: 'newsletter_subscriptions#create'
+
+      # Route pour se désabonner de la newsletter
+      delete 'newsletter/unsubscribe', to: 'newsletter_subscriptions#destroy'
     end
   end
 
