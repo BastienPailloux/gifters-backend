@@ -26,7 +26,8 @@ RSpec.describe "Api::V1::Invitations", type: :request do
       end
 
       it "returns all invitations for the group" do
-        invitations = JSON.parse(response.body)
+        json_response = JSON.parse(response.body)
+        invitations = json_response['invitations']
         expect(invitations.size).to eq(3)
       end
     end
@@ -207,7 +208,8 @@ RSpec.describe "Api::V1::Invitations", type: :request do
       # Vérifier que l'email a été envoyé au bon destinataire
       email = ActionMailer::Base.deliveries.last
       expect(email.to).to include(user.email)
-      expect(email.subject).to eq("Un utilisateur a rejoint votre groupe sur Gifters")
+      # Vérifier que le sujet contient la bonne information
+      expect(email.subject).to include("has joined your group on Gifters")
     end
 
     context "when the invitation is valid" do

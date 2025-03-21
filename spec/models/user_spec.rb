@@ -60,4 +60,23 @@ RSpec.describe User, type: :model do
       expect(user1.has_common_group_with?(user3)).to be false
     end
   end
+
+  describe "locale attribute" do
+    it "can be nil by default" do
+      user = User.new
+      expect(user.locale).to be_nil
+    end
+
+    it "can update locale to a valid value" do
+      user = create(:user)
+      user.update(locale: 'fr')
+      expect(user.reload.locale).to eq('fr')
+    end
+
+    it "can be set to nil" do
+      user = create(:user, locale: 'fr')
+      user.update(locale: nil)
+      expect(user.reload.locale).to be_nil
+    end
+  end
 end

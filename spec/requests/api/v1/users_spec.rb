@@ -59,7 +59,7 @@ RSpec.describe "Api::V1::Users", type: :request do
         it "returns user with correct attributes" do
           user_response = JSON.parse(response.body)["user"]
           expect(user_response).to include('id', 'name', 'email')
-          expect(user_response).not_to include('password_digest', 'created_at', 'updated_at')
+          expect(user_response).not_to include('encrypted_password', 'reset_password_token', 'reset_password_sent_at')
         end
       end
 
@@ -212,6 +212,88 @@ RSpec.describe "Api::V1::Users", type: :request do
       it "returns an unauthorized message" do
         expect(JSON.parse(response.body)).to include('error' => 'Unauthorized')
       end
+    end
+  end
+
+  describe "GET /api/v1/users/shared_users" do
+    let(:other_user) { create(:user) }
+    let(:another_user) { create(:user) }
+    let(:group) { create(:group) }
+
+    before do
+      # Créer un groupe et y ajouter l'utilisateur et other_user
+      group.add_user(user, 'member')
+      group.add_user(other_user, 'member')
+      # another_user n'est pas dans le même groupe
+    end
+
+    context "when authenticated" do
+      before { get "/api/v1/users/shared_users", headers: headers }
+
+      it "returns status code 200" do
+        expect(response).to have_http_status(200)
+      end
+
+      it "returns ids of users in common groups" do
+        user_ids = JSON.parse(response.body)["user_ids"]
+        expect(user_ids).to include(other_user.id)
+        expect(user_ids).not_to include(another_user.id)
+      end
+    end
+
+    context "when not authenticated" do
+      before { get "/api/v1/users/shared_users" }
+
+      it "returns status code 401" do
+        expect(response).to have_http_status(401)
+      end
+
+      it "returns an unauthorized message" do
+        expect(JSON.parse(response.body)).to include('error' => 'Unauthorized')
+      end
+    end
+  end
+
+  describe "PATCH /api/v1/users/:id/update_locale" do
+    # Créer des users spécifiques pour ces tests pour éviter les conflits
+    let(:locale_user) { create(:user, email: "locale-test@example.com", password: "password123") }
+    let(:locale_other_user) { create(:user, email: "locale-other@example.com", password: "password123") }
+
+    it "requires authentication" do
+      patch "/api/v1/users/#{locale_user.id}/update_locale", params: { user: { locale: "fr" } }
+      expect(response).to have_http_status(401)
+      expect(JSON.parse(response.body)["error"]).to match(/Unauthorized/)
+    end
+
+    it "allows authenticated users to update their own locale" do
+      # Login first
+      post "/api/v1/login", params: { user: { email: locale_user.email, password: "password123" } }
+      token = JSON.parse(response.body).dig("data", "token")
+
+      # Then update locale
+      patch "/api/v1/users/#{locale_user.id}/update_locale",
+            params: { user: { locale: "fr" } },
+            headers: { "Authorization" => "Bearer #{token}" }
+
+      # Verify response
+      expect(response).to have_http_status(200)
+      expect(JSON.parse(response.body)["data"]["locale"]).to eq("fr")
+      expect(locale_user.reload.locale).to eq("fr")
+    end
+
+    it "prevents authenticated users from updating another user's locale" do
+      # Login first
+      post "/api/v1/login", params: { user: { email: locale_user.email, password: "password123" } }
+      token = JSON.parse(response.body).dig("data", "token")
+
+      # Try to update another user's locale
+      patch "/api/v1/users/#{locale_other_user.id}/update_locale",
+            params: { user: { locale: "fr" } },
+            headers: { "Authorization" => "Bearer #{token}" }
+
+      # Verify forbidden response
+      expect(response).to have_http_status(403)
+      expect(JSON.parse(response.body)["status"]["message"]).to match(/Not authorized/)
     end
   end
 end

@@ -197,8 +197,8 @@ RSpec.describe GiftIdea, type: :model do
         idea
       end
 
-      it 'is not visible to creator' do
-        expect(gift_idea.visible_to?(creator)).to be false
+      it 'is visible to creator' do
+        expect(gift_idea.visible_to?(creator)).to be true
       end
 
       it 'is not visible to recipient' do

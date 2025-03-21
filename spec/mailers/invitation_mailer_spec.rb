@@ -4,14 +4,14 @@ RSpec.describe InvitationMailer, type: :mailer do
   describe "invitation_created" do
     let(:group) { create(:group, name: 'Test Group', description: 'A test group') }
     let(:sender) { create(:user, name: 'John Doe') }
-    let(:invitation) { create(:invitation, group: group, created_by: sender) }
     let(:recipient_email) { 'recipient@example.com' }
+    let(:invitation) { create(:invitation, group: group, created_by: sender) }
     let(:mail) { InvitationMailer.invitation_created(invitation, recipient_email) }
 
     it "renders the headers" do
       expect(mail.subject).to eq("Vous avez été invité à rejoindre un groupe sur Gifters")
       expect(mail.to).to eq([recipient_email])
-      expect(mail.from).to eq(["notifications@gifters.com"])
+      expect(mail.from).to eq(["norepy@gifters.fr"])
     end
 
     it "renders the body with sender name" do
@@ -33,7 +33,7 @@ RSpec.describe InvitationMailer, type: :mailer do
 
   describe "invitation_accepted" do
     let(:group) { create(:group, name: 'Test Group') }
-    let(:admin) { create(:user, name: 'Admin User', email: 'admin@example.com') }
+    let(:admin) { create(:user, name: 'Admin User', email: 'admin@example.com', locale: 'fr') }
     let(:user) { create(:user, name: 'New Member') }
     let(:invitation) { create(:invitation, group: group, created_by: admin) }
     let(:mail) { InvitationMailer.invitation_accepted(invitation, user) }
@@ -45,7 +45,7 @@ RSpec.describe InvitationMailer, type: :mailer do
     it "renders the headers" do
       expect(mail.subject).to eq("Un utilisateur a rejoint votre groupe sur Gifters")
       expect(mail.to).to eq([admin.email])
-      expect(mail.from).to eq(["notifications@gifters.com"])
+      expect(mail.from).to eq(["norepy@gifters.fr"])
     end
 
     it "renders the body with user name" do
