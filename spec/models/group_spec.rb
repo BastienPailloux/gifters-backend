@@ -50,6 +50,23 @@ RSpec.describe Group, type: :model do
     end
   end
 
+  describe "#members_count" do
+    it "returns the total count of all members (both admins and regular members)" do
+      group = create(:group)
+      create_list(:membership, 2, group: group, role: 'admin')
+      create_list(:membership, 3, group: group, role: 'member')
+
+      expect(group.members_count).to eq(5)
+    end
+
+    it "returns zero when the group has no members" do
+      group = create(:group)
+      # Ne pas créer de membres
+
+      expect(group.members_count).to eq(0)
+    end
+  end
+
   describe "#create_invitation" do
     it "creates an invitation with the specified role" do
       group = create(:group)
