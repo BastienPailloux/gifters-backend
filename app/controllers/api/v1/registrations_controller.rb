@@ -66,13 +66,12 @@ module Api
         end
 
         begin
-          # Utiliser le service Brevo pour l'inscription
-          response = BrevoService.subscribe_contact(user.email)
+          # Utiliser la méthode du modèle User pour l'inscription à Brevo
+          response = user.update_brevo_subscription
 
           unless response[:success]
             Rails.logger.error("RegistrationsController#subscribe_to_brevo - Erreur lors de l'ajout à Brevo: #{response[:error]}")
           end
-
         rescue => e
           Rails.logger.error("RegistrationsController#subscribe_to_brevo - Exception: #{e.message}")
         end

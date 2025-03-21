@@ -18,7 +18,6 @@ class BrevoService
         create_contact.email = email
         create_contact.list_ids = [list_id.to_i]
         create_contact.update_enabled = true
-        # Note: redirect_url n'est pas supporté par l'API Brevo et a été supprimé
 
         # Ajouter le contact à Brevo
         api_instance.create_contact(create_contact)
@@ -45,15 +44,12 @@ class BrevoService
         # Créer un client pour l'API Contacts
         api_instance = Brevo::ContactsApi.new
 
-        # Rechercher le contact par email
-        contacts = api_instance.get_contacts_from_list(list_id.to_i, email: email)
-
-        if contacts.contacts.empty?
-          return { success: false, error: "Email not found in list" }
-        end
+        # Préparer les données au format attendu par l'API
+        remove_contact = Brevo::RemoveContactFromList.new
+        remove_contact.emails = [email]  # On peut utiliser soit emails soit ids
 
         # Désabonner le contact de la liste
-        api_instance.remove_contact_from_list(list_id.to_i, contacts.contacts.first.id)
+        api_instance.remove_contact_from_list(list_id.to_i, remove_contact)
 
         { success: true }
       rescue Brevo::ApiError => e
