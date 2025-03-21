@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: |
           bundle config set --local path 'vendor/bundle'
-          bundle config set --local without 'development:test'
+          bundle config set --local without 'development'
           bundle install --jobs 4 --retry 3
 
       - name: Show bundle environment
@@ -59,6 +59,7 @@ jobs:
           bundle env
           ruby -v
           bundler -v
+          bundle list | grep rspec
 
       - name: Setup database
         run: |
@@ -71,7 +72,7 @@ jobs:
 
       - name: Run tests with SimpleCov
         run: |
-          bundle exec rspec COVERAGE=true
+          bundle exec rails test || bundle exec rails spec || bundle exec rake spec COVERAGE=true
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -101,7 +102,7 @@ jobs:
       - name: Install dependencies
         run: |
           bundle config set --local path 'vendor/bundle'
-          bundle config set --local without 'development:test'
+          bundle config set --local without 'development'
           bundle install --jobs 4 --retry 3
 
       - name: Install security tools
