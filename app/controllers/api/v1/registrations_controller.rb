@@ -26,6 +26,9 @@ module Api
           token = request.env['warden-jwt_auth.token']
           Rails.logger.info("RegistrationsController#respond_with - Inscription réussie, token: #{token.present?}")
 
+          # Ajouter l'utilisateur à la liste de contacts Brevo
+          subscribe_to_brevo(resource)
+
           render json: {
             status: { code: 200, message: 'Signed up successfully' },
             data: {
@@ -47,11 +50,32 @@ module Api
       end
 
       def sign_up_params
-        params.require(:user).permit(:name, :email, :password, :password_confirmation, :locale)
+        params.require(:user).permit(:name, :email, :password, :password_confirmation, :locale, :newsletter_subscription)
       rescue ActionController::ParameterMissing => e
         # Informer sur l'erreur
         Rails.logger.error("RegistrationsController#sign_up_params - Erreur: #{e.message}")
         {}
+      end
+
+      # Méthode pour ajouter l'utilisateur à la liste de contacts Brevo
+      def subscribe_to_brevo(user)
+        # Vérifier si l'utilisateur a accepté de s'abonner à la newsletter
+        # Si newsletter_subscription n'est pas défini, on considère qu'il n'y a pas de consentement
+        unless user.respond_to?(:newsletter_subscription) && user.newsletter_subscription
+          return
+        end
+
+        begin
+          # Utiliser le service Brevo pour l'inscription
+          response = BrevoService.subscribe_contact(user.email)
+
+          unless response[:success]
+            Rails.logger.error("RegistrationsController#subscribe_to_brevo - Erreur lors de l'ajout à Brevo: #{response[:error]}")
+          end
+
+        rescue => e
+          Rails.logger.error("RegistrationsController#subscribe_to_brevo - Exception: #{e.message}")
+        end
       end
     end
   end

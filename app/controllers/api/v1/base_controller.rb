@@ -52,8 +52,8 @@ module Api
 
       def configure_permitted_parameters
         devise_parameter_sanitizer.permit(:sign_in, keys: [:email, :password])
-        devise_parameter_sanitizer.permit(:sign_up, keys: [:name, :email, :password, :password_confirmation])
-        devise_parameter_sanitizer.permit(:account_update, keys: [:name, :email, :password, :password_confirmation, :current_password])
+        devise_parameter_sanitizer.permit(:sign_up, keys: [:name, :email, :password, :password_confirmation, :newsletter_subscription])
+        devise_parameter_sanitizer.permit(:account_update, keys: [:name, :email, :password, :password_confirmation, :current_password, :newsletter_subscription])
       end
 
       def not_found
