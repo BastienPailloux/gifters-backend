@@ -72,6 +72,14 @@ group :development, :test do
   gem "shoulda-matchers"
   gem "simplecov", require: false
   gem 'dotenv-rails'
+
+  # Gems pour CI/CD
+  gem 'rubocop', require: false
+  gem 'rubocop-rails', require: false
+  gem 'rubocop-rspec', require: false
+  gem 'rubocop-performance', require: false
+  gem 'brakeman', require: false
+  gem 'bundler-audit', require: false
 end
 
 group :development do

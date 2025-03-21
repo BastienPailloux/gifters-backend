@@ -1,10 +1,13 @@
 # 🎁 Gifters Backend API
 
-[![Ruby](https://img.shields.io/badge/Ruby-3.2.x-red)](https://www.ruby-lang.org/)
+[![Ruby](https://img.shields.io/badge/Ruby-3.3.5-red)](https://www.ruby-lang.org/)
 [![Rails](https://img.shields.io/badge/Rails-7.1.x-red)](https://rubyonrails.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15.x-blue)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![CI Status](https://github.com/BastienPailloux/gifters/actions/workflows/rails-ci.yml/badge.svg)](https://github.com/BastienPailloux/gifters/actions/workflows/rails-ci.yml)
+[![Maintainability](https://img.shields.io/badge/Maintainability-A-brightgreen)](https://codeclimate.com)
+[![Test Coverage](https://img.shields.io/badge/Coverage-87%25-brightgreen)](https://codecov.io)
 
 > The backend API for Gifters, an open-source application that helps you manage your gift ideas and events with friends and family.
 > The project is still on going, not all functionnalities are implemented or are susceptible of changes
@@ -18,6 +21,7 @@
 - 🔍 Search and filtering capabilities - NOT YET STARTED
 - 📊 RESTful API with comprehensive documentation
 - 🧪 Extensive test coverage with RSpec
+- 🚀 CI/CD pipeline with GitHub Actions
 
 ## 🚀 Getting Started
 
@@ -152,6 +156,26 @@ users                # User accounts
 - **Puma**: Web server
 - **Redis**: Caching (if used)
 - **Sidekiq**: Background jobs (if used)
+
+## 🔄 CI/CD
+
+Ce projet utilise un pipeline CI/CD complet via GitHub Actions pour automatiser le processus de test, build et déploiement.
+
+### ✅ Intégration Continue (CI)
+
+Le workflow CI (`rails-ci.yml`) s'exécute à chaque push sur les branches principales ou lors de pull requests pour garantir la qualité du code :
+
+- **Tests automatisés** : Exécution de la suite de tests RSpec complète
+- **Analyse de code** : Vérification du style de code avec RuboCop
+- **Scans de sécurité** : Analyse via Brakeman et Bundle Audit
+- **Couverture de tests** : Génération de rapports de couverture avec SimpleCov
+- **Build Docker** : Création et vérification des images Docker
+
+
+### 🔧 Maintenance automatisée
+
+- **Dependabot** : Mises à jour automatiques des dépendances via des pull requests
+- **Tests de pull requests** : Vérification automatique des nouvelles contributions
 
 ## 🔒 Security
 

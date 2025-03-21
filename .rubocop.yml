@@ -1,0 +1,93 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.3
+  Exclude:
+    - 'db/**/*'
+    - 'config/**/*'
+    - 'script/**/*'
+    - 'bin/**/*'
+    - 'vendor/**/*'
+    - 'spec/spec_helper.rb'
+    - 'spec/rails_helper.rb'
+    - 'node_modules/**/*'
+    - 'tmp/**/*'
+    - 'coverage/**/*'
+    - 'public/**/*'
+    - '.git/**/*'
+    - 'lib/tasks/**/*'
+
+# En mode développement, on peut souhaiter des méthodes longues
+# mais il est bon de le savoir
+Metrics/MethodLength:
+  Max: 20
+  Severity: warning
+
+# Pareil pour la complexité cyclomatique
+Metrics/CyclomaticComplexity:
+  Max: 10
+  Severity: warning
+
+# La longueur des lignes est importante pour la lisibilité
+Layout/LineLength:
+  Max: 120
+  Severity: warning
+
+# La longueur des classes est souvent inévitable dans Rails
+Metrics/ClassLength:
+  Max: 150
+  Severity: warning
+
+# Tolérances sur les arguments de méthodes
+Metrics/ParameterLists:
+  Max: 5
+  CountKeywordArgs: true
+
+# Le nombre d'instructions en bloc
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'lib/tasks/**/*'
+    - 'Rakefile'
+    - '**/*.rake'
+    - 'config/routes.rb'
+
+# Documentation
+Style/Documentation:
+  Enabled: false
+
+# Les commentaires ne sont pas toujours nécessaires
+Style/CommentAnnotation:
+  Enabled: false
+
+# Conventions de nommage
+Naming/VariableNumber:
+  EnforcedStyle: snake_case
+
+# Permettre les blocs do...end pour les méthodes avec des blocs
+Style/BlockDelimiters:
+  EnforcedStyle: braces_for_chaining
+
+# Style des chaînes de caractères
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+# Préférer les symboles pour les hash rockets
+Style/HashSyntax:
+  EnforcedStyle: ruby19
+
+# Préférer les cas explicites de parenthèses
+Style/MethodCallWithArgsParentheses:
+  Enabled: false
+
+Rails:
+  Enabled: true
+
+# Rails spécifique
+Rails/HasManyOrHasOneDependent:
+  Enabled: true
+
+Rails/HttpPositionalArguments:
+  Enabled: true
+
+Rails/I18nLocaleTexts:
+  Enabled: true
