@@ -2,7 +2,7 @@ version: 2
 updates:
   # Mise à jour des dépendances Ruby pour le backend
   - package-ecosystem: "bundler"
-    directory: "/backend-gifters"
+    directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
@@ -19,7 +19,7 @@ updates:
 
   # Mise à jour des dépendances GitHub Actions
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directory: "/.github/workflows"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 5
@@ -32,7 +32,7 @@ updates:
 
   # Mise à jour des dépendances Docker
   - package-ecosystem: "docker"
-    directory: "/backend-gifters"
+    directory: "/"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 5

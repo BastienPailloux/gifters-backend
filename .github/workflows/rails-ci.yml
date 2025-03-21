@@ -3,12 +3,12 @@ name: Rails CI
 on:
   push:
     branches: [ master, main, develop ]
-    paths:
-      - 'backend-gifters/**'
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches: [ master, main, develop ]
-    paths:
-      - 'backend-gifters/**'
+    paths-ignore:
+      - '**.md'
 
 jobs:
   test:
@@ -69,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage
-          path: backend-gifters/coverage/
+          path: coverage/
 
   security:
     name: Security Scan
@@ -124,7 +124,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: ./backend-gifters
+          context: .
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/gifters-backend:latest
