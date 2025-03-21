@@ -14,9 +14,6 @@ jobs:
   test:
     name: Tests & Linting
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend-gifters
 
     services:
       postgres:
@@ -44,7 +41,6 @@ jobs:
         with:
           ruby-version: '3.3.5'
           bundler-cache: true
-          working-directory: ./backend-gifters
 
       - name: Install dependencies
         run: |
@@ -66,7 +62,7 @@ jobs:
           bundle exec rake spec COVERAGE=true
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: code-coverage
           path: coverage/
@@ -74,9 +70,6 @@ jobs:
   security:
     name: Security Scan
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend-gifters
 
     steps:
       - uses: actions/checkout@v3
@@ -86,7 +79,6 @@ jobs:
         with:
           ruby-version: '3.3.5'
           bundler-cache: true
-          working-directory: ./backend-gifters
 
       - name: Install dependencies
         run: |
