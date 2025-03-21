@@ -46,4 +46,41 @@ RSpec.describe Invitation, type: :model do
       expect(invitation.token).to eq("custom_token")
     end
   end
+
+  describe "#invitation_url" do
+    it "returns a valid URL containing the invitation token" do
+      # Configurer les options d'URL pour les tests
+      allow(Rails.application.config.action_mailer).to receive(:default_url_options).and_return({ host: "example.com" })
+
+      # Créer une invitation avec un token spécifique
+      invitation = create(:invitation, token: "test_token")
+
+      # Vérifier que l'URL contient le token
+      expect(invitation.invitation_url).to include("token=test_token")
+
+      # Vérifier que l'URL utilise le host configuré
+      expect(invitation.invitation_url).to include("example.com")
+
+      # Vérifier que l'URL contient le chemin correct
+      expect(invitation.invitation_url).to include("/api/v1/invitations/accept")
+    end
+
+    it "builds URL with default options when no mailer configuration is present" do
+      # Simuler l'absence de configuration pour les URL
+      allow(Rails.application.config.action_mailer).to receive(:default_url_options).and_return(nil)
+
+      invitation = create(:invitation, token: "test_token_123")
+
+      # Simuler le comportement de URL helpers sans configuration
+      allow(Rails.application.routes.url_helpers).to receive(:accept_api_v1_invitations_url)
+        .with(hash_including(token: "test_token_123"))
+        .and_return("http://example.com/api/v1/invitations/accept?token=test_token_123")
+
+      # Appeler la méthode
+      url = invitation.invitation_url
+
+      # Vérifier que l'URL contient le token
+      expect(url).to include("token=test_token_123")
+    end
+  end
 end
