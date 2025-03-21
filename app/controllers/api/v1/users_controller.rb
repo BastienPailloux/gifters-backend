@@ -33,12 +33,30 @@ module Api
           end
         end
 
+        # Vérifier si le statut d'abonnement à la newsletter a changé
+        newsletter_changed = false
+        if user_params.key?(:newsletter_subscription)
+          newsletter_changed = @user.newsletter_subscription_changed?(user_params[:newsletter_subscription])
+        end
+
+        old_newsletter_status = @user.newsletter_subscription
+
         # Filtrer les paramètres pour exclure current_password qui n'est pas un attribut du modèle
         update_params = user_params.except(:current_password)
 
         if @user.update(update_params)
+          # Si le statut d'abonnement à la newsletter a changé, mettre à jour dans Brevo
+          if newsletter_changed
+            @user.update_brevo_subscription
+          end
+
           render json: { user: @user.as_json(except: [:encrypted_password, :reset_password_token, :reset_password_sent_at]) }
         else
+          # En cas d'échec, restaurer l'ancien statut d'abonnement si nécessaire
+          if newsletter_changed
+            @user.update_column(:newsletter_subscription, old_newsletter_status)
+          end
+
           render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
         end
       end
@@ -100,7 +118,8 @@ module Api
           :city,
           :state,
           :zip_code,
-          :country
+          :country,
+          :newsletter_subscription
         )
       end
 

@@ -55,4 +55,29 @@ class User < ApplicationRecord
     Rails.logger.info("User#jwt_payload - Payload généré: #{payload.inspect}")
     payload
   end
+
+  # Méthodes pour la gestion de la newsletter
+  def newsletter_subscription_changed?(new_status)
+    # Conversion explicite en booléen pour garantir une comparaison cohérente
+    converted_status = ActiveModel::Type::Boolean.new.cast(new_status)
+    self.newsletter_subscription != converted_status
+  end
+
+  def update_brevo_subscription
+    if self.newsletter_subscription
+      # L'utilisateur s'est abonné
+      response = BrevoService.subscribe_contact(self.email)
+      unless response[:success]
+        Rails.logger.error("User#update_brevo_subscription - Erreur lors de l'abonnement Brevo: #{response[:error]}")
+      end
+    else
+      # L'utilisateur s'est désabonné
+      response = BrevoService.unsubscribe_contact(self.email)
+      unless response[:success]
+        Rails.logger.error("User#update_brevo_subscription - Erreur lors du désabonnement Brevo: #{response[:error]}")
+      end
+    end
+    response = { success: true } if response.nil?
+    response
+  end
 end
