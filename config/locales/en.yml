@@ -32,9 +32,16 @@ en:
   mailers:
     devise:
       reset_password_instructions:
-        subject: "Reset Password Instructions"
+        subject: "Reset password instructions"
     invitation:
       created:
         subject: "Invitation to join %{group} on Gifters"
       accepted:
         subject: "%{user} has joined your group on Gifters"
+
+  newsletter:
+    subscription_success: "You are now subscribed to our newsletter!"
+    unsubscription_success: "You have been successfully unsubscribed from our newsletter."
+    errors:
+      invalid_email: "Please provide a valid email address"
+      generic: "An error occurred while subscribing to the newsletter"

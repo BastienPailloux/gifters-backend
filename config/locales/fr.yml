@@ -8,3 +8,10 @@ fr:
         subject: "Invitation à rejoindre %{group} sur Gifters"
       accepted:
         subject: "%{user} a rejoint votre groupe sur Gifters"
+
+  newsletter:
+    subscription_success: "Vous êtes désormais abonné à notre newsletter !"
+    unsubscription_success: "Vous avez été désabonné de notre newsletter avec succès."
+    errors:
+      invalid_email: "Veuillez fournir une adresse email valide"
+      generic: "Une erreur est survenue lors de l'abonnement à la newsletter"
