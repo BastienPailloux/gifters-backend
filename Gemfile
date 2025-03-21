@@ -3,7 +3,7 @@ source "https://rubygems.org"
 ruby "3.3.5"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 7.1.5"
+gem "rails", "~> 8.0.2"
 
 # Use rack-cors for handling Cross-Origin Resource Sharing
 gem 'rack-cors'
