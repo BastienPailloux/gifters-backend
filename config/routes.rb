@@ -36,7 +36,11 @@ Rails.application.routes.draw do
 
       resources :groups do
         resources :memberships
-        resources :invitations, only: [:index, :create]
+        resources :invitations, only: [:index, :create] do
+          collection do
+            post :send_email
+          end
+        end
         member do
           delete 'leave'
         end
