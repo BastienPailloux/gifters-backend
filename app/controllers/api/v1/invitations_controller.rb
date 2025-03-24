@@ -1,8 +1,8 @@
 module Api
   module V1
     class InvitationsController < Api::V1::BaseController
-      before_action :set_group, only: [:index, :create]
-      before_action :ensure_user_is_admin_of_group, only: [:index, :create]
+      before_action :set_group, only: [:index, :create, :send_email]
+      before_action :ensure_user_is_admin_of_group, only: [:index, :create, :send_email]
       before_action :set_invitation, only: [:show, :destroy]
 
       # GET /api/v1/groups/:group_id/invitations
@@ -31,16 +31,6 @@ module Api
         @invitation.created_by = current_user
 
         if @invitation.save
-          # Envoyer l'email d'invitation si un email est fourni
-          # Utiliser email_params au lieu de params[:email] pour une meilleure sécurité
-          if email_params[:email].present?
-            # Utiliser deliver_now en environnement de test pour que les tests puissent vérifier l'envoi
-            if Rails.env.test?
-              InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_now
-            else
-              InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_later
-            end
-          end
 
           render json: {
             invitation: @invitation.as_json,
@@ -49,6 +39,40 @@ module Api
           }, status: :created
         else
           render json: { errors: @invitation.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
+      # POST /api/v1/groups/:group_id/invitations/send_email
+      def send_email
+        # Chercher d'abord une invitation existante pour ce groupe
+        @invitation = @group.invitations.find_or_initialize_by(role: invitation_params[:role] || 'member')
+
+        # Si l'invitation est nouvelle, définir le créateur
+        if @invitation.new_record?
+          @invitation.created_by = current_user
+          unless @invitation.save
+            render json: { errors: @invitation.errors.full_messages }, status: :unprocessable_entity
+            return
+          end
+        end
+
+        # Maintenant, envoyer l'email avec l'invitation (existante ou nouvelle)
+        if email_params[:email].present?
+          # Utiliser deliver_now en environnement de test pour que les tests puissent vérifier l'envoi
+          if Rails.env.test?
+            InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_now
+          else
+            InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_later
+          end
+
+          render json: {
+            message: "Invitation sent to #{email_params[:email]}",
+            invitation: @invitation.as_json,
+            invitation_url: @invitation.invitation_url,
+            token: @invitation.token
+          }, status: :ok
+        else
+          render json: { error: "Email address is required" }, status: :unprocessable_entity
         end
       end
 
