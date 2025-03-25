@@ -78,10 +78,13 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Configuration des URL pour les emails en production
-  config.action_mailer.default_url_options = { host: ENV['APPLICATION_HOST'] }
+  config.action_mailer.default_url_options = {
+    host: ENV.fetch('APPLICATION_HOST', 'api.gifters.fr'),
+    protocol: 'https'
+  }
 
   # URL du frontend pour les liens de réinitialisation de mot de passe
-  config.frontend_url = ENV['FRONTEND_URL']
+  config.frontend_url = ENV.fetch('FRONTEND_URL', 'https://www.gifters.fr')
 
   # Configuration SMTP pour l'envoi d'emails en production
   config.action_mailer.delivery_method = :smtp

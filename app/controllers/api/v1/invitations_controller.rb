@@ -58,19 +58,28 @@ module Api
 
         # Maintenant, envoyer l'email avec l'invitation (existante ou nouvelle)
         if email_params[:email].present?
-          # Utiliser deliver_now en environnement de test pour que les tests puissent vérifier l'envoi
-          if Rails.env.test?
-            InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_now
-          else
-            InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_later
-          end
+          begin
+            # Utiliser deliver_now en environnement de test pour que les tests puissent vérifier l'envoi
+            if Rails.env.test?
+              InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_now
+            else
+              InvitationMailer.invitation_created(@invitation, email_params[:email]).deliver_later
+            end
 
-          render json: {
-            message: "Invitation sent to #{email_params[:email]}",
-            invitation: @invitation.as_json,
-            invitation_url: @invitation.invitation_url,
-            token: @invitation.token
-          }, status: :ok
+            render json: {
+              message: "Invitation sent to #{email_params[:email]}",
+              invitation: @invitation.as_json,
+              invitation_url: @invitation.invitation_url,
+              token: @invitation.token
+            }, status: :ok
+          rescue => e
+            Rails.logger.error("Erreur lors de l'envoi du mail d'invitation: #{e.message}")
+            render json: {
+              error: "Failed to send invitation email: #{e.message}",
+              invitation: @invitation.as_json,
+              token: @invitation.token
+            }, status: :internal_server_error
+          end
         else
           render json: { error: "Email address is required" }, status: :unprocessable_entity
         end
