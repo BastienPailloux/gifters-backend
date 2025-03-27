@@ -1,9 +1,8 @@
 # 🎁 Gifters Backend API
 
 [![Ruby](https://img.shields.io/badge/Ruby-3.3.5-red)](https://www.ruby-lang.org/)
-[![Rails](https://img.shields.io/badge/Rails-7.1.x-red)](https://rubyonrails.org/)
+[![Rails](https://img.shields.io/badge/Rails-8.0.x-red)](https://rubyonrails.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15.x-blue)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI Status](https://github.com/BastienPailloux/gifters/actions/workflows/rails-ci.yml/badge.svg)](https://github.com/BastienPailloux/gifters/actions/workflows/rails-ci.yml)
 [![Maintainability](https://img.shields.io/badge/Maintainability-A-brightgreen)](https://codeclimate.com)
@@ -58,25 +57,6 @@
    bin/rails db:create db:migrate db:seed
    ```
 
-#### Docker Setup
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/BastienPailloux/gifters-backend.git
-   cd gifters-backend
-   ```
-
-2. Build and start the containers:
-   ```bash
-   docker-compose build
-   docker-compose up
-   ```
-
-3. In a separate terminal, set up the database:
-   ```bash
-   docker-compose exec app bin/rails db:create db:migrate db:seed
-   ```
-
 ### Development
 
 Start the Rails server:
@@ -129,7 +109,6 @@ backend-gifters/
 ├── public/              # Public files
 ├── spec/                # Tests
 ├── .env.example         # Example environment variables
-└── Dockerfile           # Docker configuration
 ```
 
 ## 📝 Database Schema
@@ -151,15 +130,11 @@ users                # User accounts
 - **PostgreSQL**: Database
 - **JWT**: Authentication
 - **RSpec**: Testing
-- **Swagger**: API documentation
-- **Docker**: Containerization
 - **Puma**: Web server
-- **Redis**: Caching (if used)
-- **Sidekiq**: Background jobs (if used)
 
 ## 🔄 CI/CD
 
-Ce projet utilise un pipeline CI/CD complet via GitHub Actions pour automatiser le processus de test, build et déploiement.
+Ce projet utilise un pipeline CI/CD complet via GitHub Actions pour automatiser le processus de test, build.
 
 ### ✅ Intégration Continue (CI)
 
@@ -214,7 +189,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Ruby on Rails](https://rubyonrails.org/)
 - [PostgreSQL](https://www.postgresql.org/)
 - [RSpec](https://rspec.info/)
-- [Swagger](https://swagger.io/)
 
 ## 📞 Contact
 
