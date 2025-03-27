@@ -63,8 +63,6 @@ Start the Rails server:
 
 ```bash
 bin/rails server
-# or with Docker
-docker-compose up
 ```
 
 The API will be available at http://localhost:3000.
@@ -79,15 +77,10 @@ bin/rails spec
 bundle exec rspec
 ```
 
-With Docker:
-```bash
-docker-compose exec app bin/rails spec
-```
-
 ### API Documentation
 
 NOT YET IMPLEMENTED
-We use Swagger for API documentation. After starting the server, you can access the documentation at:
+We will Swagger for API documentation. After starting the server, you can access the documentation at:
 
 ```
 http://localhost:3000/api-docs
@@ -144,7 +137,6 @@ Le workflow CI (`rails-ci.yml`) s'exécute à chaque push sur les branches princ
 - **Analyse de code** : Vérification du style de code avec RuboCop
 - **Scans de sécurité** : Analyse via Brakeman et Bundle Audit
 - **Couverture de tests** : Génération de rapports de couverture avec SimpleCov
-- **Build Docker** : Création et vérification des images Docker
 
 
 ### 🔧 Maintenance automatisée
