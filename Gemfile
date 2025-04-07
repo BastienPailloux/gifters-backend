@@ -56,7 +56,7 @@ gem 'jsonapi-serializer'
 gem 'active_model_serializers', '~> 0.10.13'
 
 # HTML parsing
-gem 'nokogiri', '~> 1.15'
+gem 'nokogiri', '~> 1.18'
 gem 'open_uri_redirections', '~> 0.2.1' # Support des redirections pour open-uri
 
 # Gem pour l'intégration avec Brevo (anciennement Sendinblue)
