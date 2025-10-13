@@ -1,7 +1,7 @@
 # 🎁 Gifters Backend API
 
-[![Ruby](https://img.shields.io/badge/Ruby-3.3.5-red)](https://www.ruby-lang.org/)
-[![Rails](https://img.shields.io/badge/Rails-7.1.x-red)](https://rubyonrails.org/)
+[![Ruby](https://img.shields.io/badge/Ruby-3.4.2-red)](https://www.ruby-lang.org/)
+[![Rails](https://img.shields.io/badge/Rails-8.0.3-red)](https://rubyonrails.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15.x-blue)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -15,8 +15,8 @@
 ## ✨ Features
 
 - 🔐 Secure user authentication system with JWT
-- 👥 Group and membership management - ONGOING
-- 🎁 Gift ideas and wishlists management - ONGOING
+- 👥 Group and membership management - DONE
+- 🎁 Gift ideas and wishlists management - DONE
 - 📅 Events and reminders - NOT YET STARTED
 - 🔍 Search and filtering capabilities - NOT YET STARTED
 - 📊 RESTful API with comprehensive documentation
@@ -27,7 +27,7 @@
 
 ### Prerequisites
 
-- Ruby 3.2.x
+- Ruby 3.4.x
 - PostgreSQL 15.x+
 - Bundler
 - (Optional) Docker & Docker Compose for containerized setup
