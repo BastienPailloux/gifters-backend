@@ -11,7 +11,7 @@ class GiftIdea < ApplicationRecord
 
   # Validations
   validates :title, presence: true
-  validates :link, presence: true, format: { with: URI::regexp, message: "n'est pas une URL valide" }
+  validates :link, format: { with: URI::regexp, message: "n'est pas une URL valide" }, allow_blank: true
   validates :price, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :status, presence: true, inclusion: { in: STATUSES }
   validate :creator_and_recipients_have_common_group
