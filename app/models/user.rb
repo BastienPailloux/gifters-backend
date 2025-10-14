@@ -5,6 +5,10 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable,
          :jwt_authenticatable, jwt_revocation_strategy: JwtDenylist
 
+  # Relations pour les comptes parent/enfant
+  belongs_to :parent, class_name: 'User', optional: true
+  has_many :children, class_name: 'User', foreign_key: 'parent_id', dependent: :destroy
+
   has_many :memberships, dependent: :destroy
   has_many :groups, through: :memberships
   has_many :created_gift_ideas, class_name: 'GiftIdea', foreign_key: 'created_by_id', dependent: :destroy
@@ -14,9 +18,18 @@ class User < ApplicationRecord
   has_many :gift_recipients, dependent: :destroy
   has_many :received_gift_ideas, through: :gift_recipients, source: :gift_idea
 
+  # Scopes
+  scope :standard, -> { where(account_type: 'standard') }
+  scope :managed, -> { where(account_type: 'managed') }
+
   # Validations
   validates :name, presence: true
-  validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :account_type, presence: true, inclusion: { in: %w[standard managed] }
+  validates :parent_id, presence: true, if: :managed?
+  validates :parent_id, absence: true, if: :standard?
+  validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }, if: :standard?
+  validates :email, uniqueness: { allow_blank: true }, if: :managed?
+  validates :password, presence: true, if: -> { standard? && password_required? }
 
   # Methods
   def common_groups_with(user)
@@ -79,5 +92,54 @@ class User < ApplicationRecord
     end
     response = { success: true } if response.nil?
     response
+  end
+
+  # Méthodes pour les comptes managed
+  def managed?
+    account_type == 'managed'
+  end
+
+  def standard?
+    account_type.nil? || account_type == 'standard'
+  end
+
+  def has_children?
+    children.any?
+  end
+
+  def can_access_as_parent?(user)
+    # Un parent peut accéder aux données de ses enfants
+    return false if user.nil?
+    user.parent_id == self.id
+  end
+
+  # Override de la méthode Devise pour désactiver l'authentification des comptes managed
+  def active_for_authentication?
+    super && standard?
+  end
+
+  def inactive_message
+    managed? ? :account_managed : super
+  end
+
+  private
+
+  # Override des méthodes Devise pour désactiver les validations email/password pour les comptes managed
+  def email_required?
+    standard?
+  end
+
+  def email_changed?
+    super && standard?
+  end
+
+  def will_save_change_to_email?
+    super && standard?
+  end
+
+  def password_required?
+    return false if managed?
+    return false if persisted? && password.blank? && password_confirmation.blank?
+    true
   end
 end
