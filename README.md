@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI Status](https://github.com/BastienPailloux/gifters/actions/workflows/rails-ci.yml/badge.svg)](https://github.com/BastienPailloux/gifters/actions/workflows/rails-ci.yml)
 [![Maintainability](https://img.shields.io/badge/Maintainability-A-brightgreen)](https://codeclimate.com)
-[![Test Coverage](https://img.shields.io/badge/Coverage-87%25-brightgreen)](https://codecov.io)
+[![Test Coverage](https://img.shields.io/badge/Coverage-86.69%25-brightgreen)](https://codecov.io)
 
 > The backend API for Gifters, an open-source application that helps you manage your gift ideas and events with friends and family.
 > The project is still on going, not all functionnalities are implemented or are susceptible of changes
@@ -16,6 +16,7 @@
 - 🔐 Secure user authentication system with JWT
 - 👥 Group and membership management - DONE
 - 🎁 Gift ideas and wishlists management - DONE
+- 👶 Managed accounts (children/dependents) - ONGOING
 - 📅 Events and reminders - NOT YET STARTED
 - 🔍 Search and filtering capabilities - NOT YET STARTED
 - 📊 RESTful API with comprehensive documentation
@@ -110,11 +111,14 @@ Here's a simplified overview of our database schema:
 
 ```
 users                # User accounts
+  ├── parent_id      # Reference to parent user (for managed accounts)
+  ├── account_type   # 'standard' or 'managed'
   ├── groups         # Groups that users belong to
   ├── memberships    # User membership in groups
   ├── gift_ideas     # Gift ideas created by users
   ├── events         # Events created by users
   ├── invitations    # Invitations to join a Group
+  └── children       # Child (managed) accounts
 ```
 
 ## 🛠️ Technologies
