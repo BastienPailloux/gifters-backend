@@ -217,18 +217,4 @@ RSpec.describe 'Api::V1::Children', type: :request do
       end
     end
   end
-
-  # Helper pour générer les headers d'authentification
-  def auth_headers(user)
-    token = JWT.encode(
-      {
-        user_id: user.id,
-        email: user.email,
-        name: user.name,
-        exp: 24.hours.from_now.to_i
-      },
-      Rails.application.credentials.secret_key_base
-    )
-    { 'Authorization' => "Bearer #{token}" }
-  end
 end
