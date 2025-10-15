@@ -2,7 +2,9 @@ module Api
   module V1
     class UsersController < Api::V1::BaseController
       before_action :set_user, only: [:show, :update, :destroy, :update_locale]
+      before_action :set_child, only: [:update_child]
       before_action :authorize_user, only: [:update, :destroy]
+      before_action :authorize_child, only: [:update_child]
 
       # GET /api/v1/users
       def index
@@ -37,6 +39,19 @@ module Api
           }, status: :created
         else
           render json: { errors: child.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
+      # PUT /api/v1/users/children/:children_id
+      def update_child
+        # Mettre à jour l'enfant
+        if @child.update(child_params)
+          render json: {
+            user: @child.as_json(except: [:encrypted_password, :reset_password_token, :reset_password_sent_at]),
+            message: 'Child account updated successfully'
+          }
+        else
+          render json: { errors: @child.errors.full_messages }, status: :unprocessable_entity
         end
       end
 
@@ -116,9 +131,23 @@ module Api
         end
       end
 
+      def set_child
+        @child = User.find_by(id: params[:children_id])
+        unless @child
+          render json: { error: 'Child account not found' }, status: :not_found
+          return
+        end
+      end
+
       def authorize_user
         unless @user == current_user
           render json: { error: 'Forbidden' }, status: :forbidden
+        end
+      end
+
+      def authorize_child
+        unless @child && current_user.can_access_as_parent?(@child)
+          render json: { error: 'Forbidden: You are not the parent of this account' }, status: :forbidden
         end
       end
 

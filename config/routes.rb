@@ -29,6 +29,7 @@ Rails.application.routes.draw do
         collection do
           get :shared_users
           post 'children', to: 'users#create_child'
+          put 'children/:children_id', to: 'users#update_child'
         end
         member do
           patch :update_locale
