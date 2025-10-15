@@ -100,7 +100,7 @@ class User < ApplicationRecord
   end
 
   def standard?
-    account_type.nil? || account_type == 'standard'
+    account_type == 'standard'
   end
 
   def has_children?
