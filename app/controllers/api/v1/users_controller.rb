@@ -23,6 +23,23 @@ module Api
         render json: { user_ids: user_ids }
       end
 
+      # POST /api/v1/users/children
+      def create_child
+        # Créer un compte enfant managé pour l'utilisateur actuel
+        child = User.new(child_params)
+        child.account_type = 'managed'
+        child.parent_id = current_user.id
+
+        if child.save
+          render json: {
+            user: child.as_json(except: [:encrypted_password, :reset_password_token, :reset_password_sent_at]),
+            message: 'Child account created successfully'
+          }, status: :created
+        else
+          render json: { errors: child.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       # PUT /api/v1/users/:id
       def update
         # Si le mot de passe est modifié, vérifier l'ancien mot de passe
@@ -125,6 +142,20 @@ module Api
 
       def locale_params
         params.require(:user).permit(:locale)
+      end
+
+      def child_params
+        params.require(:user).permit(
+          :name,
+          :birthday,
+          :gender,
+          :phone_number,
+          :address,
+          :city,
+          :state,
+          :zip_code,
+          :country
+        )
       end
     end
   end
