@@ -28,13 +28,13 @@ Rails.application.routes.draw do
       resources :users, only: [:index, :show, :update, :destroy] do
         collection do
           get :shared_users
-          post 'children', to: 'users#create_child'
-          put 'children/:children_id', to: 'users#update_child'
         end
         member do
           patch :update_locale
         end
       end
+
+      resources :children, only: [:index, :show, :create, :update, :destroy]
 
       resources :groups do
         resources :memberships

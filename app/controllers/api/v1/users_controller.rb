@@ -2,9 +2,7 @@ module Api
   module V1
     class UsersController < Api::V1::BaseController
       before_action :set_user, only: [:show, :update, :destroy, :update_locale]
-      before_action :set_child, only: [:update_child]
       before_action :authorize_user, only: [:update, :destroy]
-      before_action :authorize_child, only: [:update_child]
 
       # GET /api/v1/users
       def index
@@ -23,36 +21,6 @@ module Api
         # Cette action ne nécessite pas de paramètres car elle utilise current_user
         user_ids = current_user.common_groups_with_users_ids
         render json: { user_ids: user_ids }
-      end
-
-      # POST /api/v1/users/children
-      def create_child
-        # Créer un compte enfant managé pour l'utilisateur actuel
-        child = User.new(child_params)
-        child.account_type = 'managed'
-        child.parent_id = current_user.id
-
-        if child.save
-          render json: {
-            user: child.as_json(except: [:encrypted_password, :reset_password_token, :reset_password_sent_at]),
-            message: 'Child account created successfully'
-          }, status: :created
-        else
-          render json: { errors: child.errors.full_messages }, status: :unprocessable_entity
-        end
-      end
-
-      # PUT /api/v1/users/children/:children_id
-      def update_child
-        # Mettre à jour l'enfant
-        if @child.update(child_params)
-          render json: {
-            user: @child.as_json(except: [:encrypted_password, :reset_password_token, :reset_password_sent_at]),
-            message: 'Child account updated successfully'
-          }
-        else
-          render json: { errors: @child.errors.full_messages }, status: :unprocessable_entity
-        end
       end
 
       # PUT /api/v1/users/:id
@@ -131,23 +99,9 @@ module Api
         end
       end
 
-      def set_child
-        @child = User.find_by(id: params[:children_id])
-        unless @child
-          render json: { error: 'Child account not found' }, status: :not_found
-          return
-        end
-      end
-
       def authorize_user
         unless @user == current_user
           render json: { error: 'Forbidden' }, status: :forbidden
-        end
-      end
-
-      def authorize_child
-        unless @child && current_user.can_access_as_parent?(@child)
-          render json: { error: 'Forbidden: You are not the parent of this account' }, status: :forbidden
         end
       end
 
@@ -171,20 +125,6 @@ module Api
 
       def locale_params
         params.require(:user).permit(:locale)
-      end
-
-      def child_params
-        params.require(:user).permit(
-          :name,
-          :birthday,
-          :gender,
-          :phone_number,
-          :address,
-          :city,
-          :state,
-          :zip_code,
-          :country
-        )
       end
     end
   end
