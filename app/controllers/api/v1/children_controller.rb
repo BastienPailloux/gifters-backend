@@ -69,7 +69,7 @@ module Api
       end
 
       def child_params
-        params.require(:child).permit(
+        params.require(:user).permit(
           :name,
           :birthday,
           :gender,
