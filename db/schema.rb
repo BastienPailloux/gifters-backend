@@ -10,9 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_21_102514) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_14_180642) do
   # These are extensions that must be enabled in order to support this database
-  enable_extension "plpgsql"
+  enable_extension "pg_catalog.plpgsql"
 
   create_table "gift_ideas", force: :cascade do |t|
     t.string "title"
@@ -77,7 +77,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_21_102514) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "email", default: "", null: false
+    t.string "email"
     t.string "encrypted_password", default: "", null: false
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
@@ -95,8 +95,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_21_102514) do
     t.datetime "updated_at", null: false
     t.string "locale"
     t.boolean "newsletter_subscription", default: false, null: false
-    t.index ["email"], name: "index_users_on_email", unique: true
+    t.bigint "parent_id"
+    t.string "account_type", default: "standard", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true, where: "(email IS NOT NULL)"
     t.index ["newsletter_subscription"], name: "index_users_on_newsletter_subscription"
+    t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
@@ -108,4 +111,5 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_21_102514) do
   add_foreign_key "invitations", "users", column: "created_by_id"
   add_foreign_key "memberships", "groups"
   add_foreign_key "memberships", "users"
+  add_foreign_key "users", "users", column: "parent_id"
 end

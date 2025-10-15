@@ -34,6 +34,8 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :children, only: [:index, :show, :create, :update, :destroy]
+
       resources :groups do
         resources :memberships
         resources :invitations, only: [:index, :create] do
