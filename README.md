@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI Status](https://github.com/BastienPailloux/gifters/actions/workflows/rails-ci.yml/badge.svg)](https://github.com/BastienPailloux/gifters/actions/workflows/rails-ci.yml)
 [![Maintainability](https://img.shields.io/badge/Maintainability-A-brightgreen)](https://codeclimate.com)
-[![Test Coverage](https://img.shields.io/badge/Coverage-86.69%25-brightgreen)](https://codecov.io)
+[![Test Coverage](https://img.shields.io/badge/Coverage-87.16%25-brightgreen)](https://codecov.io)
 
 > The backend API for Gifters, an open-source application that helps you manage your gift ideas and events with friends and family.
 > The project is still on going, not all functionnalities are implemented or are susceptible of changes
