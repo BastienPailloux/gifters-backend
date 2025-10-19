@@ -2,9 +2,9 @@ module Api
   module V1
     class GroupsController < Api::V1::BaseController
       before_action :set_children, only: [:index], if: -> { params[:with_children].present? }
+      before_action :set_user, only: [:create, :update, :destroy, :leave], if: -> { params[:user_id].present? }
       before_action :set_group, only: [:show, :update, :destroy, :leave]
-      before_action :ensure_member, only: [:show]
-      before_action :ensure_member_for_update_destroy, only: [:update, :destroy]
+      before_action :ensure_member, only: [:show, :update, :destroy, :leave]
       before_action :ensure_admin, only: [:update, :destroy]
 
       # GET /api/v1/groups
@@ -21,10 +21,10 @@ module Api
       # POST /api/v1/groups
       def create
         @group = Group.new(group_params)
-        @group.creator = current_user
+        @group.creator = @user || current_user
 
         if @group.save
-          @group.memberships.create(user: current_user, role: 'admin')
+          @group.memberships.create(user: @user || current_user, role: 'admin')
           render status: :created
         else
           render json: { errors: @group.errors.full_messages }, status: :unprocessable_entity
@@ -48,20 +48,14 @@ module Api
 
       # DELETE /api/v1/groups/:id/leave
       def leave
-        # Vérifier si l'utilisateur est membre du groupe
-        unless @group.users.include?(current_user)
-          render json: { error: 'You are not a member of this group' }, status: :unprocessable_entity
-          return
-        end
-
         # Vérifier si l'utilisateur est le dernier administrateur du groupe
-        if @group.admin_users == [current_user]
+        if @group.admin_users == [current_user] || @group.admin_users == [@user]
           render json: { error: 'You cannot leave the group as you are the last admin' }, status: :unprocessable_entity
           return
         end
 
         # Supprimer l'utilisateur du groupe
-        membership = @group.memberships.find_by(user: current_user)
+        membership = @group.memberships.find_by(user: @user || current_user)
         membership.destroy if membership
 
         render json: { message: 'Successfully left the group' }, status: :ok
@@ -75,23 +69,15 @@ module Api
       end
 
       def ensure_member
-        unless @group && (@group.users.include?(current_user) || @group.users.include?(current_user.children))
+        unless @group && (@group.users.include?(current_user) || @group.users.include?(current_user.children) || @group.users.include?(@user))
           render json: { error: 'You are not a member of this group' }, status: :forbidden
         end
-      end
-
-      def ensure_member_for_update_destroy
-        unless @group && @group.users.include?(current_user)
-          render json: { error: 'You are not a member of this group' }, status: :forbidden
-          return false
-        end
-        true
       end
 
       def ensure_admin
-        return unless ensure_member_for_update_destroy
+        return unless ensure_member
 
-        unless @group.admin_users.include?(current_user)
+        unless @group.admin_users.include?(current_user) || @group.admin_users.include?(@user)
           action = action_name == 'update' ? 'update' : 'delete'
           render json: { error: "You must be an admin to #{action} this group" }, status: :forbidden
         end
@@ -103,6 +89,13 @@ module Api
 
       def set_children
         @children = current_user.children.includes(:groups)
+      end
+
+      def set_user
+        @user = User.find(params[:user_id])
+        unless current_user.can_access_as_parent?(@user)
+          render json: { error: 'Forbidden: You are not the parent of this account' }, status: :forbidden
+        end
       end
     end
   end
