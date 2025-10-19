@@ -1,6 +1,7 @@
 module Api
   module V1
     class GroupsController < Api::V1::BaseController
+      before_action :set_children, only: [:index], if: -> { params[:with_children].present? }
       before_action :set_group, only: [:show, :update, :destroy, :leave]
       before_action :ensure_member, only: [:show]
       before_action :ensure_member_for_update_destroy, only: [:update, :destroy]
@@ -128,6 +129,10 @@ module Api
 
       def group_params
         params.require(:group).permit(:name, :description)
+      end
+
+      def set_children
+        @children = current_user.children
       end
     end
   end
