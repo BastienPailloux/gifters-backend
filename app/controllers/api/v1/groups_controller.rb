@@ -9,22 +9,8 @@ module Api
 
       # GET /api/v1/groups
       def index
-        @groups = current_user.groups || []
-
-        # Utiliser to_json et éviter l'utilisation du serializer qui génère l'erreur
-        if @groups.empty?
-          render json: { groups: [] }, adapter: nil
-          return
-        end
-
-        render json: @groups.map { |group|
-          # S'assurer que group est valide avant d'appeler members_count
-          if group.respond_to?(:members_count)
-            group.as_json(only: [:id, :name, :description]).merge(members_count: group.members_count)
-          else
-            group.as_json(only: [:id, :name, :description]).merge(members_count: 0)
-          end
-        }
+        @user = current_user
+        @groups = @user.groups
       end
 
       # GET /api/v1/groups/:id
@@ -105,7 +91,7 @@ module Api
       end
 
       def ensure_member
-        unless @group && @group.users.include?(current_user)
+        unless @group && (@group.users.include?(current_user) || @group.users.include?(current_user.children))
           render json: { error: 'You are not a member of this group' }, status: :forbidden
         end
       end
@@ -132,7 +118,7 @@ module Api
       end
 
       def set_children
-        @children = current_user.children
+        @children = current_user.children.includes(:groups)
       end
     end
   end
