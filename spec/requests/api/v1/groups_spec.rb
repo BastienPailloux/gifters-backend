@@ -339,8 +339,8 @@ RSpec.describe "Api::V1::Groups", type: :request do
       context "when the user is not a member of the group" do
         before { delete "/api/v1/groups/#{group_id}/leave", headers: headers }
 
-        it "returns status code 422" do
-          expect(response).to have_http_status(422)
+        it "returns status code 403" do
+          expect(response).to have_http_status(403)
         end
 
         it "returns an error message" do
@@ -358,6 +358,173 @@ RSpec.describe "Api::V1::Groups", type: :request do
 
       it "returns an unauthorized message" do
         expect(JSON.parse(response.body)).to include('error' => 'Unauthorized')
+      end
+    end
+  end
+
+  describe "GET /api/v1/groups?with_children=true" do
+    context "when authenticated" do
+      let(:parent) { create(:user) }
+      let(:child1) { create(:managed_user, parent: parent, name: "Child 1") }
+      let(:child2) { create(:managed_user, parent: parent, name: "Child 2") }
+      let(:headers) { { 'Authorization' => "Bearer #{generate_jwt_token(parent)}" } }
+
+      before do
+        # Créer des groupes pour le parent
+        @parent_group1 = create(:group, name: "Parent Group 1")
+        @parent_group2 = create(:group, name: "Parent Group 2")
+        @parent_group1.add_user(parent)
+        @parent_group2.add_user(parent)
+
+        # Créer des groupes pour le premier enfant
+        @child1_group1 = create(:group, name: "Child 1 Group 1")
+        @child1_group1.add_user(child1)
+
+        # Créer des groupes pour le deuxième enfant
+        @child2_group1 = create(:group, name: "Child 2 Group 1")
+        @child2_group1.add_user(child2)
+
+        get "/api/v1/groups?with_children=true", headers: headers
+      end
+
+      it "returns status code 200" do
+        expect(response).to have_http_status(200)
+      end
+
+      it "returns hierarchical structure with user, groups and children" do
+        data = JSON.parse(response.body)
+        expect(data).to include('id', 'name', 'account_type', 'groups', 'children')
+      end
+
+      it "returns the current user's information" do
+        data = JSON.parse(response.body)
+        expect(data['id']).to eq(parent.id)
+        expect(data['name']).to eq(parent.name)
+        expect(data['account_type']).to eq('standard')
+      end
+
+      it "returns the user's groups" do
+        data = JSON.parse(response.body)
+        expect(data['groups'].size).to eq(2)
+        group_names = data['groups'].map { |g| g['name'] }
+        expect(group_names).to include("Parent Group 1", "Parent Group 2")
+      end
+
+      it "returns all children" do
+        data = JSON.parse(response.body)
+        expect(data['children'].size).to eq(2)
+        child_names = data['children'].map { |c| c['name'] }
+        expect(child_names).to include("Child 1", "Child 2")
+      end
+
+      it "returns each child with their groups" do
+        data = JSON.parse(response.body)
+        child1_data = data['children'].find { |c| c['name'] == "Child 1" }
+        child2_data = data['children'].find { |c| c['name'] == "Child 2" }
+
+        expect(child1_data['groups'].size).to eq(1)
+        expect(child1_data['groups'].first['name']).to eq("Child 1 Group 1")
+
+        expect(child2_data['groups'].size).to eq(1)
+        expect(child2_data['groups'].first['name']).to eq("Child 2 Group 1")
+      end
+    end
+
+    context "when not authenticated" do
+      before { get "/api/v1/groups?with_children=true" }
+
+      it "returns status code 401" do
+        expect(response).to have_http_status(401)
+      end
+    end
+  end
+
+  describe "POST /api/v1/groups with user_id parameter" do
+    context "when authenticated" do
+      let(:parent) { create(:user) }
+      let(:child) { create(:managed_user, parent: parent, name: "Child User") }
+      let(:other_user_child) { create(:managed_user, name: "Other Child") }
+      let(:headers) { { 'Authorization' => "Bearer #{generate_jwt_token(parent)}" } }
+      let(:valid_attributes) { { group: { name: "Child Group", description: "Group for child" } } }
+
+      context "when creating a group for a child user" do
+        before do
+          post "/api/v1/groups?user_id=#{child.id}", params: valid_attributes, headers: headers, as: :json
+        end
+
+        it "returns status code 201" do
+          expect(response).to have_http_status(201)
+        end
+
+        it "creates a new group" do
+          expect {
+            post "/api/v1/groups?user_id=#{child.id}", params: valid_attributes, headers: headers, as: :json
+          }.to change(Group, :count).by(1)
+        end
+
+        it "adds the child as admin of the group" do
+          group = Group.last
+          membership = group.memberships.find_by(user: child)
+          expect(membership).not_to be_nil
+          expect(membership.role).to eq('admin')
+        end
+
+        it "returns the created group" do
+          data = JSON.parse(response.body)
+          expect(data).to include('id', 'name', 'description', 'members_count')
+          expect(data['name']).to eq("Child Group")
+        end
+      end
+
+      context "when trying to create a group for a child that is not yours" do
+        before do
+          post "/api/v1/groups?user_id=#{other_user_child.id}", params: valid_attributes, headers: headers, as: :json
+        end
+
+        it "returns status code 403" do
+          expect(response).to have_http_status(403)
+        end
+
+        it "returns a forbidden message" do
+          expect(JSON.parse(response.body)).to include('error')
+          expect(JSON.parse(response.body)['error']).to include('Forbidden')
+        end
+      end
+
+      context "when creating a group without user_id (standard behavior)" do
+        before do
+          post "/api/v1/groups", params: valid_attributes, headers: headers, as: :json
+        end
+
+        it "returns status code 201" do
+          expect(response).to have_http_status(201)
+        end
+
+        it "creates a new group" do
+          expect {
+            post "/api/v1/groups", params: valid_attributes, headers: headers, as: :json
+          }.to change(Group, :count).by(1)
+        end
+
+        it "adds the current user as admin of the group" do
+          group = Group.last
+          membership = group.memberships.find_by(user: parent)
+          expect(membership).not_to be_nil
+          expect(membership.role).to eq('admin')
+        end
+      end
+    end
+
+    context "when not authenticated" do
+      let(:child) { create(:managed_user) }
+      let(:valid_attributes) { { group: { name: "Child Group" } } }
+
+      before do
+        post "/api/v1/groups?user_id=#{child.id}", params: valid_attributes, as: :json
+      end
+
+      it "returns status code 401" do
+        expect(response).to have_http_status(401)
       end
     end
   end

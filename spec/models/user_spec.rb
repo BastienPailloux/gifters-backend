@@ -395,5 +395,152 @@ RSpec.describe User, type: :model do
         expect(managed_users).not_to include(standard_user1, standard_user2)
       end
     end
+
+    describe '#inactive_message' do
+      it 'returns :account_managed for managed accounts' do
+        child = create(:managed_user)
+        expect(child.inactive_message).to eq(:account_managed)
+      end
+
+      it 'returns default message for standard accounts' do
+        user = create(:user)
+        # Pour un utilisateur actif standard, Devise retourne :inactive par défaut
+        expect(user.inactive_message).to eq(:inactive)
+      end
+    end
+
+    describe 'Devise overrides' do
+      describe '#email_required?' do
+        it 'returns true for standard accounts' do
+          user = build(:user)
+          expect(user.send(:email_required?)).to be true
+        end
+
+        it 'returns false for managed accounts' do
+          child = build(:managed_user)
+          expect(child.send(:email_required?)).to be false
+        end
+      end
+
+      describe '#email_changed?' do
+        it 'returns true when standard user email changes' do
+          user = create(:user, email: 'old@example.com')
+          user.email = 'new@example.com'
+          expect(user.send(:email_changed?)).to be true
+        end
+
+        it 'returns false for managed accounts even if email changes' do
+          parent = create(:user)
+          child = create(:managed_user, parent: parent, email: nil)
+          child.email = 'test@example.com'
+          expect(child.send(:email_changed?)).to be false
+        end
+
+        it 'returns false when standard user email does not change' do
+          user = create(:user, email: 'same@example.com')
+          expect(user.send(:email_changed?)).to be false
+        end
+      end
+
+      describe '#will_save_change_to_email?' do
+        it 'returns true when standard user email will change' do
+          user = create(:user, email: 'old@example.com')
+          user.email = 'new@example.com'
+          expect(user.send(:will_save_change_to_email?)).to be true
+        end
+
+        it 'returns false for managed accounts' do
+          parent = create(:user)
+          child = create(:managed_user, parent: parent)
+          child.email = 'test@example.com'
+          expect(child.send(:will_save_change_to_email?)).to be false
+        end
+      end
+
+      describe '#password_required?' do
+        context 'for managed accounts' do
+          it 'returns false' do
+            child = build(:managed_user)
+            expect(child.send(:password_required?)).to be false
+          end
+        end
+
+        context 'for standard accounts' do
+          it 'returns true for new user with password' do
+            user = User.new(name: 'Test', email: 'test@example.com', password: 'password123')
+            expect(user.send(:password_required?)).to be true
+          end
+
+          it 'returns false for persisted user without password change' do
+            user = create(:user)
+            user.password = nil
+            user.password_confirmation = nil
+            user.name = 'Updated Name'
+            expect(user.send(:password_required?)).to be false
+          end
+
+          it 'returns true for persisted user updating password' do
+            user = create(:user)
+            user.password = 'newpassword123'
+            user.password_confirmation = 'newpassword123'
+            expect(user.send(:password_required?)).to be true
+          end
+        end
+      end
+    end
+
+    describe 'callbacks' do
+      describe '#set_default_account_type' do
+        it 'sets account_type to standard by default when creating user' do
+          user = User.create(name: 'Test', email: 'test@example.com', password: 'password123')
+          expect(user.account_type).to eq('standard')
+        end
+
+        it 'does not override explicitly set account_type' do
+          parent = create(:user)
+          child = User.create(name: 'Child', account_type: 'managed', parent_id: parent.id)
+          expect(child.account_type).to eq('managed')
+        end
+
+        it 'sets default account_type before validation' do
+          user = User.new(name: 'Test', email: 'test@example.com', password: 'password123')
+          # Le callback before_validation s'exécute lors de la validation
+          user.valid?
+          expect(user.account_type).to eq('standard')
+        end
+
+        it 'does not change account_type if already set' do
+          parent = create(:user)
+          child = User.new(name: 'Child', account_type: 'managed', parent_id: parent.id)
+          child.valid?
+          expect(child.account_type).to eq('managed')
+        end
+      end
+    end
+
+    describe 'email uniqueness for managed accounts' do
+      let(:parent) { create(:user) }
+
+      it 'allows multiple managed accounts with nil email' do
+        child1 = create(:managed_user, parent: parent, email: nil)
+        child2 = create(:managed_user, parent: parent, email: nil)
+        expect(child1).to be_valid
+        expect(child2).to be_valid
+      end
+
+      it 'enforces uniqueness for managed accounts with non-nil email' do
+        child1 = create(:managed_user, parent: parent, email: 'child@example.com')
+        child2 = build(:managed_user, parent: parent, email: 'child@example.com')
+        expect(child2).not_to be_valid
+        expect(child2.errors[:email]).to include('has already been taken')
+      end
+
+      it 'allows different emails for managed accounts' do
+        child1 = create(:managed_user, parent: parent, email: 'child1@example.com')
+        child2 = create(:managed_user, parent: parent, email: 'child2@example.com')
+        expect(child1).to be_valid
+        expect(child2).to be_valid
+      end
+    end
   end
 end

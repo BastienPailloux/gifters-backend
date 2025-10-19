@@ -2,7 +2,7 @@ module Api
   module V1
     class GroupsController < Api::V1::BaseController
       before_action :set_children, only: [:index], if: -> { params[:with_children].present? }
-      before_action :set_user, only: [:create, :update, :destroy, :leave], if: -> { params[:user_id].present? }
+      before_action :set_user, only: [:create, :show, :update, :destroy, :leave], if: -> { params[:user_id].present? }
       before_action :set_group, only: [:show, :update, :destroy, :leave]
       before_action :ensure_member, only: [:show, :update, :destroy, :leave]
       before_action :ensure_admin, only: [:update, :destroy]
@@ -69,9 +69,10 @@ module Api
       end
 
       def ensure_member
-        unless @group && (@group.users.include?(current_user) || @group.users.include?(current_user.children) || @group.users.include?(@user))
+        unless @group && (@group.users.include?(current_user) || @group.users.include?(@user))
           render json: { error: 'You are not a member of this group' }, status: :forbidden
         end
+        true
       end
 
       def ensure_admin
@@ -81,6 +82,7 @@ module Api
           action = action_name == 'update' ? 'update' : 'delete'
           render json: { error: "You must be an admin to #{action} this group" }, status: :forbidden
         end
+        true
       end
 
       def group_params
