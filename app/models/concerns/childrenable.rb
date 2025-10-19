@@ -18,6 +18,6 @@ module Childrenable
 
   def can_access_as_parent?(record)
     return false if record.nil?
-    record.parent_id == self.id ? true : false
+    record.parent_id == self.id
   end
 end
