@@ -1,13 +1,11 @@
 class User < ApplicationRecord
+  include Childrenable
+
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable,
          :jwt_authenticatable, jwt_revocation_strategy: JwtDenylist
-
-  # Relations pour les comptes parent/enfant
-  belongs_to :parent, class_name: 'User', optional: true
-  has_many :children, class_name: 'User', foreign_key: 'parent_id', dependent: :destroy
 
   has_many :memberships, dependent: :destroy
   has_many :groups, through: :memberships
@@ -18,20 +16,27 @@ class User < ApplicationRecord
   has_many :gift_recipients, dependent: :destroy
   has_many :received_gift_ideas, through: :gift_recipients, source: :gift_idea
 
-  # Scopes
-  scope :standard, -> { where(account_type: 'standard') }
-  scope :managed, -> { where(account_type: 'managed') }
-
   # Validations
   validates :name, presence: true
-  validates :account_type, presence: true, inclusion: { in: %w[standard managed] }
-  validates :parent_id, presence: true, if: :managed?
-  validates :parent_id, absence: true, if: :standard?
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }, if: :standard?
   validates :email, uniqueness: { allow_blank: true }, if: :managed?
   validates :password, presence: true, if: -> { standard? && password_required? }
+  validates :account_type, presence: true, inclusion: { in: %w[standard managed] }
+  validates :parent_id, presence: true, if: :managed?
+  validates :parent_id, absence: true, if: :standard?
+
+  # Callbacks
+  before_validation :set_default_account_type
 
   # Methods
+  def managed?
+    account_type == 'managed'
+  end
+
+  def standard?
+    account_type.nil? || account_type == 'standard'
+  end
+
   def common_groups_with(user)
     groups & user.groups
   end
@@ -94,25 +99,6 @@ class User < ApplicationRecord
     response
   end
 
-  # Méthodes pour les comptes managed
-  def managed?
-    account_type == 'managed'
-  end
-
-  def standard?
-    account_type == 'standard'
-  end
-
-  def has_children?
-    children.any?
-  end
-
-  def can_access_as_parent?(user)
-    # Un parent peut accéder aux données de ses enfants
-    return false if user.nil?
-    user.parent_id == self.id
-  end
-
   # Override de la méthode Devise pour désactiver l'authentification des comptes managed
   def active_for_authentication?
     super && standard?
@@ -141,5 +127,9 @@ class User < ApplicationRecord
     return false if managed?
     return false if persisted? && password.blank? && password_confirmation.blank?
     true
+  end
+
+  def set_default_account_type
+    self.account_type ||= 'standard'
   end
 end
