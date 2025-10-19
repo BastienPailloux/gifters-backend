@@ -7,20 +7,13 @@ module Api
       # GET /api/v1/users
       def index
         @users = User.all
-        users_data = @users.map { |user| user.as_json(only: [:id, :name, :email]) }
-        render json: { users: users_data }
       end
 
       # GET /api/v1/users/:id
-      def show
-        render json: { user: @user.as_json(except: [:encrypted_password, :reset_password_token, :reset_password_sent_at]) }
-      end
 
       # GET /api/v1/users/shared_users
       def shared_users
-        # Cette action ne nécessite pas de paramètres car elle utilise current_user
-        user_ids = current_user.common_groups_with_users_ids
-        render json: { user_ids: user_ids }
+        @user_ids = current_user.common_groups_with_users_ids
       end
 
       # PUT /api/v1/users/:id
@@ -50,7 +43,7 @@ module Api
             @user.update_brevo_subscription
           end
 
-          render json: { user: @user.as_json(except: [:encrypted_password, :reset_password_token, :reset_password_sent_at]) }
+          render :update
         else
           # En cas d'échec, restaurer l'ancien statut d'abonnement si nécessaire
           if newsletter_changed

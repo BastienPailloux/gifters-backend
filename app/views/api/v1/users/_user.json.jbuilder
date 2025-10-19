@@ -1,0 +1,17 @@
+json.id user.id
+json.name user.name
+json.email user.email
+json.birthday user.birthday
+json.gender user.gender
+json.phone_number user.phone_number
+json.address user.address
+json.city user.city
+json.state user.state
+json.zip_code user.zip_code
+json.country user.country
+json.locale user.locale
+json.newsletter_subscription user.newsletter_subscription
+json.account_type user.account_type
+json.parent_id user.parent_id
+json.created_at user.created_at
+json.updated_at user.updated_at
