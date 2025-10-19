@@ -21,18 +21,11 @@ module Api
       # POST /api/v1/groups
       def create
         @group = Group.new(group_params)
-
-        # Définir le créateur avant d'enregistrer
         @group.creator = current_user
 
         if @group.save
-          # Ajouter l'utilisateur courant comme admin du groupe
           @group.memberships.create(user: current_user, role: 'admin')
-
-          # L'invitation a déjà été créée par le callback after_create
-
-          render json: @group.as_json(only: [:id, :name, :description]).merge(members_count: @group.members_count),
-                 status: :created
+          render status: :created
         else
           render json: { errors: @group.errors.full_messages }, status: :unprocessable_entity
         end
@@ -41,7 +34,7 @@ module Api
       # PUT /api/v1/groups/:id
       def update
         if @group.update(group_params)
-          render json: @group.as_json(only: [:id, :name, :description]).merge(members_count: @group.members_count)
+          render :update
         else
           render json: { errors: @group.errors.full_messages }, status: :unprocessable_entity
         end
