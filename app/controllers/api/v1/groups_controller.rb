@@ -15,16 +15,7 @@ module Api
 
       # GET /api/v1/groups/:id
       def show
-        members = @group.users
-        response_data = {
-          id: @group.id,
-          name: @group.name,
-          description: @group.description,
-          members_count: @group.members_count,
-          members: @group.memberships.includes(:user).map { |m| m.user.as_json(only: [:id, :name, :email]).merge(role: m.role) }
-        }
-
-        render json: response_data
+        @memberships = @group.memberships.includes(:user)
       end
 
       # POST /api/v1/groups
