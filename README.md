@@ -81,7 +81,7 @@ bundle exec rspec
 ### API Documentation
 
 NOT YET IMPLEMENTED
-We will Swagger for API documentation. After starting the server, you can access the documentation at:
+We will use Swagger for API documentation. After starting the server, you can access the documentation at:
 
 ```
 http://localhost:3000/api-docs
@@ -91,18 +91,48 @@ http://localhost:3000/api-docs
 
 ```
 backend-gifters/
-├── app/                 # Application code
-│   ├── controllers/     # Controllers
-│   ├── models/          # Models
-│   ├── services/        # Service objects
-│   ├── serializers/     # JSON serializers
-│   └── views/           # Views (for admin interface)
-├── config/              # Configuration files
-├── db/                  # Database migrations and seeds
-├── lib/                 # Library code
-├── public/              # Public files
-├── spec/                # Tests
-├── .env.example         # Example environment variables
+├── app/                        # Application code
+│   ├── controllers/            # API controllers
+│   │   └── api/v1/            # API v1 endpoints
+│   │       ├── groups_controller.rb
+│   │       ├── children_controller.rb
+│   │       └── ...
+│   ├── models/                # Models
+│   │   ├── concerns/          # Reusable model concerns
+│   │   │   └── childrenable.rb
+│   │   ├── user.rb
+│   │   ├── group.rb
+│   │   └── ...
+│   ├── services/              # Service objects
+│   ├── serializers/           # ActiveModel Serializers
+│   └── views/                 # Jbuilder views
+│       └── api/v1/groups/    # Group JSON templates
+│           ├── _group.json.jbuilder    # Reusable partial
+│           ├── index.json.jbuilder     # List/Hierarchical view
+│           ├── show.json.jbuilder      # Detail view
+│           ├── create.json.jbuilder    # Create response
+│           └── update.json.jbuilder    # Update response
+├── config/                    # Configuration files
+├── db/                        # Database migrations and seeds
+│   └── migrate/              # Migration files
+│       ├── *_add_parent_and_account_type_to_users.rb
+│       └── *_allow_nil_email_in_user.rb
+├── lib/                       # Library code
+├── spec/                      # RSpec tests (220+ examples)
+│   ├── models/               # Model tests
+│   │   ├── concerns/         # Concern tests
+│   │   │   └── childrenable_spec.rb
+│   │   └── user_spec.rb
+│   ├── requests/             # Request/Integration tests
+│   │   └── api/v1/
+│   │       ├── groups_spec.rb
+│   │       └── children_spec.rb
+│   └── views/                # View/Jbuilder tests
+│       └── api/v1/groups/
+│           ├── _group.json.jbuilder_spec.rb
+│           ├── index.json.jbuilder_spec.rb
+│           └── ...
+└── .env.example              # Example environment variables
 ```
 
 ## 📝 Database Schema
@@ -123,11 +153,32 @@ users                # User accounts
 
 ## 🛠️ Technologies
 
-- **Ruby on Rails**: Web framework
-- **PostgreSQL**: Database
-- **JWT**: Authentication
-- **RSpec**: Testing
+### Core Stack
+- **Ruby 3.4.2**: Programming language
+- **Rails 8.0.3**: Web framework
+- **PostgreSQL 15.x**: Database
 - **Puma**: Web server
+
+### Authentication & Security
+- **JWT (JSON Web Tokens)**: Stateless authentication
+- **Devise**: User authentication framework
+- **Devise-JWT**: JWT integration for Devise
+
+### API & Views
+- **Jbuilder**: JSON template engine for API responses
+- **ActiveModel::Serializers**: JSON serialization
+- **CORS**: Cross-Origin Resource Sharing support
+
+### Testing & Quality
+- **RSpec**: Testing framework
+- **FactoryBot**: Test data generation
+- **SimpleCov**: Code coverage analysis
+- **Shoulda Matchers**: RSpec matchers for common use cases
+
+### Development Tools
+- **RuboCop**: Ruby code analyzer and formatter
+- **Brakeman**: Security vulnerability scanner
+- **Bundle Audit**: Gem vulnerability checker
 
 ## 🔄 CI/CD
 
@@ -171,10 +222,39 @@ Please make sure to update tests as appropriate and follow our code style.
 ### Development Guidelines
 
 - Follow Ruby and Rails best practices
-- Write tests for all new features
+- Write tests for all new features (models, controllers, views)
 - Follow the existing coding style
 - Document new API endpoints
 - Update API documentation when changing endpoints
+- Use Jbuilder views for JSON responses (separation of concerns)
+- Extract reusable logic into concerns
+- Ensure test coverage remains above 85%
+
+## 🏗️ Architecture & Design Patterns
+
+### Concerns
+We use Rails Concerns to encapsulate reusable logic:
+- Self-referencing associations
+- Scopes and helper methods
+- Can be included in any model needing parent-child functionality
+
+### Jbuilder Views
+API responses are rendered using Jbuilder templates:
+- **Separation of concerns**: Presentation logic separate from controllers
+- **Reusable partials**: DRY principle with shared templates
+- **Hierarchical data**: Easy nested JSON structures
+- **Performance**: Optimized eager loading
+
+### Testing Strategy
+- **Model tests**: Validations, associations, methods
+- **Controller tests**: Request specs for API endpoints
+- **View tests**: Jbuilder template rendering
+- **Integration tests**: End-to-end user flows
+
+### Performance Optimizations
+- **Eager loading**: `.includes()` to prevent N+1 queries
+- **Scopes**: Database-level filtering
+- **Partial caching**: Future implementation for frequently accessed data
 
 ## 📝 License
 
