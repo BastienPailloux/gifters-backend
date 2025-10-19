@@ -6,42 +6,28 @@ module Api
 
       # GET /api/v1/children
       def index
-        children = current_user.children
-        render json: {
-          children: children.as_json(except: [:encrypted_password, :reset_password_token, :reset_password_sent_at])
-        }
+        @children = current_user.children
       end
 
       # GET /api/v1/children/:id
-      def show
-        render json: {
-          child: @child.as_json(except: [:encrypted_password, :reset_password_token, :reset_password_sent_at])
-        }
-      end
 
       # POST /api/v1/children
       def create
-        child = User.new(child_params)
-        child.account_type = 'managed'
-        child.parent_id = current_user.id
+        @child = User.new(child_params)
+        @child.account_type = 'managed'
+        @child.parent_id = current_user.id
 
-        if child.save
-          render json: {
-            child: child.as_json(except: [:encrypted_password, :reset_password_token, :reset_password_sent_at]),
-            message: 'Child account created successfully'
-          }, status: :created
+        if @child.save
+          render :create, status: :created
         else
-          render json: { errors: child.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: @child.errors.full_messages }, status: :unprocessable_entity
         end
       end
 
       # PUT /api/v1/children/:id
       def update
         if @child.update(child_params)
-          render json: {
-            child: @child.as_json(except: [:encrypted_password, :reset_password_token, :reset_password_sent_at]),
-            message: 'Child account updated successfully'
-          }
+          render :update
         else
           render json: { errors: @child.errors.full_messages }, status: :unprocessable_entity
         end
