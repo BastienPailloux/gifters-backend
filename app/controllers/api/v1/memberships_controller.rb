@@ -84,8 +84,11 @@ module Api
 
       def authorize_membership
         case action_name
-        when 'index', 'create'
-          authorize Membership
+        when 'index'
+          # Pour index, on vérifie si l'user peut voir les memberships du groupe
+          authorize @group, :show_memberships?
+        when 'create'
+          authorize @group, :manage_memberships?
         when 'show', 'update', 'destroy'
           authorize @membership
         end

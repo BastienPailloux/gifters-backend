@@ -75,6 +75,7 @@ group :development, :test do
   gem "shoulda-matchers"
   gem "simplecov", require: false
   gem 'dotenv-rails'
+  gem 'pundit-matchers' # Pour tester les policies Pundit
 
   # Gems pour CI/CD
   gem 'rubocop', require: false

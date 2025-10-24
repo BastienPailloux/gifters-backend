@@ -29,12 +29,25 @@ class GroupPolicy < ApplicationPolicy
   end
 
   def leave?
-    return true unless record.admin_users.size == 1 && record.admin_users.include?(user)
-    false
+    # L'utilisateur doit être membre du groupe pour le quitter
+    return false unless member_or_child_member_of?(record)
+
+    # Un utilisateur ne peut pas quitter s'il est le dernier admin
+    return false if record.admin_users.size == 1 && record.admin_users.include?(user)
+
+    true
   end
 
   def manage_invitations?
     admin_or_child_admin_of?(record)
+  end
+
+  def manage_memberships?
+    admin_or_child_admin_of?(record)
+  end
+
+  def show_memberships?
+    member_or_child_member_of?(record)
   end
 
   private

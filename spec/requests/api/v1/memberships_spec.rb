@@ -202,7 +202,7 @@ RSpec.describe "Api::V1::Memberships", type: :request do
         end
 
         it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You must be an admin to add members to this group')
+          expect(JSON.parse(response.body)).to include('error' => 'You must be an admin to manage memberships in this group')
         end
       end
 
@@ -216,7 +216,7 @@ RSpec.describe "Api::V1::Memberships", type: :request do
         end
 
         it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not a member of this group')
+          expect(JSON.parse(response.body)).to include('error' => 'You must be an admin to manage memberships in this group')
         end
       end
     end
