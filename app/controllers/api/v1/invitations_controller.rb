@@ -2,12 +2,12 @@ module Api
   module V1
     class InvitationsController < Api::V1::BaseController
       before_action :set_group, only: [:index, :create, :send_email]
-      before_action :ensure_user_is_admin_of_group, only: [:index, :create, :send_email]
-      before_action :set_invitation, only: [:show, :destroy]
+      before_action :set_invitation, only: [:show, :destroy, :accept]
+      before_action :authorize_invitation
 
       # GET /api/v1/groups/:group_id/invitations
       def index
-        @invitations = @group.invitations.includes(:created_by)
+        @invitations = policy_scope(@group.invitations).includes(:created_by)
 
         # Assurer que le rendu est toujours un tableau, même vide
         if @invitations.empty?
@@ -87,25 +87,12 @@ module Api
 
       # DELETE /api/v1/invitations/:id
       def destroy
-        # Vérifier si l'utilisateur est admin du groupe ou le créateur de l'invitation
-        unless current_user_is_admin_of_group?(@invitation.group) || @invitation.created_by == current_user
-          render json: { error: 'You are not authorized to delete this invitation' }, status: :forbidden
-          return
-        end
-
         @invitation.destroy
         head :no_content
       end
 
       # POST /api/v1/invitations/accept
       def accept
-        @invitation = Invitation.find_by(token: params[:token])
-
-        unless @invitation
-          render json: { error: 'Invalid invitation token' }, status: :not_found
-          return
-        end
-
         # Vérifier si l'utilisateur est déjà membre du groupe
         if current_user.groups.include?(@invitation.group)
           render json: { error: 'You are already a member of this group' }, status: :unprocessable_entity
@@ -148,18 +135,6 @@ module Api
         end
       end
 
-      def ensure_user_is_admin_of_group
-        unless current_user_is_admin_of_group?(@group)
-          render json: { error: 'You must be an admin to manage invitations' }, status: :forbidden
-          return
-        end
-      end
-
-      def current_user_is_admin_of_group?(group)
-        membership = group.memberships.find_by(user: current_user)
-        membership&.role == 'admin'
-      end
-
       def invitation_params
         params.require(:invitation).permit(:role)
       end
@@ -176,6 +151,17 @@ module Api
           InvitationMailer.invitation_accepted(invitation, user).deliver_now
         else
           InvitationMailer.invitation_accepted(invitation, user).deliver_later
+        end
+      end
+
+      def authorize_invitation
+        case action_name
+        when 'index', 'create', 'send_email'
+          authorize @group, :manage_invitations?
+        when 'show', 'destroy'
+          authorize @invitation
+        when 'accept'
+          authorize @invitation, :accept?
         end
       end
     end

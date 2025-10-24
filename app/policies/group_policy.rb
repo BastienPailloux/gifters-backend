@@ -33,6 +33,10 @@ class GroupPolicy < ApplicationPolicy
     false
   end
 
+  def manage_invitations?
+    admin?
+  end
+
   private
 
   def member?
