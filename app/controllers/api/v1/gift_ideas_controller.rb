@@ -2,14 +2,12 @@ module Api
   module V1
     class GiftIdeasController < Api::V1::BaseController
       before_action :set_gift_idea, only: [:show, :update, :destroy, :mark_as_buying, :mark_as_bought]
-      before_action :authorize_access, only: [:show]
-      before_action :authorize_modification, only: [:update, :destroy]
-      before_action :authorize_status_change, only: [:mark_as_buying, :mark_as_bought]
+      before_action :authorize_gift_idea
 
       # GET /api/v1/gift_ideas
       def index
-        # Utiliser le scope principal pour récupérer les idées visibles par l'utilisateur
-        @gift_ideas = GiftIdea.visible_to_user(current_user)
+        # Utiliser le scope Pundit pour récupérer les idées visibles par l'utilisateur
+        @gift_ideas = policy_scope(GiftIdea)
 
         # Appliquer les filtres par statut si nécessaire
         if params[:status].present?
@@ -163,50 +161,21 @@ module Api
         end
       end
 
-      def authorize_access
-        unless @gift_idea.visible_to?(current_user)
-          render json: { error: "You are not authorized to view this gift idea" }, status: :forbidden
-          return false
-        end
-        true
-      end
-
-      def authorize_modification
-        # Vérifier d'abord si l'utilisateur peut voir l'idée de cadeau
-        unless @gift_idea.visible_to?(current_user)
-          render json: { error: "You are not authorized to #{action_name} this gift idea" }, status: :forbidden
-          return false
-        end
-
-        # Ensuite, vérifier si l'utilisateur est le créateur
-        unless @gift_idea.created_by == current_user
-          render json: { error: "You are not authorized to #{action_name} this gift idea" }, status: :forbidden
-          return false
-        end
-
-        true
-      end
-
-      # Nouvelle méthode pour autoriser les changements de statut (buying/bought)
-      def authorize_status_change
-        # Pour les changements de statut, il suffit que l'utilisateur puisse voir le cadeau
-        # Cela permet à n'importe quel membre du groupe de marquer un cadeau comme "en cours d'achat" ou "acheté"
-        unless @gift_idea.visible_to?(current_user)
-          render json: { error: "You are not authorized to #{action_name} this gift idea" }, status: :forbidden
-          return false
-        end
-
-        # Ne pas autoriser le destinataire du cadeau à changer son statut
-        if @gift_idea.is_recipient?(current_user)
-          render json: { error: "You cannot change the status of your own gift" }, status: :forbidden
-          return false
-        end
-
-        true
-      end
-
       def gift_idea_params
         params.require(:gift_idea).permit(:title, :description, :link, :price, :image_url, recipient_ids: [])
+      end
+
+      def authorize_gift_idea
+        case action_name
+        when 'index', 'create'
+          authorize GiftIdea
+        when 'show', 'update', 'destroy'
+          authorize @gift_idea
+        when 'mark_as_buying'
+          authorize @gift_idea, :mark_as_buying?
+        when 'mark_as_bought'
+          authorize @gift_idea, :mark_as_bought?
+        end
       end
     end
   end
