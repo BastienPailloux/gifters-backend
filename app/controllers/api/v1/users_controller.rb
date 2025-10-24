@@ -2,11 +2,11 @@ module Api
   module V1
     class UsersController < Api::V1::BaseController
       before_action :set_user, only: [:show, :update, :destroy, :update_locale]
-      before_action :authorize_user, only: [:update, :destroy]
+      before_action :authorize_user_action
 
       # GET /api/v1/users
       def index
-        @users = User.all
+        @users = policy_scope(User)
       end
 
       # GET /api/v1/users/:id
@@ -62,23 +62,16 @@ module Api
 
       # PATCH/PUT /api/v1/users/:id/update_locale
       def update_locale
-        # Autorise uniquement la mise à jour de sa propre locale
-        if @user.id.to_s == current_user.id.to_s
-          if @user.update(locale_params)
-            render json: {
-              status: { code: 200, message: 'Locale updated successfully' },
-              data: { locale: @user.locale }
-            }, status: :ok
-          else
-            render json: {
-              status: { code: 422, message: 'Could not update locale' },
-              errors: @user.errors.full_messages
-            }, status: :unprocessable_entity
-          end
+        if @user.update(locale_params)
+          render json: {
+            status: { code: 200, message: 'Locale updated successfully' },
+            data: { locale: @user.locale }
+          }, status: :ok
         else
           render json: {
-            status: { code: 403, message: 'Not authorized to update this user locale' }
-          }, status: :forbidden
+            status: { code: 422, message: 'Could not update locale' },
+            errors: @user.errors.full_messages
+          }, status: :unprocessable_entity
         end
       end
 
@@ -89,12 +82,6 @@ module Api
         unless @user
           render json: { error: 'User not found' }, status: :not_found
           return
-        end
-      end
-
-      def authorize_user
-        unless @user == current_user
-          render json: { error: 'Forbidden' }, status: :forbidden
         end
       end
 
@@ -118,6 +105,17 @@ module Api
 
       def locale_params
         params.require(:user).permit(:locale)
+      end
+
+      def authorize_user_action
+        case action_name
+        when 'index'
+          authorize User
+        when 'shared_users'
+          authorize User, :shared_users?
+        when 'show', 'update', 'destroy', 'update_locale'
+          authorize @user
+        end
       end
     end
   end
