@@ -57,10 +57,19 @@ module Api
         # Ajouter un filtre pour limiter par groupe si demandé
         if params[:group_id].present?
           group = Group.find_by(id: params[:group_id])
-          if group && group.users.include?(current_user)
+          # Vérifier si l'utilisateur ou un de ses enfants est membre du groupe
+          user_or_child_is_member = group && (
+            group.users.include?(current_user) ||
+            Membership.exists?(
+              group_id: group.id,
+              user_id: User.where(parent_id: current_user.id).select(:id)
+            )
+          )
+
+          if user_or_child_is_member
             @gift_ideas = @gift_ideas.for_group(params[:group_id])
           else
-            # Si le groupe n'existe pas ou si l'utilisateur n'en est pas membre, retourner une liste vide
+            # Si le groupe n'existe pas ou si ni l'utilisateur ni ses enfants ne sont membres, retourner une liste vide
             @gift_ideas = GiftIdea.none
           end
         end

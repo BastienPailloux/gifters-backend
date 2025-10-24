@@ -16,7 +16,14 @@ class UserPolicy < ApplicationPolicy
 
   def show?
     # Peut voir un utilisateur si on partage un groupe avec lui ou si c'est soi-même
-    record.id == user.id || user.has_common_group_with?(record)
+    return true if record.id == user.id
+    return true if user.has_common_group_with?(record)
+
+    # OU si un de ses enfants partage un groupe avec l'utilisateur à voir (1 requête optimisée)
+    Membership.joins("INNER JOIN memberships AS child_memberships ON memberships.group_id = child_memberships.group_id")
+      .where(memberships: { user_id: record.id })
+      .where(child_memberships: { user_id: User.where(parent_id: user.id).select(:id) })
+      .exists?
   end
 
   def shared_users?

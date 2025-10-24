@@ -162,10 +162,10 @@ class GiftIdea < ApplicationRecord
   private
 
   def creator_and_recipients_have_common_group
-    # Vérifier que le créateur a un groupe en commun avec chaque destinataire
+    # Utiliser la logique de la policy pour vérifier les autorisations
     recipients.each do |recipient|
-      unless created_by.has_common_group_with?(recipient) || created_by_id == recipient.id
-        errors.add(:recipients, "must all be in a common group with you")
+      unless GiftIdeaPolicy.can_create_for_recipient?(created_by, recipient)
+        errors.add(:recipients, "must all be in a common group with you or be a family member")
         return false
       end
     end
