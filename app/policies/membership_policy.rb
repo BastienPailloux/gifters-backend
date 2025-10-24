@@ -27,52 +27,25 @@ class MembershipPolicy < ApplicationPolicy
   end
 
   def show?
-    # Peut voir un membership si on fait partie du même groupe
-    return true if user.groups.include?(record.group)
-
-    # OU si un de ses enfants fait partie du groupe (une seule requête)
-    Membership.exists?(user_id: User.where(parent_id: user.id).select(:id), group_id: record.group_id)
+    member_or_child_member_of?(record.group)
   end
 
   def create?
-    # Seul un admin du groupe peut créer un membership
-    return true if record.group.admin_users.include?(user)
-
-    # OU si un de ses enfants est admin du groupe (une seule requête)
-    Membership.exists?(
-      user_id: User.where(parent_id: user.id).select(:id),
-      group_id: record.group_id,
-      role: 'admin'
-    )
+    admin_or_child_admin_of?(record.group)
   end
 
   def update?
-    # Seul un admin du groupe peut modifier un membership (changer le rôle)
-    return true if record.group.admin_users.include?(user)
-
-    # OU si un de ses enfants est admin du groupe (une seule requête)
-    Membership.exists?(
-      user_id: User.where(parent_id: user.id).select(:id),
-      group_id: record.group_id,
-      role: 'admin'
-    )
+    admin_or_child_admin_of?(record.group)
   end
 
   def destroy?
     # Un admin peut supprimer un membre
-    return true if record.group.admin_users.include?(user)
-
-    # OU si un de ses enfants est admin du groupe
-    return true if Membership.exists?(
-      user_id: User.where(parent_id: user.id).select(:id),
-      group_id: record.group_id,
-      role: 'admin'
-    )
+    return true if admin_or_child_admin_of?(record.group)
 
     # OU un membre peut se supprimer lui-même (quitter le groupe)
     return true if record.user_id == user.id
 
     # OU si c'est le membership d'un de ses enfants
-    User.exists?(id: record.user_id, parent_id: user.id)
+    owned_by_user_or_children?(record, owner_field: :user_id)
   end
 end

@@ -38,7 +38,7 @@ class GiftIdeaPolicy < ApplicationPolicy
     return true if record.visible_to?(user)
 
     # OU si c'est une gift idea créée par un enfant
-    return true if User.exists?(id: record.created_by_id, parent_id: user.id)
+    return true if owned_by_user_or_children?(record)
 
     # OU si c'est une gift idea pour un enfant
     GiftRecipient.joins(:user)
@@ -52,19 +52,11 @@ class GiftIdeaPolicy < ApplicationPolicy
   end
 
   def update?
-    # Seul le créateur peut modifier
-    return true if record.created_by_id == user.id
-
-    # OU si c'est créé par un enfant
-    User.exists?(id: record.created_by_id, parent_id: user.id)
+    owned_by_user_or_children?(record)
   end
 
   def destroy?
-    # Seul le créateur peut supprimer
-    return true if record.created_by_id == user.id
-
-    # OU si c'est créé par un enfant
-    User.exists?(id: record.created_by_id, parent_id: user.id)
+    owned_by_user_or_children?(record)
   end
 
   def mark_as_buying?
@@ -82,15 +74,12 @@ class GiftIdeaPolicy < ApplicationPolicy
 
   def mark_as_bought?
     # Un utilisateur peut marquer comme "acheté" si :
-    # - Il est l'acheteur (buyer) ou le créateur
-    # - OU si c'est créé par un enfant
+    # - Il est l'acheteur (buyer) ou le créateur/parent du créateur
     # - Le cadeau n'est pas déjà acheté
     return false if record.status == 'bought'
     return true if record.buyer_id == user.id
-    return true if record.created_by_id == user.id
 
-    # OU si c'est créé par un enfant (1 requête)
-    User.exists?(id: record.created_by_id, parent_id: user.id)
+    owned_by_user_or_children?(record)
   end
 
   def cancel_buying?

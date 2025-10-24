@@ -13,7 +13,7 @@ class GroupPolicy < ApplicationPolicy
   end
 
   def show?
-    member? || user.children.any? { |child| record.users.include?(child) }
+    member_or_child_member_of?(record)
   end
 
   def create?
@@ -21,11 +21,11 @@ class GroupPolicy < ApplicationPolicy
   end
 
   def update?
-    admin? || user.children.any? { |child| record.admin_users.include?(child) }
+    admin_or_child_admin_of?(record)
   end
 
   def destroy?
-    admin? || user.children.any? { |child| record.admin_users.include?(child) }
+    admin_or_child_admin_of?(record)
   end
 
   def leave?
