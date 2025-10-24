@@ -34,7 +34,7 @@ class GroupPolicy < ApplicationPolicy
   end
 
   def manage_invitations?
-    admin?
+    admin_or_child_admin_of?(record)
   end
 
   private
