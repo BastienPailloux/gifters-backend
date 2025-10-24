@@ -5,6 +5,8 @@ module Api
       respond_to :json
 
       include Devise::Controllers::Helpers
+      include Pundit::Authorization
+
       before_action :authenticate_user!
 
       # Passer current_user aux sérialiseurs comme scope
@@ -13,6 +15,7 @@ module Api
       end
 
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
+      rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
       private
 
@@ -58,6 +61,12 @@ module Api
 
       def not_found
         render json: { error: 'Resource not found' }, status: :not_found
+      end
+
+      def user_not_authorized(exception)
+        policy_name = exception.policy.class.to_s.underscore
+        error_message = I18n.t("#{policy_name}.#{exception.query}", scope: "pundit", default: 'You are not authorized to perform this action.')
+        render json: { error: error_message }, status: :forbidden
       end
     end
   end

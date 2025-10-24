@@ -52,6 +52,9 @@ gem 'devise'
 gem 'devise-jwt'
 gem 'jsonapi-serializer'
 
+# Authorization
+gem 'pundit'
+
 # Serialization
 gem 'active_model_serializers', '~> 0.10.13'
 
