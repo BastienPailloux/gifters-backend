@@ -106,6 +106,13 @@ backend-gifters/
 │   │   ├── user.rb
 │   │   ├── group.rb
 │   │   └── ...
+│   ├── policies/              # Pundit authorization policies
+│   │   ├── concerns/          # Reusable policy concerns
+│   │   │   └── child_authorization.rb
+│   │   ├── application_policy.rb
+│   │   ├── group_policy.rb
+│   │   ├── gift_idea_policy.rb
+│   │   └── ...
 │   ├── services/              # Service objects
 │   ├── serializers/           # ActiveModel Serializers
 │   └── views/                 # Jbuilder views
@@ -121,11 +128,15 @@ backend-gifters/
 │       ├── *_add_parent_and_account_type_to_users.rb
 │       └── *_allow_nil_email_in_user.rb
 ├── lib/                       # Library code
-├── spec/                      # RSpec tests (220+ examples)
+├── spec/                      # RSpec tests (638+ examples)
 │   ├── models/               # Model tests
 │   │   ├── concerns/         # Concern tests
 │   │   │   └── childrenable_spec.rb
 │   │   └── user_spec.rb
+│   ├── policies/             # Policy tests
+│   │   ├── group_policy_spec.rb
+│   │   ├── gift_idea_policy_spec.rb
+│   │   └── ...
 │   ├── requests/             # Request/Integration tests
 │   │   └── api/v1/
 │   │       ├── groups_spec.rb
@@ -166,6 +177,7 @@ users                # User accounts
 - **JWT (JSON Web Tokens)**: Stateless authentication
 - **Devise**: User authentication framework
 - **Devise-JWT**: JWT integration for Devise
+- **Pundit**: Authorization framework for fine-grained access control
 
 ### API & Views
 - **Jbuilder**: JSON template engine for API responses
@@ -177,6 +189,7 @@ users                # User accounts
 - **FactoryBot**: Test data generation
 - **SimpleCov**: Code coverage analysis
 - **Shoulda Matchers**: RSpec matchers for common use cases
+- **Pundit Matchers**: RSpec matchers for testing authorization policies
 
 ### Development Tools
 - **RuboCop**: Ruby code analyzer and formatter
@@ -204,11 +217,13 @@ Le workflow CI (`rails-ci.yml`) s'exécute à chaque push sur les branches princ
 
 ## 🔒 Security
 
-- All endpoints requiring authentication are protected with JWT tokens
-- CORS protection for API endpoints
-- Rate limiting to prevent abuse
-- SQL injection protection through ActiveRecord
-- Regular security updates
+- **Authentication**: JWT tokens pour tous les endpoints protégés
+- **Authorization**: Pundit policies pour contrôle d'accès fin-grain
+- **CORS**: Protection contre les requêtes cross-origin non autorisées
+- **Rate limiting**: Protection contre les abus
+- **SQL injection**: Protection via ActiveRecord
+- **XSS**: Protection automatique Rails
+- **Regular updates**: Mises à jour de sécurité via Dependabot
 
 ## 🤝 Contributing
 
@@ -250,6 +265,7 @@ API responses are rendered using Jbuilder templates:
 
 ### Testing Strategy
 - **Model tests**: Validations, associations, methods
+- **Policy tests**: Authorization rules avec `pundit-matchers`
 - **Controller tests**: Request specs for API endpoints
 - **View tests**: Jbuilder template rendering
 - **Integration tests**: End-to-end user flows
@@ -257,6 +273,8 @@ API responses are rendered using Jbuilder templates:
 ### Performance Optimizations
 - **Eager loading**: `.includes()` to prevent N+1 queries
 - **Scopes**: Database-level filtering
+- **Policy scopes**: Nombre fixe de requêtes (pas de N+1)
+- **Authorization caching**: Queries optimisées pour relations parent-enfant
 - **Partial caching**: Future implementation for frequently accessed data
 
 ## 📝 License
