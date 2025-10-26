@@ -122,6 +122,19 @@ RSpec.describe User, type: :model do
       user2_occurrences = common_user_ids.count(user2.id)
       expect(user2_occurrences).to eq(1)
     end
+
+    it 'includes ids of managed children even if they are not in any group' do
+      parent = create(:user)
+      child1 = create(:managed_user, parent: parent)
+      child2 = create(:managed_user, parent: parent)
+
+      # Les enfants ne sont dans aucun groupe
+      common_user_ids = parent.common_groups_with_users_ids
+
+      # Les IDs des enfants doivent être inclus
+      expect(common_user_ids).to include(child1.id)
+      expect(common_user_ids).to include(child2.id)
+    end
   end
 
   describe '#jwt_payload' do
