@@ -28,9 +28,11 @@ class GiftIdea < ApplicationRecord
     joins(:recipients).where(gift_recipients: { user_id: user_id })
   }
   scope :created_by_user, ->(user) { where(created_by: user) }
+  scope :created_by_children, ->(user) { where(created_by_id: User.where(parent_id: user.id).select(:id)) }
   scope :not_for_user, ->(user) {
     where.not(id: GiftRecipient.where(user_id: user.id).select(:gift_idea_id))
   }
+  scope :for_children, ->(user) { where(id: GiftRecipient.where(user_id: User.where(parent_id: user.id).select(:id)).select(:gift_idea_id)) }
   scope :for_users_in_common_groups, ->(user) {
     # Cette requête trouve les idées de cadeaux où tous les destinataires ont un groupe commun avec l'utilisateur
     gift_idea_ids_with_recipient_count = GiftRecipient.group(:gift_idea_id).count
@@ -139,7 +141,7 @@ class GiftIdea < ApplicationRecord
 
   # Vérifier si un utilisateur est destinataire de ce cadeau
   def is_recipient?(user)
-    recipients.include?(user)
+    gift_recipients.exists?(user_id: user.id)
   end
 
   # Ajouter un destinataire

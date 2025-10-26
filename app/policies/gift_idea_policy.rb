@@ -4,29 +4,29 @@ class GiftIdeaPolicy < ApplicationPolicy
   # Scope pour filtrer les gift ideas visibles par l'utilisateur
   class Scope < Scope
     def resolve
-      # Gift ideas visibles par l'utilisateur (logique existante du modèle)
-      visible_by_user = scope.visible_to_user(user)
+      # Collecter tous les IDs de gift ideas visibles avec des pluck
+      # pour éviter les problèmes avec les scopes Ruby (.map, .select)
+      # Cette approche fait un nombre FIXE de requêtes (5 max), pas du N+1
+      gift_idea_ids = Set.new
 
-      # Gift ideas créées par les enfants de l'utilisateur
-      created_by_children = scope.where(
-        created_by_id: User.where(parent_id: user.id).select(:id)
-      )
+      # 1. Gift ideas visibles par l'utilisateur (scope du modèle) - 1 requête
+      gift_idea_ids.merge(scope.visible_to_user(user).pluck(:id))
 
-      # Gift ideas dont un enfant est destinataire
-      for_children = scope.where(
-        id: GiftRecipient
-          .where(user_id: User.where(parent_id: user.id).select(:id))
-          .select(:gift_idea_id)
-      )
+      # 2. Gift ideas créées par les enfants de l'utilisateur - 2 requêtes
+      children_ids = User.where(parent_id: user.id).pluck(:id)
+      if children_ids.any?
+        gift_idea_ids.merge(scope.where(created_by_id: children_ids).pluck(:id))
+      end
 
-      # Combiner les 3 ensembles avec UNION pour éviter les doublons
-      scope.from("(
-        (#{visible_by_user.to_sql})
-        UNION
-        (#{created_by_children.to_sql})
-        UNION
-        (#{for_children.to_sql})
-      ) AS gift_ideas")
+      # 3. Gift ideas dont un enfant est destinataire - 1 requête
+      if children_ids.any?
+        gift_idea_ids.merge(
+          GiftRecipient.where(user_id: children_ids).pluck(:gift_idea_id)
+        )
+      end
+
+      # 4. Retourner une relation ActiveRecord avec tous les IDs - 1 requête finale
+      gift_idea_ids.empty? ? scope.none : scope.where(id: gift_idea_ids.to_a)
     end
   end
 

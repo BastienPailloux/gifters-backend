@@ -31,15 +31,15 @@ RSpec.describe GiftIdeaPolicy, type: :policy do
   end
 
   permissions :show? do
-    context 'when gift idea is visible to the user' do
-      let(:visible_gift) do
-        idea = create(:gift_idea, created_by: other_user)
-        idea.gift_recipients.create(user: user)
+    context 'when gift idea is created by the user' do
+      let(:own_gift) do
+        idea = create(:gift_idea, created_by: user)
+        idea.gift_recipients.create(user: recipient_user)
         idea
       end
 
       it 'grants access' do
-        expect(subject).to permit(user, visible_gift)
+        expect(subject).to permit(user, own_gift)
       end
     end
 
@@ -144,8 +144,7 @@ RSpec.describe GiftIdeaPolicy, type: :policy do
         idea
       end
 
-      # TODO: Ce test échoue actuellement - nécessite investigation de is_recipient?
-      xit 'denies access' do
+      it 'denies access' do
         expect(subject).not_to permit(user, gift_for_user)
       end
     end
@@ -303,24 +302,33 @@ RSpec.describe GiftIdeaPolicy, type: :policy do
   end
 
   describe 'Scope' do
-    let!(:visible_gift) do
-      idea = create(:gift_idea, created_by: other_user)
-      idea.gift_recipients.create(user: user)
+    before do
+      # Ajouter child_user au groupe pour les tests de scope
+      group.memberships.create(user: child_user, role: 'member')
+    end
+
+    # Un cadeau créé par user (visible directement via created_by_user)
+    let!(:own_gift) do
+      idea = create(:gift_idea, created_by: user)
+      idea.gift_recipients.create(user: recipient_user)
       idea
     end
 
+    # Un cadeau créé par un enfant de user
     let!(:child_created_gift) do
       idea = create(:gift_idea, created_by: child_user)
       idea.gift_recipients.create(user: recipient_user)
       idea
     end
 
+    # Un cadeau dont un enfant de user est le destinataire
     let!(:gift_for_child) do
       idea = create(:gift_idea, created_by: other_user)
       idea.gift_recipients.create(user: child_user)
       idea
     end
 
+    # Un cadeau sans relation avec user
     let!(:unrelated_gift) do
       unrelated_user = create(:user)
       idea = create(:gift_idea, created_by: unrelated_user)
@@ -328,14 +336,17 @@ RSpec.describe GiftIdeaPolicy, type: :policy do
       idea
     end
 
-    # TODO: Ce test échoue actuellement - la requête UNION SQL nécessite investigation
-    xit 'returns gift ideas visible to user, created by children, or for children' do
+    it 'returns gift ideas created by user, created by children, or for children' do
       resolved = Pundit.policy_scope!(user, GiftIdea)
       resolved_ids = resolved.pluck(:id)
 
-      expect(resolved_ids).to include(visible_gift.id)
+      # Devrait inclure les cadeaux créés par user
+      expect(resolved_ids).to include(own_gift.id)
+      # Devrait inclure les cadeaux créés par les enfants
       expect(resolved_ids).to include(child_created_gift.id)
+      # Devrait inclure les cadeaux pour les enfants
       expect(resolved_ids).to include(gift_for_child.id)
+      # Ne devrait PAS inclure les cadeaux sans relation
       expect(resolved_ids).not_to include(unrelated_gift.id)
     end
   end
