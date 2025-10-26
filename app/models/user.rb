@@ -46,11 +46,26 @@ class User < ApplicationRecord
   end
 
   # Retourne les IDs des utilisateurs avec lesquels l'utilisateur partage un groupe
+  # OU avec lesquels un de ses enfants partage un groupe
   def common_groups_with_users_ids
-    # Retourner un tableau vide si l'utilisateur n'a pas de groupes
-    group_ids = self.groups.pluck(:id)
+    # Récupérer les IDs des groupes de l'utilisateur
+    group_ids = Membership.where(user_id: self.id).pluck(:group_id)
+
+    # Récupérer les IDs des enfants (1 requête)
+    children_ids = User.where(parent_id: self.id).pluck(:id)
+
+    # Ajouter les IDs des groupes des enfants si il y en a
+    if children_ids.any?
+      children_group_ids = Membership
+        .where(user_id: children_ids)
+        .pluck(:group_id)
+      group_ids = (group_ids + children_group_ids).uniq
+    end
+
     return [] if group_ids.empty?
 
+    # Récupérer les utilisateurs partageant ces groupes, sauf soi-même
+    # Inclut les enfants et les autres utilisateurs
     User.joins(:memberships)
         .where(memberships: { group_id: group_ids })
         .where.not(id: self.id)

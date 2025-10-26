@@ -31,7 +31,7 @@ RSpec.describe Api::V1::UsersController, type: :controller do
         patch :update_locale, params: { id: other_user.id, user: { locale: 'fr' } }
 
         expect(response).to have_http_status(:forbidden)
-        expect(JSON.parse(response.body)["status"]["message"]).to match(/Not authorized/)
+        expect(JSON.parse(response.body)["error"]).to match(/Not authorized/)
       end
     end
   end

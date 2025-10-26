@@ -1,0 +1,42 @@
+en:
+  pundit:
+    default: "You are not authorized to perform this action."
+
+    group_policy:
+      show?: "You are not a member of this group"
+      update?: "You must be an admin to update this group"
+      destroy?: "You must be an admin to delete this group"
+      leave?: "You are not authorized to leave this group"
+      manage_invitations?: "You must be an admin to manage invitations"
+      manage_memberships?: "You must be an admin to manage memberships in this group"
+      show_memberships?: "You are not a member of this group"
+
+    membership_policy:
+      show?: "You are not a member of this group"
+      create?: "You must be an admin to add members to this group"
+      update?: "You must be an admin to update memberships in this group"
+      destroy?: "You must be an admin to remove members from this group"
+
+    invitation_policy:
+      show?: "You are not authorized to view this invitation"
+      create?: "You must be a member of the group to create invitations"
+      destroy?: "You are not authorized to delete this invitation"
+      send_email?: "You must be an admin to send invitations"
+
+    gift_idea_policy:
+      show?: "You are not authorized to view this gift idea"
+      create?: "You are not authorized to create this gift idea"
+      update?: "You are not authorized to update this gift idea"
+      destroy?: "You are not authorized to delete this gift idea"
+      mark_as_buying?: "You are not authorized to mark this gift as buying"
+      mark_as_bought?: "You are not authorized to mark this gift as bought"
+      cancel_buying?: "You are not authorized to cancel buying this gift"
+
+    user_policy:
+      show?: "You are not authorized to view this user"
+      update?: "Forbidden"
+      destroy?: "Forbidden"
+      update_locale?: "Not authorized to update locale"
+      show_child?: "You are not the parent of this account"
+      update_child?: "You are not the parent of this account"
+      destroy_child?: "You are not the parent of this account"

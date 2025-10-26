@@ -247,7 +247,7 @@ RSpec.describe "Api::V1::Invitations", type: :request do
       end
 
       it "returns error message" do
-        expect(JSON.parse(response.body)).to include('error' => 'Invalid invitation token')
+        expect(JSON.parse(response.body)).to include('error' => 'Invitation not found')
       end
     end
 

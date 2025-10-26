@@ -1,0 +1,42 @@
+fr:
+  pundit:
+    default: "Vous n'êtes pas autorisé à effectuer cette action."
+
+    group_policy:
+      show?: "Vous n'êtes pas membre de ce groupe"
+      update?: "Vous devez être administrateur pour modifier ce groupe"
+      destroy?: "Vous devez être administrateur pour supprimer ce groupe"
+      leave?: "Vous n'êtes pas autorisé à quitter ce groupe"
+      manage_invitations?: "Vous devez être administrateur pour gérer les invitations"
+      manage_memberships?: "Vous devez être administrateur pour gérer les membres de ce groupe"
+      show_memberships?: "Vous n'êtes pas membre de ce groupe"
+
+    membership_policy:
+      show?: "Vous n'êtes pas membre de ce groupe"
+      create?: "Vous devez être administrateur pour ajouter des membres à ce groupe"
+      update?: "Vous devez être administrateur pour modifier les membres de ce groupe"
+      destroy?: "Vous devez être administrateur pour retirer des membres de ce groupe"
+
+    invitation_policy:
+      show?: "Vous n'êtes pas autorisé à voir cette invitation"
+      create?: "Vous devez être membre du groupe pour créer des invitations"
+      destroy?: "Vous n'êtes pas autorisé à supprimer cette invitation"
+      send_email?: "Vous devez être administrateur pour envoyer des invitations"
+
+    gift_idea_policy:
+      show?: "Vous n'êtes pas autorisé à voir cette idée de cadeau"
+      create?: "Vous n'êtes pas autorisé à créer cette idée de cadeau"
+      update?: "Vous n'êtes pas autorisé à modifier cette idée de cadeau"
+      destroy?: "Vous n'êtes pas autorisé à supprimer cette idée de cadeau"
+      mark_as_buying?: "Vous n'êtes pas autorisé à marquer ce cadeau comme en cours d'achat"
+      mark_as_bought?: "Vous n'êtes pas autorisé à marquer ce cadeau comme acheté"
+      cancel_buying?: "Vous n'êtes pas autorisé à annuler l'achat de ce cadeau"
+
+    user_policy:
+      show?: "Vous n'êtes pas autorisé à voir cet utilisateur"
+      update?: "Interdit"
+      destroy?: "Interdit"
+      update_locale?: "Non autorisé à modifier la langue"
+      show_child?: "Vous n'êtes pas le parent de ce compte"
+      update_child?: "Vous n'êtes pas le parent de ce compte"
+      destroy_child?: "Vous n'êtes pas le parent de ce compte"

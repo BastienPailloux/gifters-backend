@@ -8,8 +8,15 @@ RSpec.describe "Api::V1::Users", type: :request do
   describe "GET /api/v1/users" do
     context "when authenticated" do
       before do
-        # Créer quelques utilisateurs pour les tests
-        create_list(:user, 3)
+        # Créer quelques utilisateurs qui partagent un groupe avec user
+        group = create(:group)
+        group.memberships.create(user: user, role: 'member')
+
+        3.times do
+          other_user = create(:user)
+          group.memberships.create(user: other_user, role: 'member')
+        end
+
         get "/api/v1/users", headers: headers
       end
 
@@ -18,7 +25,7 @@ RSpec.describe "Api::V1::Users", type: :request do
       end
 
       it "returns all users" do
-        expect(JSON.parse(response.body)["users"].size).to eq(4) # 3 créés + 1 utilisateur authentifié
+        expect(JSON.parse(response.body)["users"].size).to eq(4) # 3 qui partagent le groupe + 1 utilisateur authentifié
       end
 
       it "returns users with correct attributes" do
@@ -293,7 +300,7 @@ RSpec.describe "Api::V1::Users", type: :request do
 
       # Verify forbidden response
       expect(response).to have_http_status(403)
-      expect(JSON.parse(response.body)["status"]["message"]).to match(/Not authorized/)
+      expect(JSON.parse(response.body)["error"]).to match(/Not authorized/)
     end
   end
 end

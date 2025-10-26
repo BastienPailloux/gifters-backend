@@ -52,6 +52,9 @@ gem 'devise'
 gem 'devise-jwt'
 gem 'jsonapi-serializer'
 
+# Authorization
+gem 'pundit'
+
 # Serialization
 gem 'active_model_serializers', '~> 0.10.13'
 
@@ -72,6 +75,7 @@ group :development, :test do
   gem "shoulda-matchers"
   gem "simplecov", require: false
   gem 'dotenv-rails'
+  gem 'pundit-matchers' # Pour tester les policies Pundit
 
   # Gems pour CI/CD
   gem 'rubocop', require: false

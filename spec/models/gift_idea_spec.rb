@@ -88,7 +88,7 @@ RSpec.describe GiftIdea, type: :model do
         gift_idea = build(:gift_idea, created_by: creator)
         gift_idea.recipients << other_user
         expect(gift_idea).not_to be_valid
-        expect(gift_idea.errors[:recipients]).to include("must all be in a common group with you")
+        expect(gift_idea.errors[:recipients]).to include("must all be in a common group with you or be a family member")
       end
     end
 

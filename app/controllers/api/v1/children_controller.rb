@@ -2,7 +2,7 @@ module Api
   module V1
     class ChildrenController < Api::V1::BaseController
       before_action :set_child, only: [:show, :update, :destroy]
-      before_action :authorize_parent, only: [:show, :update, :destroy]
+      before_action :authorize_child_action
 
       # GET /api/v1/children
       def index
@@ -48,12 +48,6 @@ module Api
         end
       end
 
-      def authorize_parent
-        unless @child && current_user.can_access_as_parent?(@child)
-          render json: { error: 'Forbidden: You are not the parent of this account' }, status: :forbidden
-        end
-      end
-
       def child_params
         params.require(:user).permit(
           :name,
@@ -66,6 +60,21 @@ module Api
           :zip_code,
           :country
         )
+      end
+
+      def authorize_child_action
+        case action_name
+        when 'index'
+          authorize User, :index_children?
+        when 'create'
+          authorize User, :create_child?
+        when 'show'
+          authorize @child, :show_child?
+        when 'update'
+          authorize @child, :update_child?
+        when 'destroy'
+          authorize @child, :destroy_child?
+        end
       end
     end
   end

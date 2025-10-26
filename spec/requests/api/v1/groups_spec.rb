@@ -218,7 +218,7 @@ RSpec.describe "Api::V1::Groups", type: :request do
         end
 
         it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not a member of this group')
+          expect(JSON.parse(response.body)).to include('error' => 'You must be an admin to update this group')
         end
       end
     end
@@ -279,7 +279,7 @@ RSpec.describe "Api::V1::Groups", type: :request do
         end
 
         it "returns a forbidden message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not a member of this group')
+          expect(JSON.parse(response.body)).to include('error' => 'You must be an admin to delete this group')
         end
       end
     end
@@ -327,12 +327,12 @@ RSpec.describe "Api::V1::Groups", type: :request do
           delete "/api/v1/groups/#{group_id}/leave", headers: headers
         end
 
-        it "returns status code 422" do
-          expect(response).to have_http_status(422)
+        it "returns status code 403" do
+          expect(response).to have_http_status(403)
         end
 
         it "returns an error message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You cannot leave the group as you are the last admin')
+          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to leave this group')
         end
       end
 
@@ -344,7 +344,7 @@ RSpec.describe "Api::V1::Groups", type: :request do
         end
 
         it "returns an error message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not a member of this group')
+          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to leave this group')
         end
       end
     end
