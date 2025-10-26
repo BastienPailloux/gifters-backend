@@ -47,11 +47,12 @@ class User < ApplicationRecord
 
   # Retourne les IDs des utilisateurs avec lesquels l'utilisateur partage un groupe
   # OU avec lesquels un de ses enfants partage un groupe
+  # Inclut également les IDs des enfants managés (même sans groupes)
   def common_groups_with_users_ids
     # Récupérer les IDs des groupes de l'utilisateur
     group_ids = Membership.where(user_id: self.id).pluck(:group_id)
 
-    # Récupérer les IDs des enfants (1 requête)
+    # Récupérer les IDs des enfants
     children_ids = User.where(parent_id: self.id).pluck(:id)
 
     # Ajouter les IDs des groupes des enfants si il y en a
@@ -62,15 +63,18 @@ class User < ApplicationRecord
       group_ids = (group_ids + children_group_ids).uniq
     end
 
-    return [] if group_ids.empty?
+    # Si pas de groupes, retourner uniquement les IDs des enfants managés
+    return children_ids if group_ids.empty?
 
     # Récupérer les utilisateurs partageant ces groupes, sauf soi-même
-    # Inclut les enfants et les autres utilisateurs
-    User.joins(:memberships)
+    user_ids_from_groups = User.joins(:memberships)
         .where(memberships: { group_id: group_ids })
         .where.not(id: self.id)
         .distinct
         .pluck(:id)
+
+    # Combiner avec les enfants managés et éliminer les doublons
+    (user_ids_from_groups + children_ids).uniq
   end
 
   # Méthode pour personnaliser les claims JWT

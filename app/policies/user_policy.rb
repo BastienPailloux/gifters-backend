@@ -18,6 +18,8 @@ class UserPolicy < ApplicationPolicy
     # Peut voir un utilisateur si on partage un groupe avec lui ou si c'est soi-même
     return true if record.id == user.id
     return true if user.has_common_group_with?(record)
+    # OU si c'est un de ses enfants managés
+    return true if record.parent_id == user.id
 
     # OU si un de ses enfants partage un groupe avec l'utilisateur à voir (1 requête optimisée)
     Membership.joins("INNER JOIN memberships AS child_memberships ON memberships.group_id = child_memberships.group_id")
