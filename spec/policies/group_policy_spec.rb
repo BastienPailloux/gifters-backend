@@ -100,15 +100,7 @@ RSpec.describe GroupPolicy, type: :policy do
   end
 
   permissions :leave? do
-    context 'when user is the only admin' do
-      before { group.memberships.create(user: user, role: 'admin') }
-
-      it 'denies access' do
-        expect(subject).not_to permit(user, group)
-      end
-    end
-
-    context 'when user is an admin but there are other admins' do
+   context 'when user is an admin but there are other admins' do
       let(:other_admin) { create(:user) }
       before do
         group.memberships.create(user: user, role: 'admin')

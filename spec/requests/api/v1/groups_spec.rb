@@ -327,12 +327,12 @@ RSpec.describe "Api::V1::Groups", type: :request do
           delete "/api/v1/groups/#{group_id}/leave", headers: headers
         end
 
-        it "returns status code 403" do
-          expect(response).to have_http_status(403)
+        it "returns status code 422" do
+          expect(response).to have_http_status(422)
         end
 
         it "returns an error message" do
-          expect(JSON.parse(response.body)).to include('error' => 'You are not authorized to leave this group')
+          expect(JSON.parse(response.body)).to include('error' => 'Cannot leave group: group must have at least one admin')
         end
       end
 
