@@ -19,8 +19,8 @@ module Invitations
       key.failure('cannot be empty') if value.empty?
 
       # Vérifier que les IDs sont positifs
-      value.each do |id|
-        key.failure("ID #{id} must be positive") if id <= 0
+      unless value.all? { |id| id > 0 }
+        key.failure('all IDs must be positive')
       end
     end
   end
