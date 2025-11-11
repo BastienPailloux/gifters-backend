@@ -27,9 +27,9 @@ class InvitationPolicy < ApplicationPolicy
   end
 
   def show?
-    # Peut voir une invitation si on fait partie du groupe
-    # OU si un de ses enfants fait partie du groupe
-    member_or_child_member_of?(record.group)
+    # Tout utilisateur authentifié peut voir une invitation
+    # (nécessaire pour afficher les détails avant d'accepter)
+    true
   end
 
   def create?

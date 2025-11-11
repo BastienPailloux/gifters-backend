@@ -20,7 +20,8 @@ class InvitationMailer < ApplicationMailer
       locale = I18n.default_locale
     end
 
-    @invitation_url = "#{ENV['FRONTEND_URL'] || 'http://localhost:3000'}/invitations/#{@invitation.token}"
+    # Utiliser la méthode invitation_url du modèle
+    @invitation_url = invitation.invitation_url
 
     # Pour le test, on utilise un sujet fixe
     subject_text = "Vous avez été invité à rejoindre un groupe sur Gifters"
