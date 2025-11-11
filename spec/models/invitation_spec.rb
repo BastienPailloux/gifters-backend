@@ -48,39 +48,36 @@ RSpec.describe Invitation, type: :model do
   end
 
   describe "#invitation_url" do
-    it "returns a valid URL containing the invitation token" do
-      # Configurer les options d'URL pour les tests
-      allow(Rails.application.config.action_mailer).to receive(:default_url_options).and_return({ host: "example.com" })
-
+    it "returns a valid frontend URL containing the invitation token" do
       # Créer une invitation avec un token spécifique
       invitation = create(:invitation, token: "test_token")
 
       # Vérifier que l'URL contient le token
       expect(invitation.invitation_url).to include("token=test_token")
 
-      # Vérifier que l'URL utilise le host configuré
-      expect(invitation.invitation_url).to include("example.com")
+      # Vérifier que l'URL contient le chemin correct du frontend
+      expect(invitation.invitation_url).to include("/invitation/join")
 
-      # Vérifier que l'URL contient le chemin correct
-      expect(invitation.invitation_url).to include("/api/v1/invitations/accept")
+      # Vérifier que l'URL utilise le localhost en développement
+      expect(invitation.invitation_url).to include("localhost:5173")
     end
 
-    it "builds URL with default options when no mailer configuration is present" do
-      # Simuler l'absence de configuration pour les URL
-      allow(Rails.application.config.action_mailer).to receive(:default_url_options).and_return(nil)
+    it "uses FRONTEND_URL environment variable when set" do
+      # Simuler la variable d'environnement
+      allow(ENV).to receive(:[]).with('FRONTEND_URL').and_return('https://custom-frontend.com')
+      allow(ENV).to receive(:[]).and_call_original
 
-      invitation = create(:invitation, token: "test_token_123")
+      invitation = create(:invitation, token: "test_token_456")
 
-      # Simuler le comportement de URL helpers sans configuration
-      allow(Rails.application.routes.url_helpers).to receive(:accept_api_v1_invitations_url)
-        .with(hash_including(token: "test_token_123"))
-        .and_return("http://example.com/api/v1/invitations/accept?token=test_token_123")
+      # Vérifier que l'URL utilise la variable d'environnement
+      expect(invitation.invitation_url).to eq("https://custom-frontend.com/invitation/join?token=test_token_456")
+    end
 
-      # Appeler la méthode
-      url = invitation.invitation_url
+    it "uses default localhost URL in test environment" do
+      invitation = create(:invitation, token: "test_token_789")
 
-      # Vérifier que l'URL contient le token
-      expect(url).to include("token=test_token_123")
+      # En environnement de test, devrait utiliser localhost:5173
+      expect(invitation.invitation_url).to eq("http://localhost:5173/invitation/join?token=test_token_789")
     end
   end
 end
