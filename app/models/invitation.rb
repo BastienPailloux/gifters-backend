@@ -15,7 +15,6 @@ class Invitation < ApplicationRecord
 
   # Methods
   def invitation_url
-    # Déterminer l'hôte du frontend à utiliser
     frontend_host = ENV['FRONTEND_URL'] || case Rails.env
                                             when 'production'
                                               'https://gifters.fr'
@@ -25,8 +24,7 @@ class Invitation < ApplicationRecord
                                               'http://localhost:5173'
                                             end
 
-    # Construire l'URL du frontend pour rejoindre via l'invitation
-    "#{frontend_host}/invitation/join?token=#{token}"
+    "#{frontend_host}/invitation/join?token=#{CGI.escape(token)}"
   end
 
   private
