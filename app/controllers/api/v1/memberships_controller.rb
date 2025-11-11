@@ -8,14 +8,28 @@ module Api
       # GET /api/v1/groups/:group_id/memberships
       def index
         @memberships = policy_scope(@group.memberships).includes(:user)
-        render json: @memberships.as_json(include: { user: { only: [:id, :name, :email] } },
-                                         methods: [:user_name, :user_email])
+        render json: @memberships.map { |membership|
+          {
+            id: membership.user.id,
+            name: membership.user.name,
+            email: membership.user.email,
+            role: membership.role,
+            account_type: membership.user.account_type,
+            parent_id: membership.user.parent_id
+          }
+        }
       end
 
       # GET /api/v1/groups/:group_id/memberships/:id
       def show
-        render json: @membership.as_json(include: { user: { only: [:id, :name, :email] } },
-                                        methods: [:user_name, :user_email])
+        render json: {
+          id: @membership.user.id,
+          name: @membership.user.name,
+          email: @membership.user.email,
+          role: @membership.role,
+          account_type: @membership.user.account_type,
+          parent_id: @membership.user.parent_id
+        }
       end
 
       # POST /api/v1/groups/:group_id/memberships
@@ -23,9 +37,14 @@ module Api
         @membership = @group.memberships.new(membership_params)
 
         if @membership.save
-          render json: @membership.as_json(include: { user: { only: [:id, :name, :email] } },
-                                          methods: [:user_name, :user_email]),
-                 status: :created
+          render json: {
+            id: @membership.user.id,
+            name: @membership.user.name,
+            email: @membership.user.email,
+            role: @membership.role,
+            account_type: @membership.user.account_type,
+            parent_id: @membership.user.parent_id
+          }, status: :created
         else
           render json: { errors: @membership.errors.full_messages }, status: :unprocessable_entity
         end
@@ -40,8 +59,14 @@ module Api
         end
 
         if @membership.update(membership_params)
-          render json: @membership.as_json(include: { user: { only: [:id, :name, :email] } },
-                                          methods: [:user_name, :user_email])
+          render json: {
+            id: @membership.user.id,
+            name: @membership.user.name,
+            email: @membership.user.email,
+            role: @membership.role,
+            account_type: @membership.user.account_type,
+            parent_id: @membership.user.parent_id
+          }
         else
           render json: { errors: @membership.errors.full_messages }, status: :unprocessable_entity
         end

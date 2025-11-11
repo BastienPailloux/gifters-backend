@@ -45,14 +45,25 @@ module Api
         head :no_content
       end
 
-      # DELETE /api/v1/groups/:id/leave
-      def leave
-        # Supprimer l'utilisateur du groupe
-        membership = @group.memberships.find_by(user: @user || current_user)
-        membership.destroy if membership
+  # DELETE /api/v1/groups/:id/leave
+  def leave
+    target_user = @user || current_user
+    membership = @group.memberships.find_by(user: target_user)
 
-        render json: { message: 'Successfully left the group' }, status: :ok
-      end
+    unless membership
+      render json: { error: 'Membership not found' }, status: :not_found
+      return
+    end
+
+    # Vérifier si c'est le dernier admin
+    if membership.role == 'admin' && @group.admin_count == 1
+      render json: { error: 'Cannot leave group: group must have at least one admin' }, status: :unprocessable_entity
+      return
+    end
+
+    membership.destroy
+    render json: { message: 'Successfully left the group' }, status: :ok
+  end
 
       private
 

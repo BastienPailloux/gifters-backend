@@ -7,4 +7,6 @@ json.members @memberships do |membership|
   json.name membership.user.name
   json.email membership.user.email
   json.role membership.role
+  json.account_type membership.user.account_type
+  json.parent_id membership.user.parent_id
 end
