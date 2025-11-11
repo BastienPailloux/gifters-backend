@@ -55,5 +55,27 @@ RSpec.describe InvitationMailer, type: :mailer do
     it "renders the body with group name" do
       expect(mail.body.encoded).to match(group.name)
     end
+
+    context "when admin is a managed account" do
+      let(:parent) { create(:user, name: 'Parent User', email: 'parent@example.com', locale: 'fr') }
+      let(:managed_admin) { create(:user, name: 'Managed Admin', email: 'managed@example.com', parent: parent, account_type: 'managed') }
+      let(:invitation) { create(:invitation, group: group, created_by: managed_admin) }
+      let(:mail) { InvitationMailer.invitation_accepted(invitation, user) }
+
+      before do
+        create(:membership, user: managed_admin, group: group, role: 'admin')
+      end
+
+      it "sends email to parent instead of managed account" do
+        expect(mail.to).to eq([parent.email])
+        expect(mail.to).not_to include(managed_admin.email)
+      end
+
+      it "uses parent's locale" do
+        parent.update(locale: 'en')
+        mail_with_parent_locale = InvitationMailer.invitation_accepted(invitation, user)
+        expect(mail_with_parent_locale.subject).to eq("#{user.name} has joined your group on Gifters")
+      end
+    end
   end
 end

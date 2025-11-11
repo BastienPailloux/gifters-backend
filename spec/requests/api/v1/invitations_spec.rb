@@ -222,6 +222,130 @@ RSpec.describe "Api::V1::Invitations", type: :request do
       it "creates a membership for the user" do
         expect(Membership.find_by(user: new_user, group: group)).to be_present
       end
+
+      it "returns success response" do
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be true
+        expect(json_response['results'].size).to eq(1)
+        expect(json_response['results'][0]['user_id']).to eq(new_user.id)
+      end
+    end
+
+    context "when accepting invitation for a managed child" do
+      let(:parent_user) { create(:user) }
+      let(:child_user) { create(:user, parent: parent_user, account_type: 'managed') }
+      let(:parent_headers) { { 'Authorization' => "Bearer #{generate_jwt_token(parent_user)}" } }
+
+      it "allows parent to accept invitation for their child" do
+        expect {
+          post "/api/v1/invitations/accept",
+               params: { token: invitation.token, user_ids: [child_user.id] },
+               headers: parent_headers
+        }.to change { group.users.reload.count }.by(1)
+
+        expect(response).to have_http_status(:success)
+        expect(Membership.find_by(user: child_user, group: group)).to be_present
+      end
+
+      it "sends an email notification when child joins" do
+        expect {
+          post "/api/v1/invitations/accept",
+               params: { token: invitation.token, user_ids: [child_user.id] },
+               headers: parent_headers
+        }.to change { ActionMailer::Base.deliveries.count }.by(1)
+      end
+
+      it "returns success response for child" do
+        post "/api/v1/invitations/accept",
+             params: { token: invitation.token, user_ids: [child_user.id] },
+             headers: parent_headers
+
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be true
+        expect(json_response['results'].size).to eq(1)
+        expect(json_response['results'][0]['user_id']).to eq(child_user.id)
+        expect(json_response['results'][0]['user_name']).to eq(child_user.name)
+      end
+
+      it "prevents parent from adding a user that is not their child" do
+        other_user = create(:user)
+
+        post "/api/v1/invitations/accept",
+             params: { token: invitation.token, user_ids: [other_user.id] },
+             headers: parent_headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(Membership.find_by(user: other_user, group: group)).to be_nil
+
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be false
+        expect(json_response['errors'][0]['error']).to eq('Not authorized to add this user')
+      end
+    end
+
+    context "when accepting invitation for multiple users" do
+      let(:parent_user) { create(:user) }
+      let(:child1) { create(:user, parent: parent_user, account_type: 'managed') }
+      let(:child2) { create(:user, parent: parent_user, account_type: 'managed') }
+      let(:parent_headers) { { 'Authorization' => "Bearer #{generate_jwt_token(parent_user)}" } }
+
+      it "allows parent to accept invitation for themselves and children" do
+        user_ids = [parent_user.id, child1.id, child2.id]
+
+        expect {
+          post "/api/v1/invitations/accept",
+               params: { token: invitation.token, user_ids: user_ids },
+               headers: parent_headers
+        }.to change { group.users.reload.count }.by(3)
+
+        expect(response).to have_http_status(:success)
+        expect(Membership.find_by(user: parent_user, group: group)).to be_present
+        expect(Membership.find_by(user: child1, group: group)).to be_present
+        expect(Membership.find_by(user: child2, group: group)).to be_present
+      end
+
+      it "sends email notifications for each user" do
+        user_ids = [parent_user.id, child1.id, child2.id]
+
+        expect {
+          post "/api/v1/invitations/accept",
+               params: { token: invitation.token, user_ids: user_ids },
+               headers: parent_headers
+        }.to change { ActionMailer::Base.deliveries.count }.by(3)
+      end
+
+      it "returns success response for all users" do
+        user_ids = [parent_user.id, child1.id, child2.id]
+
+        post "/api/v1/invitations/accept",
+             params: { token: invitation.token, user_ids: user_ids },
+             headers: parent_headers
+
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be true
+        expect(json_response['results'].size).to eq(3)
+        expect(json_response['message']).to eq('3 user(s) successfully joined the group')
+      end
+
+      it "handles partial success when one user is already a member" do
+        # Faire rejoindre child1 en premier
+        group.add_user(child1, 'member')
+
+        user_ids = [parent_user.id, child1.id, child2.id]
+
+        post "/api/v1/invitations/accept",
+             params: { token: invitation.token, user_ids: user_ids },
+             headers: parent_headers
+
+        expect(response).to have_http_status(:success)
+
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be true
+        expect(json_response['results'].size).to eq(2) # parent et child2
+        expect(json_response['errors'].size).to eq(1) # child1 déjà membre
+        expect(json_response['errors'][0]['user_id']).to eq(child1.id)
+        expect(json_response['errors'][0]['error']).to eq('Already a member of this group')
+      end
     end
 
     context "when the user is already a member of the group" do
@@ -235,7 +359,9 @@ RSpec.describe "Api::V1::Invitations", type: :request do
       end
 
       it "returns error message" do
-        expect(JSON.parse(response.body)).to include('error' => 'You are already a member of this group')
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be false
+        expect(json_response['errors'][0]['error']).to eq('Already a member of this group')
       end
     end
 

@@ -93,25 +93,26 @@ module Api
 
       # POST /api/v1/invitations/accept
       def accept
-        # Vérifier si l'utilisateur est déjà membre du groupe
-        if current_user.groups.include?(@invitation.group)
-          render json: { error: 'You are already a member of this group' }, status: :unprocessable_entity
-          return
+        # Par défaut, si user_ids n'est pas fourni, utiliser l'utilisateur actuel
+        user_ids = if params[:user_ids].present?
+          Array(params[:user_ids]).map(&:to_i)
+        else
+          [current_user.id]
         end
 
-        # Ajouter l'utilisateur au groupe avec le rôle spécifié dans l'invitation
-        membership = @invitation.group.add_user(current_user, @invitation.role)
+        service = Invitations::InvitationAcceptanceService.new
 
-        if membership.persisted?
-          # Envoyer un email de notification aux admins du groupe
-          notify_admins_about_new_member(@invitation, current_user)
+        result = service.call(
+          invitation: @invitation,
+          user_ids: user_ids,
+          current_user: current_user
+        )
 
-          render json: {
-            message: "You have successfully joined the group #{@invitation.group.name}",
-            group: @invitation.group.as_json(only: [:id, :name])
-          }
-        else
-          render json: { errors: membership.errors.full_messages }, status: :unprocessable_entity
+        case result
+        when Dry::Monads::Success
+          render json: result.value!, status: :ok
+        when Dry::Monads::Failure
+          render json: result.failure, status: :unprocessable_entity
         end
       end
 
@@ -144,15 +145,6 @@ module Api
         params.permit(:email, :message)
       end
 
-      def notify_admins_about_new_member(invitation, user)
-        # Envoyer un email à l'admin qui a créé l'invitation
-        # Utiliser deliver_now en environnement de test pour que les tests puissent vérifier l'envoi
-        if Rails.env.test?
-          InvitationMailer.invitation_accepted(invitation, user).deliver_now
-        else
-          InvitationMailer.invitation_accepted(invitation, user).deliver_later
-        end
-      end
 
       def authorize_invitation
         case action_name

@@ -55,6 +55,11 @@ gem 'jsonapi-serializer'
 # Authorization
 gem 'pundit'
 
+# Service objects with dry-rb
+gem 'dry-transaction'
+gem 'dry-monads'
+gem 'dry-validation'
+
 # Serialization
 gem 'active_model_serializers', '~> 0.10.13'
 
