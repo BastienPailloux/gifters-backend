@@ -8,28 +8,12 @@ module Api
       # GET /api/v1/groups/:group_id/memberships
       def index
         @memberships = policy_scope(@group.memberships).includes(:user)
-        render json: @memberships.map { |membership|
-          {
-            id: membership.user.id,
-            name: membership.user.name,
-            email: membership.user.email,
-            role: membership.role,
-            account_type: membership.user.account_type,
-            parent_id: membership.user.parent_id
-          }
-        }
+        render json: @memberships, each_serializer: MembershipSerializer
       end
 
       # GET /api/v1/groups/:group_id/memberships/:id
       def show
-        render json: {
-          id: @membership.user.id,
-          name: @membership.user.name,
-          email: @membership.user.email,
-          role: @membership.role,
-          account_type: @membership.user.account_type,
-          parent_id: @membership.user.parent_id
-        }
+        render json: @membership, serializer: MembershipSerializer
       end
 
       # POST /api/v1/groups/:group_id/memberships
@@ -37,14 +21,7 @@ module Api
         @membership = @group.memberships.new(membership_params)
 
         if @membership.save
-          render json: {
-            id: @membership.user.id,
-            name: @membership.user.name,
-            email: @membership.user.email,
-            role: @membership.role,
-            account_type: @membership.user.account_type,
-            parent_id: @membership.user.parent_id
-          }, status: :created
+          render json: @membership, serializer: MembershipSerializer, status: :created
         else
           render json: { errors: @membership.errors.full_messages }, status: :unprocessable_entity
         end
@@ -59,14 +36,7 @@ module Api
         end
 
         if @membership.update(membership_params)
-          render json: {
-            id: @membership.user.id,
-            name: @membership.user.name,
-            email: @membership.user.email,
-            role: @membership.role,
-            account_type: @membership.user.account_type,
-            parent_id: @membership.user.parent_id
-          }
+          render json: @membership, serializer: MembershipSerializer
         else
           render json: { errors: @membership.errors.full_messages }, status: :unprocessable_entity
         end
