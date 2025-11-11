@@ -20,4 +20,12 @@ module Childrenable
     return false if record.nil?
     record.parent_id == self.id
   end
+
+  def responsible_user
+    if account_type == 'managed' && parent.present?
+      parent
+    else
+      self
+    end
+  end
 end

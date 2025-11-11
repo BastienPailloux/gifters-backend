@@ -200,4 +200,38 @@ RSpec.describe Childrenable, type: :concern do
       end
     end
   end
+
+  describe '#responsible_user' do
+    it 'returns self for standard accounts' do
+      user = create(:user, account_type: 'standard')
+      expect(user.responsible_user).to eq(user)
+    end
+
+    it 'returns parent for managed accounts with a parent' do
+      parent = create(:user)
+      child = create(:user, parent: parent, account_type: 'managed')
+      expect(child.responsible_user).to eq(parent)
+    end
+
+    it 'returns self for managed account without parent' do
+      child = build(:user, account_type: 'managed', parent: nil)
+      expect(child.responsible_user).to eq(child)
+    end
+
+    it 'can be used for email recipients' do
+      parent = create(:user, email: 'parent@example.com')
+      child = create(:user, parent: parent, account_type: 'managed', email: 'child@example.com')
+
+      # L'email devrait être envoyé au parent
+      expect(child.responsible_user.email).to eq('parent@example.com')
+    end
+
+    it 'can be used for audit trails' do
+      parent = create(:user, name: 'Parent User')
+      child = create(:user, parent: parent, account_type: 'managed', name: 'Child User')
+
+      # Les actions du child devraient être attribuées au parent dans les logs
+      expect(child.responsible_user.name).to eq('Parent User')
+    end
+  end
 end

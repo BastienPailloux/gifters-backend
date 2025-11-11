@@ -43,12 +43,8 @@ class InvitationMailer < ApplicationMailer
     admin_user = invitation.created_by || @group.admin_users.first
     @admin = admin_user
 
-    # Si l'admin est un compte managé, envoyer l'email au parent
-    recipient = if @admin.account_type == 'managed' && @admin.parent.present?
-      @admin.parent
-    else
-      @admin
-    end
+    # Obtenir l'utilisateur responsable (parent si compte managé, sinon l'admin)
+    recipient = @admin.responsible_user
 
     # Determine preferred locale based on recipient's locale
     locale = recipient.locale
