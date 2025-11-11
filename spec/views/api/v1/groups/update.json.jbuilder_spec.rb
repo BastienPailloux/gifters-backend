@@ -1,6 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe "api/v1/groups/update.json.jbuilder", type: :view do
+  include Pundit::Authorization
+
   let(:group) { create(:group, name: 'Updated Group', description: 'Updated Description') }
   let(:user1) { create(:user) }
   let(:user2) { create(:user) }
@@ -9,6 +11,10 @@ RSpec.describe "api/v1/groups/update.json.jbuilder", type: :view do
     group.add_user(user1, 'admin')
     group.add_user(user2, 'member')
     assign(:group, group)
+    assign(:current_user, user1)
+    def view.policy(record)
+      Pundit.policy(@current_user, record)
+    end
     render
   end
 

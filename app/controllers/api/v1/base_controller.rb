@@ -8,6 +8,7 @@ module Api
       include Pundit::Authorization
 
       before_action :authenticate_user!
+      before_action :set_current_user
 
       # Passer current_user aux sérialiseurs comme scope
       def default_serializer_options
@@ -67,6 +68,16 @@ module Api
         policy_name = exception.policy.class.to_s.underscore
         error_message = I18n.t("#{policy_name}.#{exception.query}", scope: "pundit", default: 'You are not authorized to perform this action.')
         render json: { error: error_message }, status: :forbidden
+      end
+
+      # Rendre current_user disponible dans les vues
+      def set_current_user
+        @current_user = current_user
+      end
+
+      # Définir pundit_user pour les policies dans les vues
+      def pundit_user
+        current_user
       end
     end
   end

@@ -1,6 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe "api/v1/groups/index.json.jbuilder", type: :view do
+  include Pundit::Authorization
+
   let(:user) { create(:user, name: 'Test User') }
   let(:group1) { create(:group, name: 'Group 1', description: 'Description 1') }
   let(:group2) { create(:group, name: 'Group 2', description: 'Description 2') }
@@ -15,6 +17,10 @@ RSpec.describe "api/v1/groups/index.json.jbuilder", type: :view do
       assign(:user, user)
       assign(:groups, [group1, group2])
       assign(:children, nil)
+      assign(:current_user, user)
+      def view.policy(record)
+        Pundit.policy(@current_user, record)
+      end
       render
     end
 
@@ -49,6 +55,10 @@ RSpec.describe "api/v1/groups/index.json.jbuilder", type: :view do
       assign(:user, user)
       assign(:groups, [group1, group2])
       assign(:children, [child1, child2])
+      assign(:current_user, user)
+      def view.policy(record)
+        Pundit.policy(@current_user, record)
+      end
       render
     end
 
@@ -94,6 +104,10 @@ RSpec.describe "api/v1/groups/index.json.jbuilder", type: :view do
       assign(:user, user)
       assign(:groups, [])
       assign(:children, nil)
+      assign(:current_user, user)
+      def view.policy(record)
+        Pundit.policy(@current_user, record)
+      end
       render
     end
 

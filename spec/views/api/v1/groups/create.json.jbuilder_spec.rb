@@ -1,12 +1,18 @@
 require 'rails_helper'
 
 RSpec.describe "api/v1/groups/create.json.jbuilder", type: :view do
+  include Pundit::Authorization
+
   let(:group) { create(:group, name: 'New Group', description: 'New Description') }
   let(:user) { create(:user) }
 
   before do
     group.add_user(user, 'admin')
     assign(:group, group)
+    assign(:current_user, user)
+    def view.policy(record)
+      Pundit.policy(@current_user, record)
+    end
     render
   end
 

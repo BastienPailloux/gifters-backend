@@ -39,12 +39,15 @@ class InvitationMailer < ApplicationMailer
     @user = user
     @group = invitation.group
 
-    # Obtenir l'administrateur du groupe (le premier admin ou le créateur de l'invitation)
-    admin_user = @group.admin_users.first || invitation.created_by
+    # Utiliser le créateur de l'invitation (ou le premier admin si pas de créateur)
+    admin_user = invitation.created_by || @group.admin_users.first
     @admin = admin_user
 
-    # Determine preferred locale based on admin's locale
-    locale = @admin.locale
+    # Obtenir l'utilisateur responsable (parent si compte managé, sinon l'admin)
+    recipient = @admin.responsible_user
+
+    # Determine preferred locale based on recipient's locale
+    locale = recipient.locale
     Rails.logger.info("Sending invitation accepted email with locale: #{locale}")
 
     # Validate locale
@@ -60,7 +63,7 @@ class InvitationMailer < ApplicationMailer
 
     I18n.with_locale(locale) do
       mail(
-        to: @admin.email,
+        to: recipient.email,
         subject: subject_text
       )
     end
