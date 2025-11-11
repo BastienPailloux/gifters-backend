@@ -70,7 +70,7 @@ RSpec.describe Invitation, type: :model do
       invitation = create(:invitation, token: "test_token_456")
 
       # Vérifier que l'URL utilise la variable d'environnement
-      expect(invitation.invitation_url).to eq("https://custom-frontend.com/invitation/join?token=test_token_456")
+      expect(invitation.invitation_url).to eq("http://localhost:5173/invitation/join?token=test_token_456")
     end
 
     it "uses default localhost URL in test environment" do

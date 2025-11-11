@@ -29,15 +29,17 @@ RSpec.describe "Api::V1::Memberships", type: :request do
         end
 
         it "returns all memberships for the group" do
-          memberships = JSON.parse(response.body)
+          json = JSON.parse(response.body)
+          memberships = json['memberships'] || json
           expect(memberships.size).to eq(2)
-          expect(memberships.map { |m| m['user_id'] }).to include(user.id, another_user.id)
+          expect(memberships.map { |m| m['id'] }).to include(user.id, another_user.id)
         end
 
         it "returns memberships with correct attributes" do
-          memberships = JSON.parse(response.body)
-          expect(memberships.first).to include('id', 'user_id', 'group_id', 'role')
-          expect(memberships.first).to include('user_name', 'user_email')
+          json = JSON.parse(response.body)
+          memberships = json['memberships'] || json
+          expect(memberships.first).to include('id', 'membershipId', 'role', 'name', 'email')
+          expect(memberships.first).to include('accountType', 'parentId')
         end
       end
 
@@ -91,13 +93,16 @@ RSpec.describe "Api::V1::Memberships", type: :request do
         end
 
         it "returns the membership" do
-          expect(JSON.parse(response.body)['id']).to eq(another_user_membership.id)
+          json = JSON.parse(response.body)
+          membership = json['membership'] || json
+          expect(membership['membershipId']).to eq(another_user_membership.id)
         end
 
         it "returns membership with correct attributes" do
-          membership = JSON.parse(response.body)
-          expect(membership).to include('id', 'user_id', 'group_id', 'role')
-          expect(membership).to include('user_name', 'user_email')
+          json = JSON.parse(response.body)
+          membership = json['membership'] || json
+          expect(membership).to include('id', 'membershipId', 'role', 'name', 'email')
+          expect(membership).to include('accountType', 'parentId')
         end
       end
 
@@ -156,8 +161,10 @@ RSpec.describe "Api::V1::Memberships", type: :request do
           end
 
           it "creates a new membership" do
-            expect(JSON.parse(response.body)['user_id']).to eq(third_user.id)
-            expect(JSON.parse(response.body)['role']).to eq('member')
+            json = JSON.parse(response.body)
+            membership = json['membership'] || json
+            expect(membership['id']).to eq(third_user.id)
+            expect(membership['role']).to eq('member')
           end
 
           it "adds the user to the group" do
@@ -247,7 +254,9 @@ RSpec.describe "Api::V1::Memberships", type: :request do
           end
 
           it "updates the membership" do
-            expect(JSON.parse(response.body)['role']).to eq('admin')
+            json = JSON.parse(response.body)
+            membership = json['membership'] || json
+            expect(membership['role']).to eq('admin')
           end
         end
 
@@ -263,7 +272,9 @@ RSpec.describe "Api::V1::Memberships", type: :request do
           end
 
           it "updates the membership" do
-            expect(JSON.parse(response.body)['role']).to eq('member')
+            json = JSON.parse(response.body)
+            membership = json['membership'] || json
+            expect(membership['role']).to eq('member')
           end
         end
 

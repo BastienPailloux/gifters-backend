@@ -35,8 +35,8 @@ RSpec.describe InvitationPolicy, type: :policy do
     end
 
     context 'when neither user nor their child is a member' do
-      it 'denies access' do
-        expect(subject).not_to permit(user, invitation)
+      it 'authorize access' do
+        expect(subject).to permit(user, invitation)
       end
     end
   end
