@@ -1,6 +1,6 @@
 class DeviseMailer < Devise::Mailer
   # Configuration par défaut
-  default from: 'noreply@gifters.com'
+  default from: 'noreply@gifters.fr'
   layout 'mailer'
 
   # Redéfinition de la méthode pour la réinitialisation de mot de passe

@@ -15,7 +15,7 @@ RSpec.describe DeviseMailer, type: :mailer do
     it "renders the headers" do
       expect(mail.subject).to match(/Reset password instructions/i)
       expect(mail.to).to eq([user.email])
-      expect(mail.from).to eq(['noreply@gifters.com'])
+      expect(mail.from).to eq(['noreply@gifters.fr'])
     end
 
     it "renders the body with reset link" do
