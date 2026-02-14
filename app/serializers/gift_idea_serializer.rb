@@ -6,6 +6,11 @@ class GiftIdeaSerializer < ActiveModel::Serializer
   attribute :recipients
   attribute :group_name
 
+  # Permissions calculées pour le frontend
+  attribute :can_mark_as_buying
+  attribute :can_mark_as_bought
+  attribute :can_cancel_buying
+
   # Associations
   belongs_to :created_by, serializer: UserSerializer
   belongs_to :buyer, serializer: UserSerializer, optional: true
@@ -38,6 +43,22 @@ class GiftIdeaSerializer < ActiveModel::Serializer
     Group.find(common_groups.first.group_id)&.name || "Aucun groupe commun"
   end
 
+  # Permissions calculées basées sur les policies
+  def can_mark_as_buying
+    return false unless current_user
+    GiftIdeaPolicy.new(current_user, object).mark_as_buying?
+  end
+
+  def can_mark_as_bought
+    return false unless current_user
+    GiftIdeaPolicy.new(current_user, object).mark_as_bought?
+  end
+
+  def can_cancel_buying
+    return false unless current_user
+    GiftIdeaPolicy.new(current_user, object).cancel_buying?
+  end
+
   # Ces méthodes sont gardées pour compatibilité mais ne sont plus utilisées dans le frontend
   def for_user_name
     object.recipients.first&.name || "Aucun destinataire"
@@ -45,5 +66,11 @@ class GiftIdeaSerializer < ActiveModel::Serializer
 
   def created_by_name
     object.created_by&.name
+  end
+
+  private
+
+  def current_user
+    scope
   end
 end

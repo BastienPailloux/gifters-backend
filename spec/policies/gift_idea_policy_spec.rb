@@ -156,8 +156,8 @@ RSpec.describe GiftIdeaPolicy, type: :policy do
         idea
       end
 
-      it 'denies access' do
-        expect(subject).not_to permit(user, gift_for_child)
+      it 'allows parent to buy gift for their child' do
+        expect(subject).to permit(user, gift_for_child)
       end
     end
 

@@ -1,7 +1,7 @@
 module Api
   module V1
     class GiftIdeasController < Api::V1::BaseController
-      before_action :set_gift_idea, only: [:show, :update, :destroy, :mark_as_buying, :mark_as_bought]
+      before_action :set_gift_idea, only: [:show, :update, :destroy, :mark_as_buying, :mark_as_bought, :eligible_buyers]
       before_action :authorize_gift_idea
 
       # GET /api/v1/gift_ideas
@@ -75,7 +75,18 @@ module Api
         end
 
         # Ajouter un filtre pour limiter par acheteur (buyer_id) si demandé
-        @gift_ideas = @gift_ideas.with_buyer(params[:buyer_id]) if params[:buyer_id].present?
+        if params[:buyer_id].present?
+          buyer_id = params[:buyer_id].to_i
+          
+          # Si le buyer_id est le current_user, inclure aussi les enfants comme acheteurs
+          if buyer_id == current_user.id
+            children_ids = User.where(parent_id: current_user.id).pluck(:id)
+            all_buyer_ids = [current_user.id] + children_ids
+            @gift_ideas = @gift_ideas.where(buyer_id: all_buyer_ids)
+          else
+            @gift_ideas = @gift_ideas.with_buyer(buyer_id)
+          end
+        end
 
         # Exclure les idées cadeaux dont l'utilisateur courant est destinataire si demandé
         if params[:exclude_own_wishlist].present? && params[:exclude_own_wishlist] == 'true'
@@ -144,7 +155,20 @@ module Api
 
       # PUT /api/v1/gift_ideas/:id/mark_as_buying
       def mark_as_buying
-        if @gift_idea.mark_as_buying(current_user)
+        # Déterminer qui achète : actor_id si fourni, sinon current_user
+        buyer = if params[:actor_id].present?
+          # Vérifier que c'est le current_user ou un de ses enfants
+          actor = User.find_by(id: params[:actor_id])
+          if actor && (actor.id == current_user.id || current_user.can_access_as_parent?(actor))
+            actor
+          else
+            return render json: { errors: ['Invalid actor_id'] }, status: :forbidden
+          end
+        else
+          current_user
+        end
+
+        if @gift_idea.mark_as_buying(buyer)
           render json: { giftIdea: GiftIdeaSerializer.new(@gift_idea, scope: current_user).as_json }
         else
           render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
@@ -153,14 +177,60 @@ module Api
 
       # PUT /api/v1/gift_ideas/:id/mark_as_bought
       def mark_as_bought
-        if @gift_idea.mark_as_bought(current_user)
+        # Conserver l'acheteur original
+        if @gift_idea.mark_as_bought
           render json: { giftIdea: GiftIdeaSerializer.new(@gift_idea, scope: current_user).as_json }
         else
           render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
         end
       end
 
+      # GET /api/v1/gift_ideas/:id/eligible_buyers
+      # Retourne la liste des comptes qui peuvent acheter ce cadeau
+      def eligible_buyers
+        recipients = @gift_idea.recipients
+        recipient_ids = recipients.map(&:id)
+        
+        eligible = find_eligible_actors_for_recipients(recipients)
+        
+        # Exclure les acheteurs potentiels qui sont aussi destinataires du cadeau
+        eligible = eligible.reject { |buyer| recipient_ids.include?(buyer.id) }
+
+        render json: {
+          eligibleBuyers: eligible.map { |buyer|
+            {
+              id: buyer.id,
+              name: buyer.name,
+              accountType: buyer.account_type
+            }
+          },
+          needsSelection: eligible.count > 1
+        }
+      end
+
       private
+
+      # Trouve les comptes (current_user + ses enfants) qui partagent un groupe avec TOUS les destinataires
+      def find_eligible_actors_for_recipients(recipients)
+        return [] if recipients.empty?
+
+        # Charger current_user avec ses enfants et groupes (évite N+1)
+        current_user_loaded = User.includes(:groups, children: :groups).find(current_user.id)
+        potential_actors = [current_user_loaded] + current_user_loaded.children
+
+        # Charger les groupes de tous les destinataires
+        recipient_ids = recipients.map(&:id)
+        recipients_loaded = User.includes(:groups).where(id: recipient_ids).to_a
+
+        # Filtrer les acteurs qui partagent un groupe avec TOUS les destinataires
+        potential_actors.select do |actor|
+          recipients_loaded.all? do |recipient|
+            actor_groups = actor.groups.map(&:id)
+            recipient_groups = recipient.groups.map(&:id)
+            (actor_groups & recipient_groups).any?
+          end
+        end
+      end
 
       def set_gift_idea
         @gift_idea = GiftIdea.find_by(id: params[:id])
@@ -180,7 +250,7 @@ module Api
           authorize GiftIdea
         when 'show', 'update', 'destroy'
           authorize @gift_idea
-        when 'mark_as_buying'
+        when 'mark_as_buying', 'eligible_buyers'
           authorize @gift_idea, :mark_as_buying?
         when 'mark_as_bought'
           authorize @gift_idea, :mark_as_bought?
