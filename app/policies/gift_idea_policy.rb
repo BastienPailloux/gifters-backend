@@ -50,11 +50,25 @@ class GiftIdeaPolicy < ApplicationPolicy
   end
 
   def update?
-    owned_by_user_or_children?(record)
+    # Le créateur ou un de ses enfants peut modifier
+    return true if owned_by_user_or_children?(record)
+    
+    # L'acheteur ou le parent de l'acheteur peut aussi modifier
+    return true if record.buyer_id == user.id
+    return true if record.buyer_id.present? && User.exists?(id: record.buyer_id, parent_id: user.id)
+    
+    false
   end
 
   def destroy?
-    owned_by_user_or_children?(record)
+    # Le créateur ou un de ses enfants peut supprimer
+    return true if owned_by_user_or_children?(record)
+    
+    # L'acheteur ou le parent de l'acheteur peut aussi supprimer
+    return true if record.buyer_id == user.id
+    return true if record.buyer_id.present? && User.exists?(id: record.buyer_id, parent_id: user.id)
+    
+    false
   end
 
   def mark_as_buying?

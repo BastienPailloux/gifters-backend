@@ -75,7 +75,18 @@ module Api
         end
 
         # Ajouter un filtre pour limiter par acheteur (buyer_id) si demandé
-        @gift_ideas = @gift_ideas.with_buyer(params[:buyer_id]) if params[:buyer_id].present?
+        if params[:buyer_id].present?
+          buyer_id = params[:buyer_id].to_i
+          
+          # Si le buyer_id est le current_user, inclure aussi les enfants comme acheteurs
+          if buyer_id == current_user.id
+            children_ids = User.where(parent_id: current_user.id).pluck(:id)
+            all_buyer_ids = [current_user.id] + children_ids
+            @gift_ideas = @gift_ideas.where(buyer_id: all_buyer_ids)
+          else
+            @gift_ideas = @gift_ideas.with_buyer(buyer_id)
+          end
+        end
 
         # Exclure les idées cadeaux dont l'utilisateur courant est destinataire si demandé
         if params[:exclude_own_wishlist].present? && params[:exclude_own_wishlist] == 'true'
