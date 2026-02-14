@@ -178,7 +178,12 @@ module Api
       # Retourne la liste des comptes qui peuvent acheter ce cadeau
       def eligible_buyers
         recipients = @gift_idea.recipients
+        recipient_ids = recipients.map(&:id)
+        
         eligible = find_eligible_actors_for_recipients(recipients)
+        
+        # Exclure les acheteurs potentiels qui sont aussi destinataires du cadeau
+        eligible = eligible.reject { |buyer| recipient_ids.include?(buyer.id) }
 
         render json: {
           eligibleBuyers: eligible.map { |buyer|
