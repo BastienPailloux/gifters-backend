@@ -134,9 +134,8 @@ class GiftIdea < ApplicationRecord
     # (sauf s'il est aussi le créateur, ce qui est déjà vérifié ci-dessus)
     return false if is_recipient?(user)
 
-    # Pour les autres utilisateurs, ils doivent avoir un groupe en commun avec le créateur
-    # et avec tous les destinataires
-    return user.has_common_group_with?(created_by)
+    # Pour les autres utilisateurs, ils doivent avoir un groupe en commun avec tous les destinataires
+    recipients.all? { |r| user.has_common_group_with?(r) }
   end
 
   # Vérifier si un utilisateur est destinataire de ce cadeau
