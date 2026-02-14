@@ -1,19 +1,10 @@
 # frozen_string_literal: true
 
 class GroupPolicy < ApplicationPolicy
-  # Scope pour filtrer les groupes accessibles par l'utilisateur (incluant les groupes des enfants)
+  # Scope pour filtrer les groupes accessibles par l'utilisateur
   class Scope < Scope
     def resolve
-      # Groupes de l'utilisateur
-      user_group_ids = scope.joins(:memberships).where(memberships: { user_id: user.id }).pluck(:id)
-      
-      # Groupes des enfants
-      children_ids = User.where(parent_id: user.id).pluck(:id)
-      children_group_ids = children_ids.any? ? scope.joins(:memberships).where(memberships: { user_id: children_ids }).pluck(:id) : []
-      
-      # Union des deux
-      all_group_ids = (user_group_ids + children_group_ids).uniq
-      scope.where(id: all_group_ids)
+      scope.joins(:memberships).where(memberships: { user_id: user.id })
     end
   end
 
