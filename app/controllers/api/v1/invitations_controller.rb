@@ -1,6 +1,8 @@
 module Api
   module V1
     class InvitationsController < Api::V1::BaseController
+      skip_before_action :authenticate_user!, only: [:show]
+
       before_action :set_group, only: [:index, :create, :send_email]
       before_action :set_invitation, only: [:show, :destroy, :accept]
       before_action :authorize_invitation
