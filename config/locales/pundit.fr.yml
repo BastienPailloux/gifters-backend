@@ -31,6 +31,7 @@ fr:
       mark_as_buying?: "Vous n'êtes pas autorisé à marquer ce cadeau comme en cours d'achat"
       mark_as_bought?: "Vous n'êtes pas autorisé à marquer ce cadeau comme acheté"
       cancel_buying?: "Vous n'êtes pas autorisé à annuler l'achat de ce cadeau"
+      cancel_purchase?: "Vous n'êtes pas autorisé à annuler l'achat de ce cadeau"
 
     user_policy:
       show?: "Vous n'êtes pas autorisé à voir cet utilisateur"

@@ -52,6 +52,7 @@ Rails.application.routes.draw do
         member do
           put 'mark_as_buying'
           put 'mark_as_bought'
+          put 'cancel_purchase'
           get 'eligible_buyers'
         end
       end

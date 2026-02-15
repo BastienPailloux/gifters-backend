@@ -10,6 +10,7 @@ class GiftIdeaSerializer < ActiveModel::Serializer
   attribute :can_mark_as_buying
   attribute :can_mark_as_bought
   attribute :can_cancel_buying
+  attribute :can_cancel_purchase
 
   # Associations
   belongs_to :created_by, serializer: UserSerializer
@@ -57,6 +58,11 @@ class GiftIdeaSerializer < ActiveModel::Serializer
   def can_cancel_buying
     return false unless current_user
     GiftIdeaPolicy.new(current_user, object).cancel_buying?
+  end
+
+  def can_cancel_purchase
+    return false unless current_user
+    GiftIdeaPolicy.new(current_user, object).cancel_purchase?
   end
 
   # Ces méthodes sont gardées pour compatibilité mais ne sont plus utilisées dans le frontend

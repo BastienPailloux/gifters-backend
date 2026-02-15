@@ -31,6 +31,7 @@ en:
       mark_as_buying?: "You are not authorized to mark this gift as buying"
       mark_as_bought?: "You are not authorized to mark this gift as bought"
       cancel_buying?: "You are not authorized to cancel buying this gift"
+      cancel_purchase?: "You are not authorized to cancel the purchase of this gift"
 
     user_policy:
       show?: "You are not authorized to view this user"

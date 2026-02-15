@@ -118,6 +118,11 @@ class GiftIdea < ApplicationRecord
     update(status: 'bought', buyer: buyer_to_set)
   end
 
+  # Annuler l'achat (en cours ou déjà marqué acheté) : remet le cadeau en "proposé" sans acheteur
+  def cancel_purchase
+    update(status: 'proposed', buyer: nil)
+  end
+
   def visible_to?(user)
     # Si le cadeau est acheté...
     if status == 'bought'
