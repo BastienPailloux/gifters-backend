@@ -99,6 +99,14 @@ module Invitations
           results: results,
           errors: errors
         )
+      elsif errors.any? && errors.all? { |e| e[:error] == 'Already a member of this group' }
+        # Utilisateur(s) déjà membre(s) : succès pour permettre la redirection vers le groupe
+        Success(
+          invitation: invitation,
+          results: [],
+          errors: errors,
+          already_member: true
+        )
       else
         Failure(
           success: false,
@@ -122,20 +130,30 @@ module Invitations
     def prepare_response(input)
       results = input[:results]
       errors = input[:errors]
+      group_json = input[:invitation].group.as_json(only: [:id, :name])
 
-      response = {
-        success: true,
-        message: "#{results.size} user(s) successfully joined the group",
-        results: results.map do |r|
-          {
-            user_id: r[:user].id,
-            user_name: r[:user].name,
-            message: r[:message]
-          }
-        end,
-        errors: errors.presence,
-        group: input[:invitation].group.as_json(only: [:id, :name])
-      }
+      if input[:already_member]
+        response = {
+          success: true,
+          already_member: true,
+          message: 'You are already a member of this group',
+          group: group_json
+        }
+      else
+        response = {
+          success: true,
+          message: "#{results.size} user(s) successfully joined the group",
+          results: results.map do |r|
+            {
+              user_id: r[:user].id,
+              user_name: r[:user].name,
+              message: r[:message]
+            }
+          end,
+          errors: errors.presence,
+          group: group_json
+        }
+      end
 
       Success(response)
     end

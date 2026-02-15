@@ -127,17 +127,20 @@ RSpec.describe Invitations::InvitationAcceptanceService do
         group.add_user(current_user, 'member')
       end
 
-      it 'returns failure' do
+      it 'returns success to allow redirect to group' do
         result = service.call(params)
-        expect(result).to be_failure
+        expect(result).to be_success
       end
 
-      it 'includes error message' do
+      it 'includes already_member flag and group for redirect' do
         result = service.call(params)
-        failure = result.failure
+        response = result.value!
 
-        expect(failure[:message]).to eq('No users were added to the group')
-        expect(failure[:errors][0][:error]).to eq('Already a member of this group')
+        expect(response[:success]).to be true
+        expect(response[:already_member]).to be true
+        expect(response[:message]).to eq('You are already a member of this group')
+        expect(response[:group]).to be_present
+        expect(response[:group]['id']).to eq(group.id)
       end
     end
 
