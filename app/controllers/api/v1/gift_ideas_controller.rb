@@ -1,7 +1,7 @@
 module Api
   module V1
     class GiftIdeasController < Api::V1::BaseController
-      before_action :set_gift_idea, only: [:show, :update, :destroy, :mark_as_buying, :mark_as_bought, :eligible_buyers]
+      before_action :set_gift_idea, only: [:show, :update, :destroy, :mark_as_buying, :mark_as_bought, :cancel_purchase, :eligible_buyers]
       before_action :authorize_gift_idea
 
       # GET /api/v1/gift_ideas
@@ -185,6 +185,15 @@ module Api
         end
       end
 
+      # PUT /api/v1/gift_ideas/:id/cancel_purchase
+      def cancel_purchase
+        if @gift_idea.cancel_purchase
+          render json: { giftIdea: GiftIdeaSerializer.new(@gift_idea, scope: current_user).as_json }
+        else
+          render json: { errors: @gift_idea.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
       # GET /api/v1/gift_ideas/:id/eligible_buyers
       # Retourne la liste des comptes qui peuvent acheter ce cadeau
       def eligible_buyers
@@ -254,6 +263,8 @@ module Api
           authorize @gift_idea, :mark_as_buying?
         when 'mark_as_bought'
           authorize @gift_idea, :mark_as_bought?
+        when 'cancel_purchase'
+          authorize @gift_idea, :cancel_purchase?
         end
       end
     end

@@ -126,6 +126,14 @@ class GiftIdeaPolicy < ApplicationPolicy
     User.exists?(id: record.buyer_id, parent_id: user.id)
   end
 
+  # Annuler l'achat (en cours d'achat ou déjà acheté) : même règle que cancel_buying mais pour buying ou bought
+  def cancel_purchase?
+    return false unless record.status.in?(%w[buying bought])
+    return true if record.buyer_id == user.id
+
+    User.exists?(id: record.buyer_id, parent_id: user.id)
+  end
+
   # Méthode helper pour vérifier si un créateur peut créer pour un destinataire
   def self.can_create_for_recipient?(creator, recipient)
     # Autorisé si c'est soi-même
