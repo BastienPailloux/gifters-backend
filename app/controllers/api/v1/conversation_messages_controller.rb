@@ -54,7 +54,10 @@ module Api
 
       def validate_content
         content = params[:content].to_s.strip
-        render json: { error: 'content requis' }, status: :unprocessable_entity if content.blank?
+        return unless content.blank?
+
+        render json: { error: 'content requis' }, status: :unprocessable_entity
+        response.stream.close
       end
 
       def update_title_if_first_message(content)
