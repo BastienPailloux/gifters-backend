@@ -14,6 +14,7 @@ module Api
           title: 'Nouvelle conversation',
           last_activity_at: Time.current
         )
+        authorize @conversation
         render :create, status: :created
       end
 
