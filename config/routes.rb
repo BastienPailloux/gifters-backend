@@ -85,6 +85,10 @@ Rails.application.routes.draw do
 
       # Chat avec l'IA (assistant + outils MCP)
       post 'chat', to: 'chat#create'
+
+      resources :conversations, only: [:index, :create, :show] do
+        post 'messages/stream', to: 'conversation_messages#stream'
+      end
     end
   end
 

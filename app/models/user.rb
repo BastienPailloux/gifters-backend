@@ -16,6 +16,8 @@ class User < ApplicationRecord
   has_many :gift_recipients, dependent: :destroy
   has_many :received_gift_ideas, through: :gift_recipients, source: :gift_idea
 
+  has_many :conversations, dependent: :destroy
+
   # Validations
   validates :name, presence: true
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }, if: :standard?
