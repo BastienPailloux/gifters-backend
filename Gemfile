@@ -103,6 +103,9 @@ group :development do
 
   # Visualiser les emails en développement
   gem "letter_opener"
+
+  # To optimize Claude Code
+  gem 'claude-on-rails'
 end
 
 group :test do

@@ -36,3 +36,8 @@
 
 # Ignore test coverage
 coverage/
+
+# ClaudeOnRails
+.claude-on-rails/sessions/
+.claude-swarm/
+claude-swarm.log
