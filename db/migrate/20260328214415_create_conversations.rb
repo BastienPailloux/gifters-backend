@@ -1,0 +1,11 @@
+class CreateConversations < ActiveRecord::Migration[8.0]
+  def change
+    create_table :conversations do |t|
+      t.references :user, null: false, foreign_key: true
+      t.string :title, null: false
+      t.datetime :last_activity_at, null: false, default: -> { 'NOW()' }
+
+      t.timestamps
+    end
+  end
+end
