@@ -310,6 +310,8 @@ GEM
     minitest (5.26.0)
     msgpack (1.8.0)
     multipart-post (2.4.1)
+    neighbor (0.6.0)
+      activerecord (>= 7.1)
     net-http (0.9.1)
       uri (>= 0.11.1)
     net-http-persistent (4.0.8)
@@ -555,6 +557,7 @@ DEPENDENCIES
   jsonapi-serializer
   letter_opener
   mcp
+  neighbor
   nokogiri (~> 1.18)
   open_uri_redirections (~> 0.2.1)
   pg (~> 1.1)
