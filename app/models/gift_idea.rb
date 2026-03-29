@@ -2,6 +2,7 @@ class GiftIdea < ApplicationRecord
   belongs_to :created_by, class_name: 'User'
   belongs_to :buyer, class_name: 'User', optional: true
   has_neighbors :embedding
+  include Backgroundable
 
   # Relation many-to-many avec les destinataires
   has_many :gift_recipients, dependent: :destroy
@@ -125,6 +126,14 @@ class GiftIdea < ApplicationRecord
     update(status: 'proposed', buyer: nil)
   end
 
+  def generate_embedding
+    text = "#{title} #{description}".strip
+    embedding_vector = MistralEmbeddingService.new.embed(text)
+    update_column(:embedding, embedding_vector)
+  rescue StandardError => e
+    Rails.logger.error("[GiftIdea#generate_embedding] id=#{id} #{e.class}: #{e.message}")
+  end
+
   def visible_to?(user)
     # Si le cadeau est acheté...
     if status == 'bought'
@@ -194,10 +203,6 @@ class GiftIdea < ApplicationRecord
   def update_embedding_if_needed
     return unless saved_change_to_title? || saved_change_to_description?
 
-    text = "#{title} #{description}".strip
-    embedding_vector = MistralEmbeddingService.new.embed(text)
-    update_column(:embedding, embedding_vector)
-  rescue StandardError => e
-    Rails.logger.error("[GiftIdea#update_embedding_if_needed] id=#{id} #{e.class}: #{e.message}")
+    background_generate_embedding
   end
 end
