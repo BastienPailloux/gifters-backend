@@ -14,6 +14,9 @@ Rails.application.configure do
   # Show full error reports.
   config.consider_all_requests_local = true
 
+  # Autoriser le sous-domaine MCP (agent + tests en local)
+  config.hosts << "mcp.lvh.me"
+
   # Enable server timing
   config.server_timing = true
 

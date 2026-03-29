@@ -1,4 +1,12 @@
 Rails.application.routes.draw do
+  # Sous-domaine MCP : mcp.gifters.fr (prod) ou mcp.lvh.me (dev, lvh.me → 127.0.0.1)
+  constraints(host: /mcp\.(gifters\.fr|lvh\.me)$/) do
+    defaults format: :json do
+      post "/", to: "api/v1/mcp#create", as: :mcp_post
+      get "/", to: "api/v1/mcp#show", as: :mcp_root
+    end
+  end
+
   # devise_for :users
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -74,6 +82,13 @@ Rails.application.routes.draw do
 
       # Route pour se désabonner de la newsletter
       delete 'newsletter/unsubscribe', to: 'newsletter_subscriptions#destroy'
+
+      # Chat avec l'IA (assistant + outils MCP)
+      post 'chat', to: 'chat#create'
+
+      resources :conversations, only: [:index, :create, :show] do
+        post 'messages/stream', to: 'conversation_messages#stream'
+      end
     end
   end
 

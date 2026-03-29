@@ -70,6 +70,11 @@ gem 'open_uri_redirections', '~> 0.2.1' # Support des redirections pour open-uri
 # Gem pour l'intégration avec Brevo (anciennement Sendinblue)
 gem 'brevo'
 
+# Model Context Protocol - serveur MCP pour les assistants IA
+gem 'mcp'
+gem 'faraday', '>= 2.0' # requis pour MCP::Client HTTP
+gem 'ruby-openai' # LLM pour le chat (appels d'outils MCP)
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ]
