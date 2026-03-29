@@ -1,6 +1,7 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require 'spec_helper'
 require 'simplecov'
+require 'webmock/rspec'
 
 # Configure SimpleCov
 if ENV['COVERAGE'] == 'true'
