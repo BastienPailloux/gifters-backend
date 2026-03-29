@@ -144,7 +144,7 @@ RSpec.describe GiftIdea, type: :model do
     context 'when gift idea is proposed' do
       let!(:gift_idea) do
         # Créer un GiftIdea en désactivant les validations pour les tests
-        idea = build(:gift_idea, created_by: creator)
+        idea = GiftIdea.new(title: 'Test Gift', status: 'proposed', created_by: creator)
         idea.recipients << receiver
         idea.save(validate: false)
         idea
@@ -169,7 +169,7 @@ RSpec.describe GiftIdea, type: :model do
 
     context 'when gift idea is buying' do
       let!(:gift_idea) do
-        idea = build(:gift_idea, status: 'buying', created_by: creator)
+        idea = GiftIdea.new(title: 'Test Gift', status: 'buying', created_by: creator)
         idea.recipients << receiver
         idea.save(validate: false)
         idea

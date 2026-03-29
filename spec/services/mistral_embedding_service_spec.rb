@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe MistralEmbeddingService do
+RSpec.describe MistralEmbeddingService, :real_mistral_service do
   let(:service) { described_class.new }
   let(:api_key) { 'test-mistral-key' }
   let(:text) { 'Vélo rouge pour Tom' }
