@@ -48,5 +48,17 @@ RSpec.describe GiftersMcp::Tools::SearchGiftIdeasTool do
         expect(result.structured_content['results']).to eq([])
       end
     end
+
+    context 'when embedding service raises' do
+      before do
+        allow(embedding_service).to receive(:embed).and_raise(RuntimeError, 'API error')
+      end
+
+      it 'returns an error response with empty results' do
+        result = described_class.call(server_context: server_context, query: 'vélo')
+        expect(result).to be_error
+        expect(result.structured_content['results']).to eq([])
+      end
+    end
   end
 end
