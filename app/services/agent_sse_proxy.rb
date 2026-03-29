@@ -39,7 +39,7 @@ class AgentSseProxy
   def stream_response(response, &block)
     buffer = String.new
     response.read_body do |chunk|
-      buffer << chunk
+      buffer << chunk.gsub("\r\n", "\n")
       while (pos = buffer.index("\n\n"))
         block_text = buffer[0...pos]
         buffer = String.new(buffer[(pos + 2)..] || '')
