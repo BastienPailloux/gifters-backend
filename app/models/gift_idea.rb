@@ -109,21 +109,19 @@ class GiftIdea < ApplicationRecord
 
   # Methods
   def mark_as_buying(user = nil)
-    # Mettre à jour le statut même si aucun utilisateur n'est fourni
-    result = update(status: 'buying')
-    # Si un utilisateur est fourni, mettre à jour l'acheteur également
-    update(buyer: user) if user && result
-    result
+    cols = { status: 'buying' }
+    cols[:buyer_id] = user.id if user
+    update_columns(cols)
   end
 
   def mark_as_bought(user = nil)
     buyer_to_set = user || self.buyer
-    update(status: 'bought', buyer: buyer_to_set)
+    update_columns(status: 'bought', buyer_id: buyer_to_set&.id)
   end
 
   # Annuler l'achat (en cours ou déjà marqué acheté) : remet le cadeau en "proposé" sans acheteur
   def cancel_purchase
-    update(status: 'proposed', buyer: nil)
+    update_columns(status: 'proposed', buyer_id: nil)
   end
 
   def generate_embedding
