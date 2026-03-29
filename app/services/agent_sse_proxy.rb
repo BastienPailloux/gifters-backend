@@ -37,12 +37,12 @@ class AgentSseProxy
   end
 
   def stream_response(response, &block)
-    buffer = ''
+    buffer = String.new
     response.read_body do |chunk|
       buffer << chunk
       while (pos = buffer.index("\n\n"))
         block_text = buffer[0...pos]
-        buffer = buffer[(pos + 2)..]
+        buffer = String.new(buffer[(pos + 2)..] || '')
         parse_sse_block(block_text, &block)
       end
     end
