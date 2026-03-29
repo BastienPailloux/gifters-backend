@@ -36,10 +36,11 @@ RSpec.describe GiftersMcp::Tools::DeleteGiftIdeaTool do
       let!(:gift_idea) { create(:gift_idea, created_by: other) }
 
       it 'returns an error response and does not delete' do
+        result = nil
         expect {
           result = described_class.call(server_context: server_context, id: gift_idea.id)
-          expect(result).to be_error
         }.not_to change(GiftIdea, :count)
+        expect(result).to be_error
       end
     end
   end

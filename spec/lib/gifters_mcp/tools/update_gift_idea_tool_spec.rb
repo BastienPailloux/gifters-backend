@@ -36,6 +36,17 @@ RSpec.describe GiftersMcp::Tools::UpdateGiftIdeaTool do
       end
     end
 
+    context 'when no fields are provided' do
+      let!(:gift_idea) { create(:gift_idea, title: 'Vélo', created_by: creator) }
+
+      it 'returns an error response' do
+        result = described_class.call(server_context: server_context, id: gift_idea.id)
+        expect(result).to be_error
+        parsed = JSON.parse(result.content.first[:text])
+        expect(parsed['error']).to eq('No fields provided to update')
+      end
+    end
+
     context 'when gift idea does not exist' do
       it 'returns an error response' do
         result = described_class.call(server_context: server_context, id: 99999)

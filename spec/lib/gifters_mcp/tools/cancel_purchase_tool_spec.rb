@@ -14,8 +14,9 @@ RSpec.describe GiftersMcp::Tools::CancelPurchaseTool do
         result = described_class.call(server_context: server_context, id: gift_idea.id)
         expect(result).not_to be_error
         expect(result.structured_content['status']).to eq('proposed')
-        expect(gift_idea.reload.status).to eq('proposed')
-        expect(gift_idea.reload.buyer).to be_nil
+        gift_idea.reload
+        expect(gift_idea.status).to eq('proposed')
+        expect(gift_idea.buyer).to be_nil
       end
 
       it 'returns url field' do

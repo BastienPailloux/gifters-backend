@@ -40,7 +40,11 @@ module GiftersMcp
           attrs[:price]       = price       if price
           attrs[:link]        = url         if url
 
-          if attrs.empty? || gift_idea.update(attrs)
+          if attrs.empty?
+            return MCP::Tool::Response.new([{ type: "text", text: { error: "No fields provided to update" }.to_json }], error: true)
+          end
+
+          if gift_idea.update(attrs)
             data = serialize(gift_idea)
             MCP::Tool::Response.new(
               [{ type: "text", text: data.to_json }],
