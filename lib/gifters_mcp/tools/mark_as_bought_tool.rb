@@ -36,6 +36,8 @@ module GiftersMcp
             [{ type: "text", text: data.to_json }],
             structured_content: data.transform_keys(&:to_s)
           )
+        rescue StandardError => e
+          MCP::Tool::Response.new([{ type: "text", text: { error: e.message }.to_json }])
         end
 
         private

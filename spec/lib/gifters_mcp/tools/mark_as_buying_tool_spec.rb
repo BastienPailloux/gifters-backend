@@ -55,5 +55,19 @@ RSpec.describe GiftersMcp::Tools::MarkAsBuyingTool do
         expect(result).to be_error
       end
     end
+
+    context 'when gift idea is already in buying status' do
+      let!(:gift_idea) do
+        idea = build(:gift_idea, status: 'buying', created_by: create(:user), buyer: buyer)
+        idea.recipients = [recipient]
+        idea.save!(validate: false)
+        idea
+      end
+
+      it 'returns an error (invalid state transition)' do
+        result = described_class.call(server_context: server_context, id: gift_idea.id)
+        expect(result).to be_error
+      end
+    end
   end
 end

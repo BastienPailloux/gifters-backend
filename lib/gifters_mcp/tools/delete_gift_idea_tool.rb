@@ -29,7 +29,7 @@ module GiftersMcp
           return unauthorized_response(id) unless GiftIdeaPolicy.new(user, gift_idea).destroy?
 
           gift_idea.destroy!
-          data = { message: "Idée de cadeau supprimée avec succès", id: id }
+          data = { message: "Deleted", id: id }
           MCP::Tool::Response.new(
             [{ type: "text", text: data.to_json }],
             structured_content: data.transform_keys(&:to_s)

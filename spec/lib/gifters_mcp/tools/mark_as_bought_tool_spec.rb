@@ -38,5 +38,15 @@ RSpec.describe GiftersMcp::Tools::MarkAsBoughtTool do
         expect(result).to be_error
       end
     end
+
+    context 'when current_user is not the buyer' do
+      let(:other_buyer) { create(:user) }
+      let!(:gift_idea) { create(:gift_idea, status: 'buying', buyer: other_buyer) }
+
+      it 'returns an authorization error' do
+        result = described_class.call(server_context: server_context, id: gift_idea.id)
+        expect(result).to be_error
+      end
+    end
   end
 end
