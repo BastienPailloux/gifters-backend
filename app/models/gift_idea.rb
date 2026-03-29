@@ -197,5 +197,7 @@ class GiftIdea < ApplicationRecord
     text = "#{title} #{description}".strip
     embedding_vector = MistralEmbeddingService.new.embed(text)
     update_column(:embedding, embedding_vector)
+  rescue StandardError => e
+    Rails.logger.error("[GiftIdea#update_embedding_if_needed] id=#{id} #{e.class}: #{e.message}")
   end
 end
