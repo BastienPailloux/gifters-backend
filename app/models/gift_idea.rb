@@ -1,6 +1,7 @@
 class GiftIdea < ApplicationRecord
   belongs_to :created_by, class_name: 'User'
   belongs_to :buyer, class_name: 'User', optional: true
+  has_neighbors :embedding
 
   # Relation many-to-many avec les destinataires
   has_many :gift_recipients, dependent: :destroy
@@ -19,6 +20,7 @@ class GiftIdea < ApplicationRecord
 
   # Callbacks
   before_validation :set_default_status
+  after_save :update_embedding_if_needed
 
   # Scopes
   scope :proposed, -> { where(status: 'proposed') }
@@ -187,5 +189,13 @@ class GiftIdea < ApplicationRecord
 
   def set_default_status
     self.status ||= 'proposed'
+  end
+
+  def update_embedding_if_needed
+    return unless saved_change_to_title? || saved_change_to_description?
+
+    text = "#{title} #{description}".strip
+    embedding_vector = MistralEmbeddingService.new.embed(text)
+    update_column(:embedding, embedding_vector)
   end
 end
