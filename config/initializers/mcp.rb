@@ -13,6 +13,7 @@ Rails.application.config.after_initialize do
   GiftersMcp::Tools::DeleteGiftIdeaTool
   GiftersMcp::Tools::MarkAsBuyingTool
   GiftersMcp::Tools::MarkAsBoughtTool
+  GiftersMcp::Tools::CancelPurchaseTool
 
   MCP.configure do |config|
     config.exception_reporter = lambda { |exception, server_context|
