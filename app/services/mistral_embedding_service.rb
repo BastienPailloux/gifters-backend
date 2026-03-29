@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'json'
-
 class MistralEmbeddingService
   MISTRAL_API_URL = 'https://api.mistral.ai/v1/embeddings'
   MODEL = 'mistral-embed'
@@ -13,6 +10,8 @@ class MistralEmbeddingService
 
     http = Net::HTTP.new(uri.hostname, uri.port)
     http.use_ssl = true
+    http.open_timeout = 5
+    http.read_timeout = 15
 
     request = Net::HTTP::Post.new(uri)
     request['Content-Type'] = 'application/json'
@@ -22,6 +21,12 @@ class MistralEmbeddingService
     response = http.request(request)
     raise "Mistral API error: #{response.code} #{response.body}" unless response.is_a?(Net::HTTPSuccess)
 
-    JSON.parse(response.body)['data'][0]['embedding']
+    begin
+      JSON.parse(response.body)['data'][0]['embedding']
+    rescue JSON::ParserError, NoMethodError, TypeError => e
+      raise "Mistral API: unexpected response format — #{e.message}"
+    end
+  rescue Net::OpenTimeout, Net::ReadTimeout => e
+    raise "Mistral API timeout: #{e.message}"
   end
 end

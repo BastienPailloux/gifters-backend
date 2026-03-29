@@ -44,5 +44,27 @@ RSpec.describe MistralEmbeddingService do
         expect { service.embed(text) }.to raise_error(RuntimeError, /Mistral API error: 401/)
       end
     end
+
+    context 'when Mistral API returns malformed JSON' do
+      before do
+        stub_request(:post, 'https://api.mistral.ai/v1/embeddings')
+          .to_return(status: 200, body: 'not json', headers: { 'Content-Type' => 'application/json' })
+      end
+
+      it 'raises a RuntimeError about unexpected response format' do
+        expect { service.embed(text) }.to raise_error(RuntimeError, /unexpected response format/)
+      end
+    end
+
+    context 'when Mistral API times out' do
+      before do
+        stub_request(:post, 'https://api.mistral.ai/v1/embeddings')
+          .to_raise(Net::ReadTimeout)
+      end
+
+      it 'raises a RuntimeError about timeout' do
+        expect { service.embed(text) }.to raise_error(RuntimeError, /timeout/)
+      end
+    end
   end
 end
