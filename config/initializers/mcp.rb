@@ -7,6 +7,7 @@ Rails.application.config.after_initialize do
   GiftersMcp::Tools::ListGiftIdeasTool
   GiftersMcp::Tools::GetGiftIdeaTool
   GiftersMcp::Tools::ListGroupsTool
+  GiftersMcp::Tools::SearchGiftIdeasTool
 
   MCP.configure do |config|
     config.exception_reporter = lambda { |exception, server_context|
