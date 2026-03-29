@@ -32,11 +32,9 @@ RSpec.describe Backgroundable do
     end
 
     it 'enqueues with delay when :delay is provided' do
-      job_double = instance_double(BackgroundMethodJob)
-      allow(BackgroundMethodJob).to receive(:new).and_return(job_double)
       set_double = double('set_double')
-      allow(job_double).to receive(:set).with(wait: 5.seconds).and_return(set_double)
-      expect(set_double).to receive(:perform_later)
+      allow(BackgroundMethodJob).to receive(:set).with(wait: 5.seconds).and_return(set_double)
+      expect(set_double).to receive(:perform_later).with('DummyModel', 42, 'some_method', [], {})
       instance.background_some_method(delay: 5.seconds)
     end
 

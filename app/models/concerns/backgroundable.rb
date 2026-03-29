@@ -8,7 +8,7 @@ module Backgroundable
       actual_method = name.to_s.delete_prefix('background_')
       delay = kwargs.delete(:delay)
       if delay
-        BackgroundMethodJob.new.set(wait: delay).perform_later(self.class.name, id, actual_method, args, kwargs)
+        BackgroundMethodJob.set(wait: delay).perform_later(self.class.name, id, actual_method, args, kwargs)
       else
         BackgroundMethodJob.perform_later(self.class.name, id, actual_method, args, kwargs)
       end
