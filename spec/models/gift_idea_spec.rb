@@ -208,5 +208,64 @@ RSpec.describe GiftIdea, type: :model do
         expect(gift_idea.visible_to?(group_member)).to be false
       end
     end
+
+    context 'when the user is a recipient (even if also creator)' do
+      it 'returns false regardless of status' do
+        gift = GiftIdea.new(title: 'Wishlist Gift', status: 'proposed', created_by: creator)
+        gift.recipients << creator
+        gift.save(validate: false)
+        expect(gift.visible_to?(creator)).to be false
+      end
+
+      it 'returns false even when bought' do
+        gift = GiftIdea.new(title: 'Wishlist Gift', status: 'bought', created_by: creator)
+        gift.recipients << creator
+        gift.save(validate: false)
+        expect(gift.visible_to?(creator)).to be false
+      end
+    end
+  end
+
+  describe '.visible_to_user' do
+    let(:user) { create(:user) }
+    let(:other_user) { create(:user) }
+    let(:shared_group) { create(:group) }
+
+    before do
+      create(:membership, user: user, group: shared_group)
+      create(:membership, user: other_user, group: shared_group)
+    end
+
+    context 'when user is both creator and recipient' do
+      it 'excludes the gift from visible scope' do
+        gift = GiftIdea.new(title: 'My Wishlist', status: 'proposed', created_by: user)
+        gift.recipients << user
+        gift.save(validate: false)
+        expect(GiftIdea.visible_to_user(user)).not_to include(gift)
+      end
+    end
+
+    context 'bought gifts' do
+      it 'excludes bought gifts for users who are neither creator nor buyer' do
+        buyer = create(:user)
+        # other_user creates a gift for a third recipient that shares a group with user
+        third_user = create(:user)
+        create(:membership, user: third_user, group: shared_group)
+        gift = GiftIdea.new(title: 'Bought Gift', status: 'bought', created_by: other_user, buyer: buyer)
+        gift.recipients << third_user
+        gift.save(validate: false)
+        expect(GiftIdea.visible_to_user(user)).not_to include(gift)
+      end
+
+      it 'includes bought gifts for the buyer' do
+        # user is the buyer of a gift created by other_user for a third recipient
+        third_user = create(:user)
+        create(:membership, user: third_user, group: shared_group)
+        gift = GiftIdea.new(title: 'Bought Gift', status: 'bought', created_by: other_user, buyer: user)
+        gift.recipients << third_user
+        gift.save(validate: false)
+        expect(GiftIdea.visible_to_user(user)).to include(gift)
+      end
+    end
   end
 end

@@ -45,7 +45,7 @@ module GiftersMcp
           results = base_scope
                       .nearest_neighbors(:embedding, query_vector, distance: "cosine")
                       .limit(5)
-                      .map { |g| serialize(g) }
+                      .map { |g| GiftersMcp::Serializers::GiftIdeaSerializer.serialize_compact(g, user) }
 
           MCP::Tool::Response.new(
             [{ type: "text", text: results.to_json }],
@@ -66,15 +66,6 @@ module GiftersMcp
           User.find(user_id)
         end
 
-        def serialize(g)
-          {
-            id:          g.id,
-            title:       g.title,
-            status:      g.status,
-            description: g.description,
-            url:         "/gift-ideas/#{g.id}"
-          }
-        end
       end
     end
   end

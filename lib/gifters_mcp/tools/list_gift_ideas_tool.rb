@@ -3,13 +3,16 @@
 module GiftersMcp
   module Tools
     class ListGiftIdeasTool < MCP::Tool
-      description "Liste les idées de cadeaux visibles par l'utilisateur connecté (proposées, en cours d'achat ou achetées)."
+      description "Liste les idées de cadeaux visibles par l'utilisateur connecté. " \
+                  "IMPORTANT : appeler sans aucun filtre retourne TOUTES les idées (tous groupes, tous statuts). " \
+                  "N'appelle cet outil qu'UNE SEULE FOIS sans filtre pour obtenir la liste complète. " \
+                  "Utilise les filtres status/group_id uniquement si l'utilisateur demande explicitement un filtre précis."
       input_schema(
         properties: {
           status: {
             type: "string",
             enum: %w[proposed buying bought],
-            description: "Filtrer par statut (optionnel)"
+            description: "Filtrer par statut : proposed, buying, bought (optionnel)"
           },
           group_id: {
             type: "integer",
@@ -20,7 +23,8 @@ module GiftersMcp
             description: "Nombre max de résultats (défaut: 50)",
             default: 50
           }
-        }
+        },
+        required: ["limit"]
       )
       # structuredContent MCP doit être un objet (dict), pas un tableau
       output_schema(
@@ -52,8 +56,8 @@ module GiftersMcp
           user = user_from_context(server_context)
           scope = GiftIdeaPolicy::Scope.new(user, GiftIdea).resolve
           scope = scope.where(status: status) if status.present?
-          scope = scope.for_group(group_id) if group_id.present?
-          ideas = scope.limit(limit.to_i).map { |g| serialize_gift_idea(g) }
+          scope = scope.for_group(group_id) if group_id.present? && group_id.to_i > 0
+          ideas = scope.limit(limit.to_i).map { |g| GiftersMcp::Serializers::GiftIdeaSerializer.serialize(g, user) }
           ideas_arr = ideas.map { |h| h.transform_keys(&:to_s) }
           MCP::Tool::Response.new(
             [{ type: "text", text: ideas.to_json }],
@@ -68,19 +72,6 @@ module GiftersMcp
           User.find(user_id)
         end
 
-        def serialize_gift_idea(g)
-          {
-            id: g.id,
-            title: g.title,
-            status: g.status,
-            link: g.link,
-            price: g.price.nil? ? nil : g.price.to_f,
-            description: g.description,
-            recipient_names: g.recipients.pluck(:name),
-            created_by_name: g.created_by&.name,
-            buyer_name: g.buyer&.name
-          }
-        end
       end
     end
   end

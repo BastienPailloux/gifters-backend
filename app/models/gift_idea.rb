@@ -133,20 +133,15 @@ class GiftIdea < ApplicationRecord
   end
 
   def visible_to?(user)
-    # Si le cadeau est acheté...
+    # Recipient rule is absolute — cannot see a gift intended for them
+    return false if is_recipient?(user)
+
     if status == 'bought'
-      # Le créateur et l'acheteur peuvent toujours voir le cadeau acheté
-      return true if created_by_id == user.id || buyer_id == user.id
-      # Pour les autres, ils ne peuvent pas voir le cadeau acheté
-      return false
+      return created_by_id == user.id || buyer_id == user.id
     end
 
     # Le créateur peut toujours voir ses propres cadeaux
     return true if created_by_id == user.id
-
-    # Le destinataire ne peut pas voir le cadeau qui lui est destiné
-    # (sauf s'il est aussi le créateur, ce qui est déjà vérifié ci-dessus)
-    return false if is_recipient?(user)
 
     # Pour les autres utilisateurs, ils doivent avoir un groupe en commun avec tous les destinataires
     recipients.all? { |r| user.has_common_group_with?(r) }
