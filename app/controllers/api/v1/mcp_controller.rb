@@ -49,7 +49,11 @@ module Api
       end
 
       def authorize_tool_call!
-        parsed = JSON.parse(raw_request_body) rescue {}
+        begin
+          parsed = JSON.parse(raw_request_body)
+        rescue JSON::ParserError
+          return
+        end
         return unless parsed["method"] == "tools/call"
 
         tool_name = parsed.dig("params", "name")
@@ -60,14 +64,18 @@ module Api
         unless tool_klass.authorize!(current_user, params)
           render json: {
             jsonrpc: "2.0",
-            error: { code: -32_600, message: "Not authorized" },
-            id: parsed["id"]
+            error: { code: 4003, message: "Forbidden" },
+            id: parsed["id"] || 0
           }, status: :forbidden
         end
       end
 
       def fill_optional_params(raw_body)
-        parsed = JSON.parse(raw_body)
+        begin
+          parsed = JSON.parse(raw_body)
+        rescue JSON::ParserError
+          return raw_body
+        end
         return raw_body unless parsed["method"] == "tools/call"
 
         tool_name = parsed.dig("params", "name")
