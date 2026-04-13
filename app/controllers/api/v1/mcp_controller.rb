@@ -2,12 +2,10 @@
 
 module Api
   module V1
-    # Contrôleur exposant le protocole MCP (Model Context Protocol) pour les assistants IA.
-    # Les clients (ex: Cursor, Claude) envoient des requêtes JSON-RPC en POST ;
-    # l'utilisateur doit être authentifié via JWT (header Authorization).
     class McpController < Api::V1::BaseController
       skip_before_action :authenticate_user!, only: [:show]
       before_action :authenticate_user!, only: [:create]
+      before_action :authorize_tool_call!, only: [:create]
 
       MCP_TOOL_CLASSES = [
         ::Tools::GiftIdeas::ListGiftIdeasTool,
@@ -25,7 +23,6 @@ module Api
         ::Tools::Users::GetUserTool,
       ].freeze
 
-      # GET /api/v1/mcp — métadonnées / découverte (optionnel, sans auth pour info)
       def show
         render json: {
           name: "gifters",
@@ -36,17 +33,39 @@ module Api
         }
       end
 
-      # POST /api/v1/mcp — requêtes JSON-RPC MCP (Streamable HTTP)
       def create
         server = build_mcp_server
-        response_body = server.handle_json(fill_optional_params(request.body.read))
+        response_body = server.handle_json(fill_optional_params(raw_request_body))
         render json: response_body
       end
 
       private
 
-      # Injecte nil pour les paramètres optionnels absents d'un appel tools/call.
-      # Cela permet aux clients de ne pas passer explicitement les params facultatifs.
+      def raw_request_body
+        @raw_request_body ||= begin
+          request.body.rewind
+          request.body.read
+        end
+      end
+
+      def authorize_tool_call!
+        parsed = JSON.parse(raw_request_body) rescue {}
+        return unless parsed["method"] == "tools/call"
+
+        tool_name = parsed.dig("params", "name")
+        tool_klass = MCP_TOOL_CLASSES.find { |k| k.tool_name == tool_name }
+        return unless tool_klass&.respond_to?(:authorize!)
+
+        params = (parsed.dig("params", "arguments") || {}).symbolize_keys
+        unless tool_klass.authorize!(current_user, params)
+          render json: {
+            jsonrpc: "2.0",
+            error: { code: -32_600, message: "Not authorized" },
+            id: parsed["id"]
+          }, status: :forbidden
+        end
+      end
+
       def fill_optional_params(raw_body)
         parsed = JSON.parse(raw_body)
         return raw_body unless parsed["method"] == "tools/call"
@@ -57,10 +76,10 @@ module Api
         tool_klass = MCP_TOOL_CLASSES.find { |klass| klass.tool_name == tool_name }
         return raw_body unless tool_klass
 
-        schema    = tool_klass.input_schema_value.to_h
-        required  = Array(schema[:required]).map(&:to_s)
-        props     = (schema[:properties] || {}).keys.map(&:to_s)
-        args      = parsed.dig("params", "arguments") || {}
+        schema   = tool_klass.input_schema_value.to_h
+        required = Array(schema[:required]).map(&:to_s)
+        props    = (schema[:properties] || {}).keys.map(&:to_s)
+        args     = parsed.dig("params", "arguments") || {}
 
         optional_missing = props - required - args.keys.map(&:to_s)
         return raw_body if optional_missing.empty?
