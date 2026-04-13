@@ -18,6 +18,10 @@ module Tools
             type: "integer",
             description: "Filtrer par ID de groupe (optionnel)"
           },
+          recipient_id: {
+            type: "integer",
+            description: "Filtrer par ID du destinataire (optionnel)"
+          },
           limit: {
             type: "integer",
             description: "Nombre max de résultats (défaut: 50)",
@@ -52,11 +56,12 @@ module Tools
       )
 
       class << self
-        def call(server_context:, status: nil, group_id: nil, limit: 50)
+        def call(server_context:, status: nil, group_id: nil, limit: 50, recipient_id: nil)
           user = user_from_context(server_context)
           scope = GiftIdeaPolicy::Scope.new(user, GiftIdea).resolve
           scope = scope.where(status: status) if status.present?
           scope = scope.for_group(group_id) if group_id.present? && group_id.to_i > 0
+          scope = scope.for_recipient(recipient_id) if recipient_id.present? && recipient_id.to_i > 0
           ideas = scope.limit(limit.to_i).map { |g| Serializers::GiftIdeaSerializer.serialize(g, user) }
           ideas_arr = ideas.map { |h| h.transform_keys(&:to_s) }
           MCP::Tool::Response.new(
