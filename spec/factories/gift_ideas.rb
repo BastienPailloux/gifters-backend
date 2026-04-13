@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :gift_idea do
     sequence(:title) { |n| "Gift Idea #{n}" }
-    description { "A test gift idea description" }
+    description { nil }
     price { 19.99 }
     link { "https://example.com/gift" }
     image_url { "https://example.com/gift.jpg" }

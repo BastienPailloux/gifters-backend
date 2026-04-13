@@ -1,0 +1,55 @@
+# frozen_string_literal: true
+
+require 'rails_helper'
+
+RSpec.describe Tools::GiftIdeas::CancelPurchaseTool do
+  let(:buyer) { create(:user) }
+  let(:server_context) { { user_id: buyer.id } }
+
+  describe '.call' do
+    context 'when gift idea is buying and user is buyer' do
+      let!(:gift_idea) { create(:gift_idea, status: 'buying', buyer: buyer) }
+
+      it 'reverts status to proposed' do
+        result = described_class.call(server_context: server_context, id: gift_idea.id)
+        expect(result).not_to be_error
+        expect(result.structured_content['status']).to eq('proposed')
+        gift_idea.reload
+        expect(gift_idea.status).to eq('proposed')
+        expect(gift_idea.buyer).to be_nil
+      end
+
+      it 'returns url field' do
+        result = described_class.call(server_context: server_context, id: gift_idea.id)
+        expect(result.structured_content['url']).to eq("/gift-ideas/#{gift_idea.id}")
+      end
+    end
+
+    context 'when gift idea is bought and user is buyer' do
+      let!(:gift_idea) { create(:gift_idea, status: 'bought', buyer: buyer) }
+
+      it 'reverts status to proposed' do
+        result = described_class.call(server_context: server_context, id: gift_idea.id)
+        expect(result).not_to be_error
+        expect(gift_idea.reload.status).to eq('proposed')
+      end
+    end
+
+    context 'when user is not the buyer' do
+      let(:other_buyer) { create(:user) }
+      let!(:gift_idea) { create(:gift_idea, status: 'buying', buyer: other_buyer) }
+
+      it 'returns an error response' do
+        result = described_class.call(server_context: server_context, id: gift_idea.id)
+        expect(result).to be_error
+      end
+    end
+
+    context 'when gift idea does not exist' do
+      it 'returns an error response' do
+        result = described_class.call(server_context: server_context, id: 99999)
+        expect(result).to be_error
+      end
+    end
+  end
+end

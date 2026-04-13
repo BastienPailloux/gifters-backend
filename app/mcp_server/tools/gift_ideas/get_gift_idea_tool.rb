@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GiftersMcp
-  module Tools
+module Tools
+  module GiftIdeas
     class GetGiftIdeaTool < MCP::Tool
       description "Récupère le détail d'une idée de cadeau par son ID (si l'utilisateur y a accès)."
       input_schema(
@@ -48,7 +48,10 @@ module GiftersMcp
               structured_content: error_structured_content("Accès non autorisé à cette idée de cadeau")
             )
           end
-          data = serialize_gift_idea(gift_idea)
+          data = Serializers::GiftIdeaSerializer.serialize(gift_idea, user).merge(
+            created_at: gift_idea.created_at.iso8601,
+            updated_at: gift_idea.updated_at.iso8601
+          )
           data_str = data.transform_keys(&:to_s)
           # structured_content requis par le client MCP quand l'outil a un output_schema
           MCP::Tool::Response.new(
@@ -64,21 +67,6 @@ module GiftersMcp
           User.find(user_id)
         end
 
-        def serialize_gift_idea(g)
-          {
-            id: g.id,
-            title: g.title,
-            status: g.status,
-            link: g.link,
-            price: g.price.nil? ? nil : g.price.to_f,
-            description: g.description,
-            recipient_names: g.recipients.pluck(:name),
-            created_by_name: g.created_by&.name,
-            buyer_name: g.buyer&.name,
-            created_at: g.created_at.iso8601,
-            updated_at: g.updated_at.iso8601
-          }
-        end
 
         # Contenu structuré minimal pour les erreurs (le client MCP exige structured_content si output_schema est défini)
         def error_structured_content(message)

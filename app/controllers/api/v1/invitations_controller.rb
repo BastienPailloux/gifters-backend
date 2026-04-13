@@ -112,7 +112,12 @@ module Api
 
         case result
         when Dry::Monads::Success
-          render json: result.value!, status: :ok
+          value = result.value!
+          if value[:already_member]
+            render json: { success: false, errors: value[:errors] }, status: :unprocessable_entity
+          else
+            render json: value, status: :ok
+          end
         when Dry::Monads::Failure
           render json: result.failure, status: :unprocessable_entity
         end

@@ -137,6 +137,7 @@ module Invitations
           success: true,
           already_member: true,
           message: 'You are already a member of this group',
+          errors: errors,
           group: group_json
         }
       else

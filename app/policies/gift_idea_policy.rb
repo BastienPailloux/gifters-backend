@@ -86,6 +86,9 @@ class GiftIdeaPolicy < ApplicationPolicy
     # Visible via show? (créé par lui/enfant ou enfant destinataire - déjà exclu ci-dessus)
     return true if owned_by_user_or_children?(record)
 
+    # Parent peut acheter pour son enfant destinataire
+    return true if child_is_recipient?
+
     # Visible pour un de ses enfants (enfant partage un groupe avec un destinataire)
     if user.has_children?
       user.children.each do |child|
@@ -133,6 +136,18 @@ class GiftIdeaPolicy < ApplicationPolicy
 
     User.exists?(id: record.buyer_id, parent_id: user.id)
   end
+
+  private
+
+  # Vérifie si l'un des destinataires du cadeau est un enfant de l'utilisateur courant
+  def child_is_recipient?
+    GiftRecipient.joins(:user)
+      .where(gift_idea_id: record.id)
+      .where(users: { parent_id: user.id })
+      .exists?
+  end
+
+  public
 
   # Méthode helper pour vérifier si un créateur peut créer pour un destinataire
   def self.can_create_for_recipient?(creator, recipient)
