@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   include Childrenable
+  include Backgroundable
 
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
@@ -17,6 +18,7 @@ class User < ApplicationRecord
   has_many :received_gift_ideas, through: :gift_recipients, source: :gift_idea
 
   has_many :conversations, dependent: :destroy
+  has_neighbors :embedding
 
   # Validations
   validates :name, presence: true
@@ -29,6 +31,7 @@ class User < ApplicationRecord
 
   # Callbacks
   before_validation :set_default_account_type
+  after_save :update_embedding_if_needed
 
   # Methods
   def managed?
@@ -129,7 +132,21 @@ class User < ApplicationRecord
     managed? ? :account_managed : super
   end
 
+  def generate_embedding
+    text = name.to_s.strip
+    embedding_vector = MistralEmbeddingService.new.embed(text)
+    update_column(:embedding, embedding_vector)
+  rescue StandardError => e
+    Rails.logger.error("[User#generate_embedding] id=#{id} #{e.class}: #{e.message}")
+  end
+
   private
+
+  def update_embedding_if_needed
+    return if previously_new_record?
+    return unless saved_change_to_name?
+    background_generate_embedding
+  end
 
   # Override des méthodes Devise pour désactiver les validations email/password pour les comptes managed
   def email_required?
