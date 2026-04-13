@@ -115,8 +115,9 @@ RSpec.describe GiftIdeaPolicy, type: :policy do
 
   permissions :mark_as_buying? do
     let(:proposed_gift) do
-      idea = create(:gift_idea, created_by: other_user, status: 'proposed')
-      idea.gift_recipients.create(user: recipient_user)
+      idea = GiftIdea.new(title: 'Test Gift', status: 'proposed', created_by: other_user)
+      idea.recipients << recipient_user
+      idea.save(validate: false)
       idea
     end
 
@@ -151,8 +152,9 @@ RSpec.describe GiftIdeaPolicy, type: :policy do
 
     context 'when user\'s child is a recipient' do
       let(:gift_for_child) do
-        idea = create(:gift_idea, created_by: other_user, status: 'proposed')
-        idea.gift_recipients.create(user: child_user)
+        idea = GiftIdea.new(title: 'Test Gift', status: 'proposed', created_by: other_user)
+        idea.recipients << child_user
+        idea.save(validate: false)
         idea
       end
 

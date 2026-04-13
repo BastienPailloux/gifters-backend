@@ -32,6 +32,31 @@ Flux obligatoire : `Frontend → POST /api/v1/conversations/:id/messages/stream 
 - `ConversationMessagesController#stream` : `include ActionController::Live`, autorise via `ConversationPolicy#stream?`, persiste les messages user/assistant
 - Variable d'env : `AGENT_URL=http://localhost:8000`
 
+## MCP Tools — Structure
+
+Les tools MCP sont dans `app/mcp_server/` :
+- Sérialiseurs : `app/mcp_server/serializers/`
+- Tools : `app/mcp_server/tools/gift_ideas/`
+
+Tools disponibles dans `Tools::GiftIdeas` :
+- `ListGiftIdeasTool` — liste les cadeaux visibles
+- `GetGiftIdeaTool` — détail d'un cadeau par ID
+- `ListGroupsTool` — liste les groupes de l'utilisateur
+- `SearchGiftIdeasTool` — recherche sémantique via pgvector + `MistralEmbeddingService`
+- `CreateGiftIdeaTool` — crée un `GiftIdea` avec recipients
+- `UpdateGiftIdeaTool` — met à jour titre/description/prix d'un cadeau
+- `DeleteGiftIdeaTool` — supprime un cadeau (status `proposed` uniquement)
+- `MarkAsBuyingTool` — passe un cadeau au statut `buying`
+- `MarkAsBoughtTool` — passe un cadeau au statut `bought`
+- `CancelPurchaseTool` — annule un achat (repasse en `proposed`)
+
+### Services et concerns clés
+
+- `MistralEmbeddingService` (`app/services/mistral_embedding_service.rb`) — appelle l'API Mistral pour générer des embeddings vectoriels
+- `Backgroundable` (`app/models/concerns/backgroundable.rb`) — concern permettant d'exécuter des méthodes en arrière-plan via ActiveJob
+- `BackgroundMethodJob` (`app/jobs/background_method_job.rb`) — job générique qui invoque une méthode sur un modèle en arrière-plan
+- Les embeddings sont stockés dans `gift_ideas.embedding` (colonne pgvector), générés automatiquement après `create`/`update`
+
 ## Development Guidelines
 
 When working on this project:

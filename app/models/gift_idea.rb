@@ -1,6 +1,8 @@
 class GiftIdea < ApplicationRecord
   belongs_to :created_by, class_name: 'User'
   belongs_to :buyer, class_name: 'User', optional: true
+  has_neighbors :embedding
+  include Backgroundable
 
   # Relation many-to-many avec les destinataires
   has_many :gift_recipients, dependent: :destroy
@@ -19,6 +21,7 @@ class GiftIdea < ApplicationRecord
 
   # Callbacks
   before_validation :set_default_status
+  after_save :update_embedding_if_needed
 
   # Scopes
   scope :proposed, -> { where(status: 'proposed') }
@@ -106,38 +109,39 @@ class GiftIdea < ApplicationRecord
 
   # Methods
   def mark_as_buying(user = nil)
-    # Mettre à jour le statut même si aucun utilisateur n'est fourni
-    result = update(status: 'buying')
-    # Si un utilisateur est fourni, mettre à jour l'acheteur également
-    update(buyer: user) if user && result
-    result
+    cols = { status: 'buying' }
+    cols[:buyer_id] = user.id if user
+    update_columns(cols)
   end
 
   def mark_as_bought(user = nil)
     buyer_to_set = user || self.buyer
-    update(status: 'bought', buyer: buyer_to_set)
+    update_columns(status: 'bought', buyer_id: buyer_to_set&.id)
   end
 
   # Annuler l'achat (en cours ou déjà marqué acheté) : remet le cadeau en "proposé" sans acheteur
   def cancel_purchase
-    update(status: 'proposed', buyer: nil)
+    update_columns(status: 'proposed', buyer_id: nil)
+  end
+
+  def generate_embedding
+    text = "#{title} #{description}".strip
+    embedding_vector = MistralEmbeddingService.new.embed(text)
+    update_column(:embedding, embedding_vector)
+  rescue StandardError => e
+    Rails.logger.error("[GiftIdea#generate_embedding] id=#{id} #{e.class}: #{e.message}")
   end
 
   def visible_to?(user)
-    # Si le cadeau est acheté...
+    # Recipient rule is absolute — cannot see a gift intended for them
+    return false if is_recipient?(user)
+
     if status == 'bought'
-      # Le créateur et l'acheteur peuvent toujours voir le cadeau acheté
-      return true if created_by_id == user.id || buyer_id == user.id
-      # Pour les autres, ils ne peuvent pas voir le cadeau acheté
-      return false
+      return created_by_id == user.id || buyer_id == user.id
     end
 
     # Le créateur peut toujours voir ses propres cadeaux
     return true if created_by_id == user.id
-
-    # Le destinataire ne peut pas voir le cadeau qui lui est destiné
-    # (sauf s'il est aussi le créateur, ce qui est déjà vérifié ci-dessus)
-    return false if is_recipient?(user)
 
     # Pour les autres utilisateurs, ils doivent avoir un groupe en commun avec tous les destinataires
     recipients.all? { |r| user.has_common_group_with?(r) }
@@ -187,5 +191,11 @@ class GiftIdea < ApplicationRecord
 
   def set_default_status
     self.status ||= 'proposed'
+  end
+
+  def update_embedding_if_needed
+    return unless saved_change_to_title? || saved_change_to_description?
+
+    background_generate_embedding
   end
 end
