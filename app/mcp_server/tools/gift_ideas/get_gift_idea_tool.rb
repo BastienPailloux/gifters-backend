@@ -19,6 +19,7 @@ module Tools
           title: { type: "string" },
           status: { type: "string", enum: %w[proposed buying bought] },
           link: { type: ["string", "null"] },
+          gifters_url: { type: "string" },
           price: { type: ["number", "null"] },
           description: { type: ["string", "null"] },
           recipient_names: { type: "array", items: { type: "string" } },
@@ -27,7 +28,7 @@ module Tools
           created_at: { type: "string", format: "date-time" },
           updated_at: { type: "string", format: "date-time" }
         },
-        required: %w[id title status created_at updated_at]
+        required: %w[id title status gifters_url created_at updated_at]
       )
 
       class << self
@@ -76,6 +77,7 @@ module Tools
             "title" => message,
             "status" => "proposed",
             "link" => nil,
+            "gifters_url" => "/gift-ideas/0",
             "price" => nil,
             "description" => nil,
             "recipient_names" => [],

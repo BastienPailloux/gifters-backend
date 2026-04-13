@@ -9,7 +9,7 @@ module Tools
       input_schema(
         properties: {
           id:       { type: "integer", description: "ID de l'idée de cadeau (obtenu via search_gift_ideas)" },
-          actor_id: { type: "integer", description: "ID de l'acheteur : current_user ou un de ses enfants (optionnel, défaut = current_user)" }
+          actor_id: { type: ["integer", "null"], description: "ID de l'acheteur : current_user ou un de ses enfants (optionnel, défaut = current_user)" }
         },
         required: %w[id]
       )

@@ -12,6 +12,7 @@ module Serializers
         title:           gift_idea.title,
         status:          recipient ? "proposed" : gift_idea.status,
         link:            gift_idea.link,
+        gifters_url:     "/gift-ideas/#{gift_idea.id}",
         price:           gift_idea.price.nil? ? nil : gift_idea.price.to_f,
         description:     gift_idea.description,
         recipient_names: gift_idea.recipients.pluck(:name),
@@ -28,7 +29,8 @@ module Serializers
         title:       gift_idea.title,
         status:      recipient ? "proposed" : gift_idea.status,
         description: gift_idea.description,
-        url:         "/gift-ideas/#{gift_idea.id}"
+        url:         "/gift-ideas/#{gift_idea.id}",
+        link:        gift_idea.link
       }
     end
   end
