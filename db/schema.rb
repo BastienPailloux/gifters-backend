@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_29_162620) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_13_124847) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -118,6 +118,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_162620) do
     t.boolean "newsletter_subscription", default: false, null: false
     t.bigint "parent_id"
     t.string "account_type", default: "standard", null: false
+    t.vector "embedding", limit: 1024
     t.index ["email"], name: "index_users_on_email", unique: true, where: "(email IS NOT NULL)"
     t.index ["newsletter_subscription"], name: "index_users_on_newsletter_subscription"
     t.index ["parent_id"], name: "index_users_on_parent_id"

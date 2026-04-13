@@ -36,6 +36,12 @@ RSpec.describe Tools::GiftIdeas::SearchGiftIdeasTool do
         expect(results.first['url']).to eq("/gift-ideas/#{gift_idea.id}")
       end
 
+      it 'includes link in each result' do
+        result = described_class.call(server_context: server_context, query: 'vélo')
+        expect(result).not_to be_error
+        expect(result.structured_content['results'].first).to have_key('link')
+      end
+
       it 'embeds the query string' do
         described_class.call(server_context: server_context, query: 'vélo rouge')
         expect(embedding_service).to have_received(:embed).with('vélo rouge')

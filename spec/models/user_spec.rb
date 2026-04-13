@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe User, type: :model do
@@ -554,6 +556,47 @@ RSpec.describe User, type: :model do
         expect(child1).to be_valid
         expect(child2).to be_valid
       end
+    end
+  end
+
+  describe '#generate_embedding' do
+    let(:user) { create(:user, name: 'Alice') }
+    let(:embedding_service) { instance_double(MistralEmbeddingService) }
+    let(:vector) { Array.new(1024, 0.1) }
+
+    before do
+      allow(MistralEmbeddingService).to receive(:new).and_return(embedding_service)
+      allow(embedding_service).to receive(:embed).and_return(vector)
+    end
+
+    it 'embeds the user name and stores it' do
+      user.generate_embedding
+      expect(embedding_service).to have_received(:embed).with('Alice')
+      expect(user.reload.embedding).not_to be_nil
+    end
+
+    it 'logs and does not raise when embedding service fails' do
+      allow(embedding_service).to receive(:embed).and_raise(StandardError, 'API error')
+      expect { user.generate_embedding }.not_to raise_error
+    end
+  end
+
+  describe 'embedding callback' do
+    before do
+      allow(BackgroundMethodJob).to receive(:perform_later)
+    end
+
+    it 'enqueues background embedding job when name changes' do
+      user = create(:user, name: 'Alice')
+      user.update!(name: 'Alice Updated')
+      expect(BackgroundMethodJob).to have_received(:perform_later).with('User', user.id, 'generate_embedding', [], {})
+    end
+
+    it 'does not enqueue background embedding job when name is unchanged' do
+      user = create(:user, name: 'Alice')
+      allow(BackgroundMethodJob).to receive(:perform_later)
+      user.update!(email: "new_#{SecureRandom.hex(4)}@example.com")
+      expect(BackgroundMethodJob).not_to have_received(:perform_later)
     end
   end
 end

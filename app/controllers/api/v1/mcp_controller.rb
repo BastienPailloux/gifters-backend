@@ -20,6 +20,9 @@ module Api
         ::Tools::GiftIdeas::MarkAsBuyingTool,
         ::Tools::GiftIdeas::MarkAsBoughtTool,
         ::Tools::GiftIdeas::CancelPurchaseTool,
+        ::Tools::Users::ListGroupMembersTool,
+        ::Tools::Users::SearchUsersTool,
+        ::Tools::Users::GetUserTool,
       ].freeze
 
       # GET /api/v1/mcp — métadonnées / découverte (optionnel, sans auth pour info)
