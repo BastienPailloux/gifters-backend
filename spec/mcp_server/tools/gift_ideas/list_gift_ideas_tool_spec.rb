@@ -32,6 +32,13 @@ RSpec.describe Tools::GiftIdeas::ListGiftIdeasTool do
         ids = result.structured_content['ideas'].map { |i| i['id'] }
         expect(ids).to include(alice_gift.id, bob_gift.id)
       end
+
+      it 'inclut gifters_url dans chaque idée' do
+        result = described_class.call(server_context: server_context, limit: 50)
+        first_idea = result.structured_content['ideas'].first
+        expect(first_idea).to have_key('gifters_url')
+        expect(first_idea['gifters_url']).to match(%r{^/gift-ideas/\d+$})
+      end
     end
 
     context 'avec recipient_id' do

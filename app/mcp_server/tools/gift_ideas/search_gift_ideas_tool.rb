@@ -26,7 +26,8 @@ module Tools
                 title:       { type: "string" },
                 status:      { type: "string" },
                 description: { type: ["string", "null"] },
-                url:         { type: "string" }
+                url:         { type: "string" },
+                link:        { type: ["string", "null"] }
               },
               required: %w[id title status url]
             }

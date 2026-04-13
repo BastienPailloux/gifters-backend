@@ -42,6 +42,7 @@ module Tools
                 title: { type: "string" },
                 status: { type: "string", enum: %w[proposed buying bought] },
                 link: { type: ["string", "null"] },
+                gifters_url: { type: ["string", "null"] },
                 price: { type: ["number", "null"] },
                 description: { type: ["string", "null"] },
                 recipient_names: { type: "array", items: { type: "string" } },
