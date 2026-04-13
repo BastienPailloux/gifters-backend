@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe GiftersMcp::Tools::DeleteGiftIdeaTool do
+RSpec.describe Tools::GiftIdeas::DeleteGiftIdeaTool do
   let(:creator) { create(:user) }
   let(:server_context) { { user_id: creator.id } }
 

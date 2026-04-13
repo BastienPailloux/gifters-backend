@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe GiftersMcp::Tools::MarkAsBoughtTool do
+RSpec.describe Tools::GiftIdeas::MarkAsBoughtTool do
   let(:buyer) { create(:user) }
   let(:server_context) { { user_id: buyer.id } }
 

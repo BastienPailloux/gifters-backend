@@ -10,16 +10,16 @@ module Api
       before_action :authenticate_user!, only: [:create]
 
       MCP_TOOL_CLASSES = [
-        ::GiftersMcp::Tools::ListGiftIdeasTool,
-        ::GiftersMcp::Tools::GetGiftIdeaTool,
-        ::GiftersMcp::Tools::ListGroupsTool,
-        ::GiftersMcp::Tools::SearchGiftIdeasTool,
-        ::GiftersMcp::Tools::CreateGiftIdeaTool,
-        ::GiftersMcp::Tools::UpdateGiftIdeaTool,
-        ::GiftersMcp::Tools::DeleteGiftIdeaTool,
-        ::GiftersMcp::Tools::MarkAsBuyingTool,
-        ::GiftersMcp::Tools::MarkAsBoughtTool,
-        ::GiftersMcp::Tools::CancelPurchaseTool,
+        ::Tools::GiftIdeas::ListGiftIdeasTool,
+        ::Tools::GiftIdeas::GetGiftIdeaTool,
+        ::Tools::GiftIdeas::ListGroupsTool,
+        ::Tools::GiftIdeas::SearchGiftIdeasTool,
+        ::Tools::GiftIdeas::CreateGiftIdeaTool,
+        ::Tools::GiftIdeas::UpdateGiftIdeaTool,
+        ::Tools::GiftIdeas::DeleteGiftIdeaTool,
+        ::Tools::GiftIdeas::MarkAsBuyingTool,
+        ::Tools::GiftIdeas::MarkAsBoughtTool,
+        ::Tools::GiftIdeas::CancelPurchaseTool,
       ].freeze
 
       # GET /api/v1/mcp — métadonnées / découverte (optionnel, sans auth pour info)

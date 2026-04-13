@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GiftersMcp
-  module Tools
+module Tools
+  module GiftIdeas
     class CreateGiftIdeaTool < MCP::Tool
       description "Crée une nouvelle idée de cadeau. " \
                   "Avant d'appeler cet outil, demander chaque paramètre manquant un par un (obligatoires d'abord, optionnels ensuite)."

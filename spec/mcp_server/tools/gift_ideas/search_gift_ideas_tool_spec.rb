@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe GiftersMcp::Tools::SearchGiftIdeasTool do
+RSpec.describe Tools::GiftIdeas::SearchGiftIdeasTool do
   let(:user) { create(:user) }
   let(:server_context) { { user_id: user.id } }
   let(:embedding_service) { instance_double(MistralEmbeddingService) }

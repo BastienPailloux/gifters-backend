@@ -32,10 +32,16 @@ Flux obligatoire : `Frontend → POST /api/v1/conversations/:id/messages/stream 
 - `ConversationMessagesController#stream` : `include ActionController::Live`, autorise via `ConversationPolicy#stream?`, persiste les messages user/assistant
 - Variable d'env : `AGENT_URL=http://localhost:8000`
 
-## MCP Tools — Gift Ideas Write
+## MCP Tools — Structure
 
-Les tools MCP sont dans `lib/gifters_mcp/tools/`. Nouveaux tools d'écriture :
+Les tools MCP sont dans `app/mcp_server/` :
+- Sérialiseurs : `app/mcp_server/serializers/`
+- Tools : `app/mcp_server/tools/gift_ideas/`
 
+Tools disponibles dans `Tools::GiftIdeas` :
+- `ListGiftIdeasTool` — liste les cadeaux visibles
+- `GetGiftIdeaTool` — détail d'un cadeau par ID
+- `ListGroupsTool` — liste les groupes de l'utilisateur
 - `SearchGiftIdeasTool` — recherche sémantique via pgvector + `MistralEmbeddingService`
 - `CreateGiftIdeaTool` — crée un `GiftIdea` avec recipients
 - `UpdateGiftIdeaTool` — met à jour titre/description/prix d'un cadeau

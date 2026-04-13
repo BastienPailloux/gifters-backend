@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GiftersMcp
-  module Tools
+module Tools
+  module GiftIdeas
     class SearchGiftIdeasTool < MCP::Tool
       description "Cherche des idées de cadeaux par nom ou description approximatifs (recherche sémantique). " \
                   "À utiliser avant toute action nécessitant l'ID d'une idée."
@@ -45,7 +45,7 @@ module GiftersMcp
           results = base_scope
                       .nearest_neighbors(:embedding, query_vector, distance: "cosine")
                       .limit(5)
-                      .map { |g| GiftersMcp::Serializers::GiftIdeaSerializer.serialize_compact(g, user) }
+                      .map { |g| Serializers::GiftIdeaSerializer.serialize_compact(g, user) }
 
           MCP::Tool::Response.new(
             [{ type: "text", text: results.to_json }],
@@ -65,7 +65,6 @@ module GiftersMcp
           user_id = server_context[:user_id] || server_context["user_id"]
           User.find(user_id)
         end
-
       end
     end
   end

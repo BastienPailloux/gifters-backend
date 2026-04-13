@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GiftersMcp
-  module Tools
+module Tools
+  module GiftIdeas
     class UpdateGiftIdeaTool < MCP::Tool
       description "Met à jour une idée de cadeau. Utiliser search_gift_ideas d'abord pour trouver l'ID. " \
                   "Demander chaque champ à modifier un par un."

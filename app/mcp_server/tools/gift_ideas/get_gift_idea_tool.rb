@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GiftersMcp
-  module Tools
+module Tools
+  module GiftIdeas
     class GetGiftIdeaTool < MCP::Tool
       description "Récupère le détail d'une idée de cadeau par son ID (si l'utilisateur y a accès)."
       input_schema(
@@ -48,7 +48,7 @@ module GiftersMcp
               structured_content: error_structured_content("Accès non autorisé à cette idée de cadeau")
             )
           end
-          data = GiftersMcp::Serializers::GiftIdeaSerializer.serialize(gift_idea, user).merge(
+          data = Serializers::GiftIdeaSerializer.serialize(gift_idea, user).merge(
             created_at: gift_idea.created_at.iso8601,
             updated_at: gift_idea.updated_at.iso8601
           )

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GiftersMcp
-  module Tools
+module Tools
+  module GiftIdeas
     class ListGiftIdeasTool < MCP::Tool
       description "Liste les idées de cadeaux visibles par l'utilisateur connecté. " \
                   "IMPORTANT : appeler sans aucun filtre retourne TOUTES les idées (tous groupes, tous statuts). " \
@@ -57,7 +57,7 @@ module GiftersMcp
           scope = GiftIdeaPolicy::Scope.new(user, GiftIdea).resolve
           scope = scope.where(status: status) if status.present?
           scope = scope.for_group(group_id) if group_id.present? && group_id.to_i > 0
-          ideas = scope.limit(limit.to_i).map { |g| GiftersMcp::Serializers::GiftIdeaSerializer.serialize(g, user) }
+          ideas = scope.limit(limit.to_i).map { |g| Serializers::GiftIdeaSerializer.serialize(g, user) }
           ideas_arr = ideas.map { |h| h.transform_keys(&:to_s) }
           MCP::Tool::Response.new(
             [{ type: "text", text: ideas.to_json }],
@@ -71,7 +71,6 @@ module GiftersMcp
           user_id = server_context[:user_id] || server_context["user_id"]
           User.find(user_id)
         end
-
       end
     end
   end

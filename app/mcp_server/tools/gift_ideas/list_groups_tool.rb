@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GiftersMcp
-  module Tools
+module Tools
+  module GiftIdeas
     class ListGroupsTool < MCP::Tool
       description "Liste les groupes dont l'utilisateur connecté est membre (famille, amis, etc.)."
       input_schema(

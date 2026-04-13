@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe GiftersMcp::Tools::MarkAsBuyingTool do
+RSpec.describe Tools::GiftIdeas::MarkAsBuyingTool do
   let(:buyer) { create(:user) }
   let(:recipient) { create(:user) }
   let(:group) { create(:group) }

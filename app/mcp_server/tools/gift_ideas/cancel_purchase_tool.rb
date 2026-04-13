@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GiftersMcp
-  module Tools
+module Tools
+  module GiftIdeas
     class CancelPurchaseTool < MCP::Tool
       description "Annule un achat (en cours ou déjà acheté) et remet l'idée de cadeau en 'proposé'. " \
                   "IMPORTANT : demander une confirmation explicite à l'utilisateur avant d'appeler cet outil."

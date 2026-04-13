@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module GiftersMcp
-  module Tools
+module Tools
+  module GiftIdeas
     class DeleteGiftIdeaTool < MCP::Tool
       description "Supprime définitivement une idée de cadeau. " \
                   "IMPORTANT : demander une confirmation explicite à l'utilisateur avant d'appeler cet outil."

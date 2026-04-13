@@ -3,18 +3,18 @@
 # Configuration du serveur MCP (Model Context Protocol).
 # Voir https://github.com/modelcontextprotocol/ruby-sdk
 Rails.application.config.after_initialize do
-  # Charger le namespace GiftersMcp et ses tools pour éviter un NameError au premier appel.
-  GiftersMcp::Serializers::GiftIdeaSerializer
-  GiftersMcp::Tools::ListGiftIdeasTool
-  GiftersMcp::Tools::GetGiftIdeaTool
-  GiftersMcp::Tools::ListGroupsTool
-  GiftersMcp::Tools::SearchGiftIdeasTool
-  GiftersMcp::Tools::CreateGiftIdeaTool
-  GiftersMcp::Tools::UpdateGiftIdeaTool
-  GiftersMcp::Tools::DeleteGiftIdeaTool
-  GiftersMcp::Tools::MarkAsBuyingTool
-  GiftersMcp::Tools::MarkAsBoughtTool
-  GiftersMcp::Tools::CancelPurchaseTool
+  # Charger les tools MCP pour éviter un NameError au premier appel.
+  Serializers::GiftIdeaSerializer
+  Tools::GiftIdeas::ListGiftIdeasTool
+  Tools::GiftIdeas::GetGiftIdeaTool
+  Tools::GiftIdeas::ListGroupsTool
+  Tools::GiftIdeas::SearchGiftIdeasTool
+  Tools::GiftIdeas::CreateGiftIdeaTool
+  Tools::GiftIdeas::UpdateGiftIdeaTool
+  Tools::GiftIdeas::DeleteGiftIdeaTool
+  Tools::GiftIdeas::MarkAsBuyingTool
+  Tools::GiftIdeas::MarkAsBoughtTool
+  Tools::GiftIdeas::CancelPurchaseTool
 
   MCP.configure do |config|
     # Les paramètres optionnels absents sont injectés en nil par McpController
