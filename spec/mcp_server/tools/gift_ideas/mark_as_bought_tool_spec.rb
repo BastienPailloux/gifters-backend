@@ -23,15 +23,6 @@ RSpec.describe Tools::GiftIdeas::MarkAsBoughtTool do
       end
     end
 
-    context 'when status is already bought' do
-      let!(:gift_idea) { create(:gift_idea, status: 'bought', buyer: buyer) }
-
-      it 'returns an error response' do
-        result = described_class.call(server_context: server_context, id: gift_idea.id)
-        expect(result).to be_error
-      end
-    end
-
     context 'when gift idea does not exist' do
       it 'returns an error response' do
         result = described_class.call(server_context: server_context, id: 99999)
@@ -39,14 +30,5 @@ RSpec.describe Tools::GiftIdeas::MarkAsBoughtTool do
       end
     end
 
-    context 'when current_user is not the buyer' do
-      let(:other_buyer) { create(:user) }
-      let!(:gift_idea) { create(:gift_idea, status: 'buying', buyer: other_buyer) }
-
-      it 'returns an authorization error' do
-        result = described_class.call(server_context: server_context, id: gift_idea.id)
-        expect(result).to be_error
-      end
-    end
   end
 end

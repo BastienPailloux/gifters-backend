@@ -27,12 +27,17 @@ module Tools
       )
 
       class << self
+        def authorize!(user, params)
+          gift_idea = GiftIdea.find_by(id: params[:id])
+          return false unless gift_idea
+          GiftIdeaPolicy.new(user, gift_idea).update?
+        end
+
         def call(server_context:, id:, title: nil, description: nil, price: nil, url: nil)
           user = user_from_context(server_context)
           gift_idea = GiftIdea.find_by(id: id)
 
           return not_found_response unless gift_idea
-          return unauthorized_response unless GiftIdeaPolicy.new(user, gift_idea).update?
 
           attrs = {}
           attrs[:title]       = title       if title
@@ -76,14 +81,6 @@ module Tools
             [{ type: "text", text: { error: "Idée de cadeau introuvable" }.to_json }],
             error: true,
             structured_content: error_content("Idée de cadeau introuvable")
-          )
-        end
-
-        def unauthorized_response
-          MCP::Tool::Response.new(
-            [{ type: "text", text: { error: "Accès non autorisé" }.to_json }],
-            error: true,
-            structured_content: error_content("Accès non autorisé")
           )
         end
 

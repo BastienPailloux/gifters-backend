@@ -57,6 +57,8 @@ module Tools
       )
 
       class << self
+        def authorize!(_user, _params) = true
+
         def call(server_context:, status: nil, group_id: nil, limit: 50, recipient_id: nil)
           user = user_from_context(server_context)
           scope = GiftIdeaPolicy::Scope.new(user, GiftIdea).resolve

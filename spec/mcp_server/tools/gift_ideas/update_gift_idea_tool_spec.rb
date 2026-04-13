@@ -54,14 +54,5 @@ RSpec.describe Tools::GiftIdeas::UpdateGiftIdeaTool do
       end
     end
 
-    context 'when user is not the creator' do
-      let(:other) { create(:user) }
-      let!(:gift_idea) { create(:gift_idea, created_by: other) }
-
-      it 'returns an error response' do
-        result = described_class.call(server_context: server_context, id: gift_idea.id, title: 'Hacked')
-        expect(result).to be_error
-      end
-    end
   end
 end

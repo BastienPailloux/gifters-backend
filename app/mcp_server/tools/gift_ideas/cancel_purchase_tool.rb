@@ -23,12 +23,17 @@ module Tools
       )
 
       class << self
+        def authorize!(user, params)
+          gift_idea = GiftIdea.find_by(id: params[:id])
+          return false unless gift_idea
+          GiftIdeaPolicy.new(user, gift_idea).cancel_purchase?
+        end
+
         def call(server_context:, id:)
           user = user_from_context(server_context)
           gift_idea = GiftIdea.find_by(id: id)
 
           return not_found_response unless gift_idea
-          return unauthorized_response unless GiftIdeaPolicy.new(user, gift_idea).cancel_purchase?
 
           gift_idea.cancel_purchase
           data = serialize(gift_idea)

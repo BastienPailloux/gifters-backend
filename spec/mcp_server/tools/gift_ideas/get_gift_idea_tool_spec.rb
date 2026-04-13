@@ -50,14 +50,24 @@ RSpec.describe Tools::GiftIdeas::GetGiftIdeaTool do
       end
     end
 
-    context 'when the user is not authorized' do
-      let(:outsider) { create(:user) }
-      let(:outsider_context) { { user_id: outsider.id } }
+  end
 
-      it 'returns an error response' do
-        result = described_class.call(server_context: outsider_context, gift_idea_id: gift_idea.id)
-        expect(result).to be_error
-      end
+  describe '.authorize!' do
+    let(:outsider) { create(:user) }
+
+    it 'returns true when the user can see the gift idea' do
+      result = described_class.authorize!(creator, { gift_idea_id: gift_idea.id })
+      expect(result).to be true
+    end
+
+    it 'returns false when the user cannot see the gift idea' do
+      result = described_class.authorize!(outsider, { gift_idea_id: gift_idea.id })
+      expect(result).to be false
+    end
+
+    it 'returns false when the gift idea is not found' do
+      result = described_class.authorize!(creator, { gift_idea_id: 0 })
+      expect(result).to be false
     end
   end
 end

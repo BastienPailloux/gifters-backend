@@ -25,12 +25,17 @@ module Tools
       )
 
       class << self
+        def authorize!(user, params)
+          gift_idea = GiftIdea.find_by(id: params[:id])
+          return false unless gift_idea
+          GiftIdeaPolicy.new(user, gift_idea).mark_as_buying?
+        end
+
         def call(server_context:, id:, actor_id: nil)
           user = user_from_context(server_context)
           gift_idea = GiftIdea.find_by(id: id)
 
           return not_found_response unless gift_idea
-          return unauthorized_response unless GiftIdeaPolicy.new(user, gift_idea).mark_as_buying?
 
           buyer = resolve_buyer(user, actor_id)
           return unauthorized_response unless buyer

@@ -37,6 +37,8 @@ module Tools
       )
 
       class << self
+        def authorize!(_user, _params) = true
+
         def call(server_context:, query:)
           user = user_from_context(server_context)
           query_vector = MistralEmbeddingService.new.embed(query.to_s.strip)

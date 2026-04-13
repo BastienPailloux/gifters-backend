@@ -21,12 +21,17 @@ module Tools
       )
 
       class << self
+        def authorize!(user, params)
+          gift_idea = GiftIdea.find_by(id: params[:id])
+          return false unless gift_idea
+          GiftIdeaPolicy.new(user, gift_idea).destroy?
+        end
+
         def call(server_context:, id:)
           user = user_from_context(server_context)
           gift_idea = GiftIdea.find_by(id: id)
 
           return not_found_response(id) unless gift_idea
-          return unauthorized_response(id) unless GiftIdeaPolicy.new(user, gift_idea).destroy?
 
           gift_idea.destroy!
           data = { message: "Deleted", id: id }
@@ -45,15 +50,6 @@ module Tools
 
         def not_found_response(id)
           data = { "message" => "Idée de cadeau introuvable", "id" => id }
-          MCP::Tool::Response.new(
-            [{ type: "text", text: data.to_json }],
-            error: true,
-            structured_content: data
-          )
-        end
-
-        def unauthorized_response(id)
-          data = { "message" => "Accès non autorisé", "id" => id }
           MCP::Tool::Response.new(
             [{ type: "text", text: data.to_json }],
             error: true,

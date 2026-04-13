@@ -31,17 +31,22 @@ RSpec.describe Tools::GiftIdeas::DeleteGiftIdeaTool do
       end
     end
 
-    context 'when user is not authorized' do
-      let(:other) { create(:user) }
-      let!(:gift_idea) { create(:gift_idea, created_by: other) }
+  end
 
-      it 'returns an error response and does not delete' do
-        result = nil
-        expect {
-          result = described_class.call(server_context: server_context, id: gift_idea.id)
-        }.not_to change(GiftIdea, :count)
-        expect(result).to be_error
-      end
+  describe '.authorize!' do
+    let(:other) { create(:user) }
+    let!(:gift_idea) { create(:gift_idea, created_by: creator) }
+
+    it 'returns true when the user is the creator' do
+      expect(described_class.authorize!(creator, { id: gift_idea.id })).to be true
+    end
+
+    it 'returns false when the user is not the creator' do
+      expect(described_class.authorize!(other, { id: gift_idea.id })).to be false
+    end
+
+    it 'returns false when the gift idea is not found' do
+      expect(described_class.authorize!(creator, { id: 0 })).to be false
     end
   end
 end

@@ -43,6 +43,10 @@ module Tools
       )
 
       class << self
+        def authorize!(user, _params)
+          GiftIdeaPolicy.new(user, GiftIdea.new).create?
+        end
+
         def call(server_context:, title:, recipient_ids:, description: nil, price: nil, url: nil)
           user = user_from_context(server_context)
           recipients = User.where(id: Array(recipient_ids))

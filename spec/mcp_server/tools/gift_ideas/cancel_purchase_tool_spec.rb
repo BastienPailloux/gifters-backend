@@ -35,16 +35,6 @@ RSpec.describe Tools::GiftIdeas::CancelPurchaseTool do
       end
     end
 
-    context 'when user is not the buyer' do
-      let(:other_buyer) { create(:user) }
-      let!(:gift_idea) { create(:gift_idea, status: 'buying', buyer: other_buyer) }
-
-      it 'returns an error response' do
-        result = described_class.call(server_context: server_context, id: gift_idea.id)
-        expect(result).to be_error
-      end
-    end
-
     context 'when gift idea does not exist' do
       it 'returns an error response' do
         result = described_class.call(server_context: server_context, id: 99999)

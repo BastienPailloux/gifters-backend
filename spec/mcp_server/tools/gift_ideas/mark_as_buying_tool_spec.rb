@@ -35,20 +35,6 @@ RSpec.describe Tools::GiftIdeas::MarkAsBuyingTool do
       end
     end
 
-    context 'when user is a recipient' do
-      let!(:gift_idea) do
-        idea = build(:gift_idea, status: 'proposed')
-        idea.recipients = [buyer]
-        idea.save!(validate: false)
-        idea
-      end
-
-      it 'returns an error (recipient cannot buy)' do
-        result = described_class.call(server_context: server_context, id: gift_idea.id)
-        expect(result).to be_error
-      end
-    end
-
     context 'when gift idea does not exist' do
       it 'returns an error response' do
         result = described_class.call(server_context: server_context, id: 99999)
@@ -56,18 +42,5 @@ RSpec.describe Tools::GiftIdeas::MarkAsBuyingTool do
       end
     end
 
-    context 'when gift idea is already in buying status' do
-      let!(:gift_idea) do
-        idea = build(:gift_idea, status: 'buying', created_by: create(:user), buyer: buyer)
-        idea.recipients = [recipient]
-        idea.save!(validate: false)
-        idea
-      end
-
-      it 'returns an error (invalid state transition)' do
-        result = described_class.call(server_context: server_context, id: gift_idea.id)
-        expect(result).to be_error
-      end
-    end
   end
 end

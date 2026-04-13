@@ -32,6 +32,12 @@ module Tools
       )
 
       class << self
+        def authorize!(user, params)
+          gift_idea = GiftIdea.find_by(id: params[:gift_idea_id])
+          return false unless gift_idea
+          GiftIdeaPolicy.new(user, gift_idea).show?
+        end
+
         def call(server_context:, gift_idea_id:)
           user = user_from_context(server_context)
           gift_idea = GiftIdea.find_by(id: gift_idea_id)
@@ -40,13 +46,6 @@ module Tools
               [{ type: "text", text: { error: "Idée de cadeau introuvable" }.to_json }],
               error: true,
               structured_content: error_structured_content("Idée de cadeau introuvable")
-            )
-          end
-          unless GiftIdeaPolicy.new(user, gift_idea).show?
-            return MCP::Tool::Response.new(
-              [{ type: "text", text: { error: "Accès non autorisé à cette idée de cadeau" }.to_json }],
-              error: true,
-              structured_content: error_structured_content("Accès non autorisé à cette idée de cadeau")
             )
           end
           data = Serializers::GiftIdeaSerializer.serialize(gift_idea, user).merge(
