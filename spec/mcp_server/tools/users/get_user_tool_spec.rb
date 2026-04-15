@@ -46,12 +46,29 @@ RSpec.describe Tools::Users::GetUserTool do
       end
     end
 
-    context "quand la cible n'est pas visible par current_user" do
-      it 'retourne une erreur' do
-        stranger = create(:user)
-        result = described_class.call(server_context: server_context, user_id: stranger.id)
-        expect(result).to be_error
+  end
+
+  describe '.authorize!' do
+    context "when target is visible by current_user" do
+      before do
+        create(:membership, user: current_user, group: group)
+        create(:membership, user: target_user, group: group)
       end
+
+      it 'returns true' do
+        expect(described_class.authorize!(current_user, { user_id: target_user.id })).to be true
+      end
+    end
+
+    context "when target is not visible" do
+      it 'returns false' do
+        stranger = create(:user)
+        expect(described_class.authorize!(current_user, { user_id: stranger.id })).to be false
+      end
+    end
+
+    it 'returns false when user not found' do
+      expect(described_class.authorize!(current_user, { user_id: 0 })).to be false
     end
   end
 end

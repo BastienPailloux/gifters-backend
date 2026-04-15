@@ -34,9 +34,11 @@ module Tools
       )
 
       class << self
+        def authorize!(_user, _params) = true
+
         def call(server_context:, query:)
           user  = user_from_context(server_context)
-          scope = User.where(id: user.common_groups_with_users_ids)
+          scope = UserPolicy::Scope.new(user, User).resolve
           q     = query.to_s.strip
 
           # 1. Fuzzy text search

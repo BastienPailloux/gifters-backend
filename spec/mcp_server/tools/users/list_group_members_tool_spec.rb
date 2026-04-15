@@ -36,18 +36,26 @@ RSpec.describe Tools::Users::ListGroupMembersTool do
       end
     end
 
-    context "quand l'utilisateur n'est pas membre du groupe" do
-      it 'retourne une erreur' do
-        result = described_class.call(server_context: server_context, group_id: group.id)
-        expect(result).to be_error
-        expect(result.structured_content['members']).to eq([])
-      end
-    end
-
     context 'avec un groupe inexistant' do
       it 'retourne une erreur' do
         result = described_class.call(server_context: server_context, group_id: 999_999)
         expect(result).to be_error
+      end
+    end
+  end
+
+  describe '.authorize!' do
+    context "when user is member of the group" do
+      before { create(:membership, user: user, group: group) }
+
+      it 'returns true' do
+        expect(described_class.authorize!(user, { group_id: group.id })).to be true
+      end
+    end
+
+    context "when user is not member of the group" do
+      it 'returns false' do
+        expect(described_class.authorize!(user, { group_id: group.id })).to be false
       end
     end
   end

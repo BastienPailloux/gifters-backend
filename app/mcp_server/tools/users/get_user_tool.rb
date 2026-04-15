@@ -48,19 +48,16 @@ module Tools
       )
 
       class << self
+        def authorize!(user, params)
+          target = User.find_by(id: params[:user_id])
+          return false unless target
+          UserPolicy.new(user, target).show?
+        end
+
         def call(server_context:, user_id:)
-          current     = user_from_context(server_context)
-          visible_ids = current.common_groups_with_users_ids
+          current = user_from_context(server_context)
+          target  = User.find_by(id: user_id)
 
-          unless visible_ids.include?(user_id)
-            return MCP::Tool::Response.new(
-              [{ type: "text", text: { error: "Utilisateur introuvable ou accès non autorisé" }.to_json }],
-              error: true,
-              structured_content: error_content
-            )
-          end
-
-          target = User.find_by(id: user_id)
           unless target
             return MCP::Tool::Response.new(
               [{ type: "text", text: { error: "Utilisateur introuvable" }.to_json }],

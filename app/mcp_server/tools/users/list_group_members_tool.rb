@@ -34,17 +34,20 @@ module Tools
       )
 
       class << self
+        def authorize!(user, params)
+          group = GroupPolicy::Scope.new(user, Group).resolve.find_by(id: params[:group_id])
+          return false unless group
+          GroupPolicy.new(user, group).show_memberships?
+        end
+
         def call(server_context:, group_id:)
           user  = user_from_context(server_context)
-          group = GroupPolicy::Scope.new(user, Group).resolve.find_by(id: group_id)
-
-          unless group
-            return MCP::Tool::Response.new(
-              [{ type: "text", text: { error: "Groupe introuvable ou accès non autorisé" }.to_json }],
-              error: true,
-              structured_content: { "members" => [] }
-            )
-          end
+          group = Group.find_by(id: group_id)
+          return MCP::Tool::Response.new(
+            [{ type: "text", text: { error: "Groupe introuvable" }.to_json }],
+            error: true,
+            structured_content: { "members" => [] }
+          ) unless group
 
           members = group.memberships.includes(:user).map do |m|
             {
