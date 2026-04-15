@@ -63,14 +63,6 @@ module Tools
             structured_content: { "id" => 0, "title" => "Introuvable", "status" => "proposed", "url" => "" }
           )
         end
-
-        def unauthorized_response
-          MCP::Tool::Response.new(
-            [{ type: "text", text: { error: "Action non autorisée" }.to_json }],
-            error: true,
-            structured_content: { "id" => 0, "title" => "Non autorisé", "status" => "proposed", "url" => "" }
-          )
-        end
       end
     end
   end

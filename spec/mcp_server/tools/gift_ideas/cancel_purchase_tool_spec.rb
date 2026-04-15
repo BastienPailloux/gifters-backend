@@ -42,4 +42,30 @@ RSpec.describe Tools::GiftIdeas::CancelPurchaseTool do
       end
     end
   end
+
+  describe '.authorize!' do
+    let(:buyer) { create(:user) }
+    let(:other) { create(:user) }
+    let(:group) { create(:group) }
+    let!(:gift_idea) do
+      create(:membership, user: buyer, group: group)
+      recipient = create(:user).tap { |u| create(:membership, user: u, group: group) }
+      idea = GiftIdea.new(title: 'Test', created_by: buyer, status: 'buying', buyer: buyer)
+      idea.recipients = [recipient]
+      idea.save!
+      idea
+    end
+
+    it 'returns true for the buyer' do
+      expect(described_class.authorize!(buyer, { id: gift_idea.id })).to be true
+    end
+
+    it 'returns false for a non-buyer' do
+      expect(described_class.authorize!(other, { id: gift_idea.id })).to be false
+    end
+
+    it 'returns false when gift idea not found' do
+      expect(described_class.authorize!(buyer, { id: 0 })).to be false
+    end
+  end
 end

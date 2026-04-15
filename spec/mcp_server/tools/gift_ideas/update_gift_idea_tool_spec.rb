@@ -55,4 +55,29 @@ RSpec.describe Tools::GiftIdeas::UpdateGiftIdeaTool do
     end
 
   end
+
+  describe '.authorize!' do
+    let(:creator) { create(:user) }
+    let(:other)   { create(:user) }
+    let(:group)   { create(:group) }
+    let!(:gift_idea) do
+      create(:membership, user: creator, group: group)
+      idea = GiftIdea.new(title: 'Test', created_by: creator)
+      idea.recipients = [create(:user).tap { |u| create(:membership, user: u, group: group) }]
+      idea.save!
+      idea
+    end
+
+    it 'returns true for the creator' do
+      expect(described_class.authorize!(creator, { id: gift_idea.id })).to be true
+    end
+
+    it 'returns false for a non-creator' do
+      expect(described_class.authorize!(other, { id: gift_idea.id })).to be false
+    end
+
+    it 'returns false when gift idea not found' do
+      expect(described_class.authorize!(creator, { id: 0 })).to be false
+    end
+  end
 end
