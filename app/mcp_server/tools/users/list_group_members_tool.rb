@@ -42,7 +42,7 @@ module Tools
 
         def call(server_context:, group_id:)
           user  = user_from_context(server_context)
-          group = Group.find_by(id: group_id)
+          group = GroupPolicy::Scope.new(user, Group).resolve.find_by(id: group_id)
           return MCP::Tool::Response.new(
             [{ type: "text", text: { error: "Groupe introuvable" }.to_json }],
             error: true,
