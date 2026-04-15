@@ -17,9 +17,8 @@ RSpec.describe Serializers::InvitationSerializer do
       expect(result[:created_by_name]).to eq('Alice')
     end
 
-    it 'retourne invitation_url non vide' do
-      expect(result[:invitation_url]).to be_present
-      expect(result[:invitation_url]).to include(invitation.token)
+    it 'retourne invitation_url' do
+      expect(result[:invitation_url]).to eq(invitation.invitation_url)
     end
   end
 end
