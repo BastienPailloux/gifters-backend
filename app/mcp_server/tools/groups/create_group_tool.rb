@@ -60,7 +60,7 @@ module Tools
             [{ type: "text", text: { error: message }.to_json }],
             error: true,
             structured_content: { "id" => 0, "name" => message, "members_count" => 0,
-                                  "current_user_role" => nil, "members" => [], "invitations" => [] }
+                                  "current_user_role" => "", "members" => [], "invitations" => [] }
           )
         end
       end
