@@ -10,7 +10,6 @@ module Api
       MCP_TOOL_CLASSES = [
         ::Tools::GiftIdeas::ListGiftIdeasTool,
         ::Tools::GiftIdeas::GetGiftIdeaTool,
-        ::Tools::Groups::ListGroupsTool,
         ::Tools::GiftIdeas::SearchGiftIdeasTool,
         ::Tools::GiftIdeas::CreateGiftIdeaTool,
         ::Tools::GiftIdeas::UpdateGiftIdeaTool,
@@ -21,6 +20,13 @@ module Api
         ::Tools::Users::ListGroupMembersTool,
         ::Tools::Users::SearchUsersTool,
         ::Tools::Users::GetUserTool,
+        ::Tools::Groups::ListGroupsTool,
+        ::Tools::Groups::GetGroupTool,
+        ::Tools::Groups::CreateGroupTool,
+        ::Tools::Groups::UpdateGroupTool,
+        ::Tools::Groups::DeleteGroupTool,
+        ::Tools::Invitations::CreateInvitationTool,
+        ::Tools::Memberships::RemoveMemberTool,
       ].freeze
 
       def show

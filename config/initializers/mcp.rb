@@ -5,9 +5,11 @@
 Rails.application.config.after_initialize do
   # Charger les tools MCP pour éviter un NameError au premier appel.
   Serializers::GiftIdeaSerializer
+  Serializers::GroupSerializer
+  Serializers::InvitationSerializer
+  Serializers::UserSerializer
   Tools::GiftIdeas::ListGiftIdeasTool
   Tools::GiftIdeas::GetGiftIdeaTool
-  Tools::Groups::ListGroupsTool
   Tools::GiftIdeas::SearchGiftIdeasTool
   Tools::GiftIdeas::CreateGiftIdeaTool
   Tools::GiftIdeas::UpdateGiftIdeaTool
@@ -15,6 +17,16 @@ Rails.application.config.after_initialize do
   Tools::GiftIdeas::MarkAsBuyingTool
   Tools::GiftIdeas::MarkAsBoughtTool
   Tools::GiftIdeas::CancelPurchaseTool
+  Tools::Users::ListGroupMembersTool
+  Tools::Users::SearchUsersTool
+  Tools::Users::GetUserTool
+  Tools::Groups::ListGroupsTool
+  Tools::Groups::GetGroupTool
+  Tools::Groups::CreateGroupTool
+  Tools::Groups::UpdateGroupTool
+  Tools::Groups::DeleteGroupTool
+  Tools::Invitations::CreateInvitationTool
+  Tools::Memberships::RemoveMemberTool
 
   MCP.configure do |config|
     # Les paramètres optionnels absents sont injectés en nil par McpController
