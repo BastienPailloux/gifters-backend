@@ -11,8 +11,9 @@ module Serializers
     end
 
     def self.serialize_full(group, current_user)
-      membership  = group.memberships.find_by(user: current_user)
-      members     = group.memberships.includes(:user).map do |m|
+      loaded_memberships = group.memberships.includes(:user).to_a
+      membership = loaded_memberships.find { |m| m.user_id == current_user.id }
+      members = loaded_memberships.map do |m|
         {
           id:           m.user.id,
           name:         m.user.name,
@@ -22,6 +23,7 @@ module Serializers
       end
       invitations = group.invitations.map { |i| Serializers::InvitationSerializer.serialize(i) }
       serialize_compact(group).merge(
+        members_count:     loaded_memberships.size,
         current_user_role: membership&.role,
         members:           members,
         invitations:       invitations

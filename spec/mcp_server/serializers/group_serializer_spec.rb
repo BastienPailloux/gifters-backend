@@ -35,6 +35,8 @@ RSpec.describe Serializers::GroupSerializer do
       expect(ids).to contain_exactly(current_user.id, other_user.id)
       admin = result[:members].find { |m| m[:id] == current_user.id }
       expect(admin[:role]).to eq('admin')
+      expect(admin[:name]).to eq(current_user.name)
+      expect(admin[:account_type]).to eq(current_user.account_type)
     end
 
     it 'inclut les invitations du groupe' do
