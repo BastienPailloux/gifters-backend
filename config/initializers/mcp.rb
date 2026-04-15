@@ -7,7 +7,7 @@ Rails.application.config.after_initialize do
   Serializers::GiftIdeaSerializer
   Tools::GiftIdeas::ListGiftIdeasTool
   Tools::GiftIdeas::GetGiftIdeaTool
-  Tools::GiftIdeas::ListGroupsTool
+  Tools::Groups::ListGroupsTool
   Tools::GiftIdeas::SearchGiftIdeasTool
   Tools::GiftIdeas::CreateGiftIdeaTool
   Tools::GiftIdeas::UpdateGiftIdeaTool

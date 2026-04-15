@@ -10,7 +10,7 @@ module Api
       MCP_TOOL_CLASSES = [
         ::Tools::GiftIdeas::ListGiftIdeasTool,
         ::Tools::GiftIdeas::GetGiftIdeaTool,
-        ::Tools::GiftIdeas::ListGroupsTool,
+        ::Tools::Groups::ListGroupsTool,
         ::Tools::GiftIdeas::SearchGiftIdeasTool,
         ::Tools::GiftIdeas::CreateGiftIdeaTool,
         ::Tools::GiftIdeas::UpdateGiftIdeaTool,
